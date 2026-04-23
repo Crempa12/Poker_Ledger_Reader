@@ -1034,11 +1034,16 @@ void printMainMenu() {
 // --------------------------------------------------
 
 int main() {
-    string dataFolder = "C:\\Users\\Camer\\CLionProjects\\Poker_Ledger_Reader\\Single_Game_Settlement";
-    string mergeRulesFile = "merge_rules.csv";
-    string summaryFile = "player_summary.csv";
-    string settlementFile = "settlements.csv";
-    string sessionBalancesFile = "session_balances.csv";
+    fs::path projectRoot = "/Users/cameron/CLionProjects/Poker_Ledger_Reader";
+    fs::path dataFolder = projectRoot / "Single_Game_Settlement";
+    fs::path savedDataFolder = projectRoot / "Saved_Data";
+
+    fs::create_directories(savedDataFolder);
+
+    fs::path mergeRulesFile = savedDataFolder / "merge_rules.csv";
+    fs::path summaryFile = savedDataFolder / "player_summary.csv";
+    fs::path settlementFile = savedDataFolder / "settlements.csv";
+    fs::path sessionBalancesFile = savedDataFolder / "session_balances.csv";
 
     unordered_map<string, PlayerStats> players;
     unordered_map<string, string> mergeRules;
@@ -1059,8 +1064,8 @@ int main() {
     cout << "\nLoaded " << players.size() << " normalized players from ledger files.\n";
 
     if (fs::exists(mergeRulesFile)) {
-        if (askYesNo("Found merge_rules.csv. Load saved merge rules? (y/n): ") == 'y') {
-            if (loadMergeRulesFromCSV(mergeRulesFile, mergeRules)) {
+        if (askYesNo("Found merge_rules.csv in Saved_data. Load saved merge rules? (y/n): ") == 'y') {
+            if (loadMergeRulesFromCSV(mergeRulesFile.string(), mergeRules)) {
                 applySavedMergeRules(players, mergeRules);
                 cout << "Saved merge rules applied.\n";
             } else {
@@ -1070,8 +1075,8 @@ int main() {
     }
 
     if (fs::exists(sessionBalancesFile)) {
-        if (loadSessionBalancesCSV(sessionBalancesFile, sessionBalances)) {
-            cout << "Loaded session balances from " << sessionBalancesFile << ".\n";
+        if (loadSessionBalancesCSV(sessionBalancesFile.string(), sessionBalances)) {
+            cout << "Loaded session balances from " << sessionBalancesFile.string() << ".\n";
         }
     }
 
@@ -1098,8 +1103,8 @@ int main() {
             }
 
             case 3: {
-                if (saveMergeRulesToCSV(mergeRulesFile, mergeRules)) {
-                    cout << "Merge rules saved to " << mergeRulesFile << '\n';
+                if (saveMergeRulesToCSV(mergeRulesFile.string(), mergeRules)) {
+                    cout << "Merge rules saved to " << mergeRulesFile.string() << '\n';
                 } else {
                     cout << "Could not save merge rules.\n";
                 }
@@ -1107,8 +1112,8 @@ int main() {
             }
 
             case 4: {
-                if (exportPlayerSummaryCSV(summaryFile, sortedPlayers)) {
-                    cout << "Player summary exported to " << summaryFile << '\n';
+                if (exportPlayerSummaryCSV(summaryFile.string(), sortedPlayers)) {
+                    cout << "Player summary exported to " << summaryFile.string() << '\n';
                 } else {
                     cout << "Could not export player summary.\n";
                 }
@@ -1130,8 +1135,8 @@ int main() {
                         cout << "Session ID cannot be empty.\n";
                     } else {
                         addSettlementBatchToSession(sessionId, currentSettlements, players, sessionBalances);
-                        if (saveSessionBalancesCSV(sessionBalancesFile, sessionBalances)) {
-                            cout << "Session balances saved to " << sessionBalancesFile << '\n';
+                        if (saveSessionBalancesCSV(sessionBalancesFile.string(), sessionBalances)) {
+                            cout << "Session balances saved to " << sessionBalancesFile.string() << '\n';
                         } else {
                             cout << "Session balances updated in memory, but could not save the file.\n";
                         }
@@ -1152,8 +1157,8 @@ int main() {
 
             case 9: {
                 recordPaymentBySession(sessionBalances);
-                if (saveSessionBalancesCSV(sessionBalancesFile, sessionBalances)) {
-                    cout << "Session balances saved to " << sessionBalancesFile << '\n';
+                if (saveSessionBalancesCSV(sessionBalancesFile.string(), sessionBalances)) {
+                    cout << "Session balances saved to " << sessionBalancesFile.string() << '\n';
                 } else {
                     cout << "Payment updated in memory, but could not save the file.\n";
                 }
@@ -1169,8 +1174,8 @@ int main() {
                 if (currentSettlements.empty()) {
                     cout << "No current settlements are loaded. Calculate settlements first.\n";
                 } else {
-                    if (exportSettlementsCSV(settlementFile, currentSettlements)) {
-                        cout << "Settlements exported to " << settlementFile << '\n';
+                    if (exportSettlementsCSV(settlementFile.string(), currentSettlements)) {
+                        cout << "Settlements exported to " << settlementFile.string() << '\n';
                     } else {
                         cout << "Could not export settlements.\n";
                     }
@@ -1179,8 +1184,8 @@ int main() {
             }
 
             case 12: {
-                if (saveSessionBalancesCSV(sessionBalancesFile, sessionBalances)) {
-                    cout << "Session balances saved to " << sessionBalancesFile << '\n';
+                if (saveSessionBalancesCSV(sessionBalancesFile.string(), sessionBalances)) {
+                    cout << "Session balances saved to " << sessionBalancesFile.string() << '\n';
                 } else {
                     cout << "Could not save session balances.\n";
                 }
@@ -1188,8 +1193,8 @@ int main() {
             }
 
             case 0: {
-                saveMergeRulesToCSV(mergeRulesFile, mergeRules);
-                saveSessionBalancesCSV(sessionBalancesFile, sessionBalances);
+                saveMergeRulesToCSV(mergeRulesFile.string(), mergeRules);
+                saveSessionBalancesCSV(sessionBalancesFile.string(), sessionBalances);
                 cout << "Saved merge rules and session balances.\n";
                 cout << "Done.\n";
                 running = false;
