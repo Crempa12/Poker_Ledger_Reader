@@ -300,7 +300,7 @@ void printPlayerTable(const vector<PlayerStats>& players) {
          << setw(5)  << "#"
          << setw(24) << "Player"
          << setw(22) << "Normalized"
-         << setw(10) << "Sessions"
+         << setw(10) << "Buyins"
          << setw(16) << "Total Ups"
          << setw(16) << "Total Downs"
          << setw(16) << "Total Net"
@@ -1034,8 +1034,8 @@ void printMainMenu() {
 // --------------------------------------------------
 
 int main() {
-    fs::path projectRoot = "C:\\Users\\Camer\\CLionProjects\\Poker_Ledger_Reader";
-    fs::path dataFolder = projectRoot / "Single_Game_Settlement";
+    fs::path projectRoot = "/Users/cameron/CLionProjects/Poker_Ledger_Reader";
+    fs::path dataFolder = projectRoot / "data_folder_April_22-29";
     fs::path savedDataFolder = projectRoot / "Saved_Data";
 
     fs::create_directories(savedDataFolder);
