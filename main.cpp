@@ -1034,8 +1034,8 @@ void printMainMenu() {
 // --------------------------------------------------
 
 int main() {
-    fs::path projectRoot = "/Users/cameron/CLionProjects/Poker_Ledger_Reader";
-    fs::path dataFolder = projectRoot / "data_folder_April_22-29";
+    fs::path projectRoot = "C:\\Users\\Camer\\CLionProjects\\Poker_Ledger_Reader";
+    fs::path dataFolder = projectRoot / "SingleGameSettlement";
     fs::path savedDataFolder = projectRoot / "Saved_Data";
 
     fs::create_directories(savedDataFolder);
