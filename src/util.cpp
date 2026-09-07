@@ -200,9 +200,9 @@ std::string formatLocalDateTime(std::int64_t epoch) {
 std::string formatShortDate(std::int64_t epoch) {
     if (epoch == NO_TIME) return "?";
     std::tm t = toLocalTm(epoch);
-    char buf[32];
-    std::strftime(buf, sizeof(buf), "%b %-d", &t);
-    return buf;
+    static const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    return std::string(months[t.tm_mon]) + " " + std::to_string(t.tm_mday);
 }
 
 std::int64_t nowEpoch() {

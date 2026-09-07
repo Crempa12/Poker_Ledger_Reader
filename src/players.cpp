@@ -77,7 +77,9 @@ bool saveMergeRulesCSV(const std::string& filename, MergeRules& rules) {
 
 // ---------------- aggregation ----------------
 
-std::map<std::string, PlayerStats> aggregate(const std::vector<const Game*>& games, const MergeRules& rules) {
+std::map<std::string, PlayerStats> aggregate(const std::vector<const Game*>& games,
+                                             const MergeRules& rules,
+                                             const std::vector<const Adjustment*>& adjustments) {
     std::map<std::string, PlayerStats> stats;
     std::map<std::string, std::map<std::string, int>> nicknameCounts;  // canonical -> raw nickname -> count
 
@@ -111,10 +113,32 @@ std::map<std::string, PlayerStats> aggregate(const std::vector<const Game*>& gam
             p.games++;
             if (r.net > EPSILON) p.totalWon += r.net;
             else if (r.net < -EPSILON) p.totalLost += r.net;
-            p.biggestWin = std::max(p.biggestWin, r.net);
-            p.biggestLoss = std::min(p.biggestLoss, r.net);
+            if (p.games == 1) {
+                p.biggestWin = r.net;
+                p.biggestLoss = r.net;
+            } else {
+                p.biggestWin = std::max(p.biggestWin, r.net);
+                p.biggestLoss = std::min(p.biggestLoss, r.net);
+            }
             p.history.push_back(r);
         }
+    }
+
+    for (const Adjustment* a : adjustments) {
+        std::string canonical = resolveCanonical(rules, a->playerNormalized);
+        PlayerStats& p = stats[canonical];
+        p.normalizedName = canonical;
+        p.aliases.insert(a->playerNormalized);
+        p.totalNet += a->amount;
+        p.adjustments += a->amount;
+        GameResult r;
+        r.gameId = "adjustment";
+        r.folder = a->folder.empty() ? "(any folder)" : a->folder;
+        r.date = a->date;
+        r.net = a->amount;
+        r.adjustment = true;
+        r.note = a->note;
+        p.history.push_back(r);
     }
 
     for (auto& pair : stats) {
@@ -182,17 +206,19 @@ std::vector<MergeSuggestion> suggestMergesByPlayerId(const std::vector<Game>& ga
 // ---------------- printing / export ----------------
 
 void printLeaderboard(const std::vector<PlayerStats>& list) {
-    const int W = 126;
+    const int W = 136;
     double grandTotal = 0.0;
+    double adjustmentTotal = 0.0;
     std::cout << divider(W)
               << padRight("#", 4) << padRight("Player", 18) << padRight("Games", 7) << padRight("Buy-ins", 9)
-              << padLeft("Won", 12) << padLeft("Lost", 12) << padLeft("Net", 12) << padLeft("Avg/game", 12)
-              << padLeft("Best", 12) << padLeft("Worst", 12) << "  Aliases\n"
+              << padLeft("Won", 12) << padLeft("Lost", 12) << padLeft("Adjust", 10) << padLeft("Net", 12)
+              << padLeft("Avg/game", 12) << padLeft("Best", 12) << padLeft("Worst", 12) << "  Aliases\n"
               << divider(W);
 
     for (size_t i = 0; i < list.size(); ++i) {
         const PlayerStats& p = list[i];
         grandTotal += p.totalNet;
+        adjustmentTotal += p.adjustments;
         std::string aliases;
         for (const std::string& a : p.aliases) {
             if (a == p.normalizedName || a == normalizeName(p.displayName)) continue;
@@ -201,12 +227,18 @@ void printLeaderboard(const std::vector<PlayerStats>& list) {
         std::cout << padRight(std::to_string(i + 1), 4) << padRight(p.displayName, 18)
                   << padRight(std::to_string(p.games), 7) << padRight(std::to_string(p.buyIns), 9)
                   << padLeft(money(p.totalWon), 12) << padLeft(money(p.totalLost), 12)
+                  << padLeft(p.adjustments > -EPSILON && p.adjustments < EPSILON ? "" : moneySigned(p.adjustments), 10)
                   << padLeft(moneySigned(p.totalNet), 12) << padLeft(moneySigned(p.averagePerGame()), 12)
                   << padLeft(moneySigned(p.biggestWin), 12) << padLeft(moneySigned(p.biggestLoss), 12)
                   << "  " << aliases << '\n';
     }
-    std::cout << divider(W) << "Sum of all nets: " << moneySigned(grandTotal)
-              << "  (should be $0.00 when every ledger balances)\n\n";
+    std::cout << divider(W) << "Sum of all nets: " << moneySigned(grandTotal);
+    if (adjustmentTotal > EPSILON || adjustmentTotal < -EPSILON) {
+        std::cout << "  (includes " << moneySigned(adjustmentTotal) << " of one-sided adjustments)";
+    } else {
+        std::cout << "  (should be $0.00 when every ledger balances)";
+    }
+    std::cout << "\n\n";
 }
 
 void printCompactList(const std::vector<PlayerStats>& list) {
@@ -223,33 +255,34 @@ void printCompactList(const std::vector<PlayerStats>& list) {
 void printPlayerHistory(const PlayerStats& p) {
     std::cout << "\nGame history for " << p.displayName << " (" << p.games << " games, "
               << p.buyIns << " buy-ins, net " << moneySigned(p.totalNet) << ")\n";
-    std::cout << divider(96)
-              << padRight("#", 4) << padRight("Date", 12) << padRight("Folder", 28) << padRight("Ledger", 30)
+    std::cout << divider(100)
+              << padRight("#", 4) << padRight("Date", 12) << padRight("Folder", 28) << padRight("Ledger", 34)
               << padLeft("Buy-ins", 8) << padLeft("Net", 12) << padLeft("Running", 12) << '\n'
-              << divider(96);
+              << divider(100);
     double running = 0.0;
     for (size_t i = 0; i < p.history.size(); ++i) {
         const GameResult& r = p.history[i];
         running += r.net;
         std::cout << padRight(std::to_string(i + 1), 4) << padRight(formatLocalDate(r.date), 12)
-                  << padRight(r.folder, 28) << padRight(r.gameId, 30) << padLeft(std::to_string(r.buyIns), 8)
+                  << padRight(r.folder, 28) << padRight(r.adjustment ? "adjustment: " + r.note : r.gameId, 34)
+                  << padLeft(r.adjustment ? "-" : std::to_string(r.buyIns), 8)
                   << padLeft(moneySigned(r.net), 12) << padLeft(moneySigned(running), 12) << '\n';
     }
-    std::cout << divider(96) << '\n';
+    std::cout << divider(100) << '\n';
 }
 
 bool exportPlayerSummaryCSV(const std::string& filename, const std::vector<PlayerStats>& list) {
     std::ofstream out(filename);
     if (!out.is_open()) return false;
 
-    out << "rank,display_name,normalized_name,games,buy_ins,total_won,total_lost,total_net,avg_per_game,biggest_win,biggest_loss,aliases\n";
+    out << "rank,display_name,normalized_name,games,buy_ins,total_won,total_lost,adjustments,total_net,avg_per_game,biggest_win,biggest_loss,aliases\n";
     for (size_t i = 0; i < list.size(); ++i) {
         const PlayerStats& p = list[i];
         std::string aliases;
         for (const std::string& a : p.aliases) aliases += (aliases.empty() ? "" : " | ") + a;
         out << (i + 1) << ',' << escapeCSV(p.displayName) << ',' << escapeCSV(p.normalizedName) << ','
             << p.games << ',' << p.buyIns << ',' << fixed2(p.totalWon) << ',' << fixed2(p.totalLost) << ','
-            << fixed2(p.totalNet) << ',' << fixed2(p.averagePerGame()) << ',' << fixed2(p.biggestWin) << ','
+            << fixed2(p.adjustments) << ',' << fixed2(p.totalNet) << ',' << fixed2(p.averagePerGame()) << ',' << fixed2(p.biggestWin) << ','
             << fixed2(p.biggestLoss) << ',' << escapeCSV(aliases) << '\n';
     }
     return true;

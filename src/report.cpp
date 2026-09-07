@@ -217,7 +217,13 @@ void writeCumulativeLines(std::ostream& o, const ReportInput& in) {
         std::map<size_t, double> perIdx;
         for (const GameResult& r : chosen[s]->history) {
             auto it = gameIndex.find(r.gameId);
-            if (it != gameIndex.end()) perIdx[it->second] += r.net;
+            if (it != gameIndex.end()) {
+                perIdx[it->second] += r.net;
+            } else if (r.adjustment) {
+                size_t slot = 0;   // latest game on or before the adjustment date
+                for (size_t i = 0; i < n; ++i) if (in.games[i]->start <= r.date) slot = i;
+                perIdx[slot] += r.net;
+            }
         }
         if (perIdx.empty()) continue;
         double running = 0;
@@ -325,7 +331,9 @@ void writePerGameBars(std::ostream& o, const ReportInput& in) {
     }
     if (!focus || focus->history.empty()) return;
 
-    const std::vector<GameResult>& h = focus->history;
+    std::vector<GameResult> h;
+    for (const GameResult& r : focus->history) if (!r.adjustment) h.push_back(r);
+    if (h.empty()) return;
     double lo = 0, hi = 0;
     for (const GameResult& r : h) { lo = std::min(lo, r.net); hi = std::max(hi, r.net); }
     if (hi - lo < 1) hi = lo + 1;
@@ -375,7 +383,7 @@ void writePerGameBars(std::ostream& o, const ReportInput& in) {
 
 void writeLeaderboardTable(std::ostream& o, const ReportInput& in) {
     o << "<div class=card><h2>Leaderboard</h2><div class=scroll><table><tr><th>#</th><th class=l>Player</th><th>Games</th><th>Buy-ins</th>"
-      << "<th>Won</th><th>Lost</th><th>Net</th><th>Avg/game</th><th>Best</th><th>Worst</th><th class=l>Also known as</th></tr>";
+      << "<th>Won</th><th>Lost</th><th>Adjust</th><th>Net</th><th>Avg/game</th><th>Best</th><th>Worst</th><th class=l>Also known as</th></tr>";
     for (size_t i = 0; i < in.byNet.size(); ++i) {
         const PlayerStats& p = in.byNet[i];
         std::string aliases;
@@ -384,7 +392,9 @@ void writeLeaderboardTable(std::ostream& o, const ReportInput& in) {
         }
         o << "<tr" << (p.normalizedName == in.meNormalized ? " class=me" : "") << "><td>" << (i + 1) << "</td><td class=l>"
           << escapeHTML(p.displayName) << "</td><td>" << p.games << "</td><td>" << p.buyIns << "</td><td>" << money(p.totalWon)
-          << "</td><td>" << money(p.totalLost) << "</td><td>" << moneySigned(p.totalNet) << "</td><td>"
+          << "</td><td>" << money(p.totalLost) << "</td><td>"
+          << (p.adjustments > -EPSILON && p.adjustments < EPSILON ? "" : moneySigned(p.adjustments))
+          << "</td><td>" << moneySigned(p.totalNet) << "</td><td>"
           << moneySigned(p.averagePerGame()) << "</td><td>" << moneySigned(p.biggestWin) << "</td><td>"
           << moneySigned(p.biggestLoss) << "</td><td class=l>" << escapeHTML(aliases) << "</td></tr>";
     }
@@ -409,10 +419,14 @@ void writeSettlementTable(std::ostream& o, const ReportInput& in) {
 void writeGamesTable(std::ostream& o, const ReportInput& in) {
     o << "<div class=card><h2>Games in scope</h2><div class=scroll><table><tr><th>#</th><th class=l>Date</th><th class=l>Folder</th>"
       << "<th class=l>Ledger</th><th>Players</th><th>Buy-in volume</th><th class=l>Biggest winner</th><th class=l>Biggest loser</th></tr>";
+    // gameId -> (display name, net) built from the merged leaderboard histories
+    std::map<std::string, std::vector<std::pair<std::string, double>>> perGame;
+    for (const PlayerStats& p : in.byNet) {
+        for (const GameResult& r : p.history) if (!r.adjustment) perGame[r.gameId].push_back({p.displayName, r.net});
+    }
     for (size_t i = 0; i < in.games.size(); ++i) {
         const Game* g = in.games[i];
-        std::map<std::string, double> nets;
-        for (const LedgerRow& r : g->rows) nets[normalizeName(r.nickname)] += r.net;
+        const std::vector<std::pair<std::string, double>>& nets = perGame[g->id];
         std::string win, lose;
         double best = 0, worst = 0;
         for (const auto& pair : nets) {

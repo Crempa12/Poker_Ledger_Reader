@@ -54,6 +54,32 @@ double askAmount(const std::string& prompt) {
     }
 }
 
+double askSignedAmount(const std::string& prompt) {
+    while (true) {
+        std::cout << prompt;
+        double amount = 0.0;
+        if (std::cin >> amount) {
+            discardLine();
+            return amount;
+        }
+        if (std::cin.eof()) return 0.0;
+        std::cout << "Invalid amount. Enter a number such as 25 or -12.50.\n";
+        discardLine();
+    }
+}
+
+std::string pickPlayer(const std::vector<PlayerStats>& players, const std::string& prompt) {
+    std::cout << '\n' << util::divider(50);
+    for (size_t i = 0; i < players.size(); ++i) {
+        std::cout << util::padRight(std::to_string(i + 1), 5) << util::padRight(players[i].displayName, 24)
+                  << util::padLeft(util::moneySigned(players[i].totalNet), 12) << '\n';
+    }
+    std::cout << util::divider(50);
+    int choice = askMenuChoice(prompt + " (0 to cancel): ", 0, static_cast<int>(players.size()));
+    if (choice == 0) return "";
+    return players[choice - 1].normalizedName;
+}
+
 std::string askLine(const std::string& prompt) {
     std::cout << prompt;
     std::string input;

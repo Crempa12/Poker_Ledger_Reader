@@ -195,18 +195,6 @@ static std::string displayFor(const std::vector<PlayerStats>& players, const std
     return normalized.empty() ? "(none)" : normalized;
 }
 
-static std::string pickPlayer(const std::vector<PlayerStats>& players, const std::string& prompt) {
-    std::cout << '\n' << divider(50);
-    for (size_t i = 0; i < players.size(); ++i) {
-        std::cout << padRight(std::to_string(i + 1), 5) << padRight(players[i].displayName, 24)
-                  << padLeft(moneySigned(players[i].totalNet), 12) << '\n';
-    }
-    std::cout << divider(50);
-    int choice = console::askMenuChoice(prompt + " (0 to cancel): ", 0, static_cast<int>(players.size()));
-    if (choice == 0) return "";
-    return players[choice - 1].normalizedName;
-}
-
 void managePreferences(std::vector<PaymentPreference>& prefs,
                        Settings& settings,
                        const std::vector<PlayerStats>& players,
@@ -238,9 +226,9 @@ void managePreferences(std::vector<PaymentPreference>& prefs,
         if (choice == 0) return;
 
         if (choice == 1) {
-            std::string payer = pickPlayer(players, "Who is the PAYER (sends their losses)?");
+            std::string payer = console::pickPlayer(players, "Who is the PAYER (sends their losses)?");
             if (payer.empty()) continue;
-            std::string payee = pickPlayer(players, "Who should " + displayFor(players, payer) + " pay?");
+            std::string payee = console::pickPlayer(players, "Who should " + displayFor(players, payer) + " pay?");
             if (payee.empty()) continue;
             if (payer == payee) { std::cout << "A player cannot pay themselves.\n"; continue; }
             std::string note = console::askLine("Optional note (e.g. 'Venmo only'): ");
@@ -256,7 +244,7 @@ void managePreferences(std::vector<PaymentPreference>& prefs,
             savePreferencesCSV(prefsFile, prefs);
             std::cout << "Removed.\n";
         } else if (choice == 3) {
-            std::string banker = pickPlayer(players, "Who is the banker?");
+            std::string banker = console::pickPlayer(players, "Who is the banker?");
             if (banker.empty()) continue;
             settings.banker = banker;
             saveSettingsCSV(settingsFile, settings);
@@ -266,7 +254,7 @@ void managePreferences(std::vector<PaymentPreference>& prefs,
             saveSettingsCSV(settingsFile, settings);
             std::cout << "Banker mode off.\n";
         } else if (choice == 5) {
-            std::string me = pickPlayer(players, "Which player is you?");
+            std::string me = console::pickPlayer(players, "Which player is you?");
             if (me.empty()) continue;
             settings.me = me;
             saveSettingsCSV(settingsFile, settings);

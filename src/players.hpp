@@ -18,8 +18,10 @@ void addMergeRule(MergeRules& rules, const std::string& alias, const std::string
 bool loadMergeRulesCSV(const std::string& filename, MergeRules& rules);
 bool saveMergeRulesCSV(const std::string& filename, MergeRules& rules);
 
-// Builds player stats from the given games, folding aliases with the merge rules.
-std::map<std::string, PlayerStats> aggregate(const std::vector<const Game*>& games, const MergeRules& rules);
+// Builds player stats from the given games (plus manual adjustments), folding aliases with the merge rules.
+std::map<std::string, PlayerStats> aggregate(const std::vector<const Game*>& games,
+                                             const MergeRules& rules,
+                                             const std::vector<const Adjustment*>& adjustments = {});
 
 std::vector<PlayerStats> sortedByNet(const std::map<std::string, PlayerStats>& stats);
 std::vector<PlayerStats> sortedByName(const std::map<std::string, PlayerStats>& stats);

@@ -27,6 +27,7 @@ struct Game {
     std::int64_t start = util::NO_TIME;   // earliest sit-down (game night)
     std::int64_t end = util::NO_TIME;     // latest cash-out
     double totalBuyIn = 0.0;
+    int skippedRows = 0;   // never-played seats (no start time, zero net) left out
     std::vector<LedgerRow> rows;
 };
 
@@ -37,6 +38,19 @@ struct GameResult {
     std::int64_t date = util::NO_TIME;
     double net = 0.0;
     int buyIns = 0;
+    bool adjustment = false;   // true = manual correction, not a game
+    std::string note;
+};
+
+// A manual correction to one player's total. A forgiven debt is two of these
+// sharing a group: +amount for the debtor, -amount for the creditor.
+struct Adjustment {
+    std::string group;
+    std::int64_t date = util::NO_TIME;   // local midnight
+    std::string playerNormalized;
+    double amount = 0.0;                 // signed dollars
+    std::string folder;                  // empty = only counted when no folder scope is chosen
+    std::string note;
 };
 
 // Aggregated view of a player across every game in the current scope.
@@ -48,6 +62,7 @@ struct PlayerStats {
     double totalLost = 0.0;   // sum of losing games (negative)
     double biggestWin = 0.0;
     double biggestLoss = 0.0;
+    double adjustments = 0.0; // sum of manual corrections included in totalNet
     int games = 0;
     int buyIns = 0;
     std::vector<GameResult> history;   // sorted by date

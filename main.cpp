@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "console.hpp"
+#include "adjustments.hpp"
 #include "ledger.hpp"
 #include "models.hpp"
 #include "players.hpp"
@@ -39,8 +40,10 @@ struct App {
     fs::path reportsDir;
 
     std::vector<Game> games;
+    std::vector<ledger::DuplicateNote> duplicates;
     players::MergeRules rules;
     std::vector<PaymentPreference> prefs;
+    std::vector<Adjustment> adjustmentList;
     Settings settings;
     sessions::Balances balances;
 
@@ -53,7 +56,7 @@ struct App {
 
     void refresh() {
         scoped = ledger::filterGames(games, scope);
-        stats = players::aggregate(scoped, rules);
+        stats = players::aggregate(scoped, rules, adjustments::filter(adjustmentList, scope));
         currentSettlements.clear();
     }
 
@@ -61,6 +64,7 @@ struct App {
         players::saveMergeRulesCSV(file("merge_rules.csv").string(), rules);
         settlement::savePreferencesCSV(file("payment_preferences.csv").string(), prefs);
         settlement::saveSettingsCSV(file("settings.csv").string(), settings);
+        adjustments::saveCSV(file("adjustments.csv").string(), adjustmentList);
         sessions::save(file("session_balances.csv").string(), balances);
     }
 
@@ -246,6 +250,8 @@ void printMenu(const App& app) {
               << " 13. Export settlement sheet CSV\n"
               << " 14. Generate HTML report with charts\n"
               << " 15. Terminal charts\n"
+              << " 16. Check for duplicate ledgers" << (app.duplicates.empty() ? "" : "  (!)") << "\n"
+              << " 17. Adjustments: forgive a debt or correct a total (" << app.adjustmentList.size() << " saved)\n"
               << "  0. Save and exit\n" << divider(72);
 }
 
@@ -253,7 +259,7 @@ void runMenu(App& app) {
     bool running = true;
     while (running) {
         printMenu(app);
-        int choice = console::askMenuChoice("Choose an option: ", 0, 15);
+        int choice = console::askMenuChoice("Choose an option: ", 0, 17);
         std::vector<PlayerStats> byNet = players::sortedByNet(app.stats);
 
         switch (choice) {
@@ -353,6 +359,15 @@ void runMenu(App& app) {
                 break;
             }
 
+            case 16: ledger::printDuplicates(app.duplicates); break;
+
+            case 17:
+                if (adjustments::manage(app.adjustmentList, byNet, app.scope, app.file("adjustments.csv").string())) {
+                    app.refresh();
+                    std::cout << "Totals recalculated with the adjustments.\n";
+                }
+                break;
+
             case 0:
                 app.saveAll();
                 std::cout << "Saved merge rules, preferences, settings and session balances. Bye.\n";
@@ -401,9 +416,17 @@ int main(int argc, char** argv) {
     std::error_code ec;
     fs::create_directories(app.savedDir, ec);
 
-    std::vector<std::string> messages;
-    app.games = ledger::loadAllGames(app.root, messages);
-    for (const std::string& m : messages) std::cout << m << '\n';
+    ledger::LoadResult loaded = ledger::loadAllGames(app.root);
+    app.games = std::move(loaded.games);
+    app.duplicates = std::move(loaded.duplicates);
+    for (const std::string& m : loaded.messages) std::cout << m << '\n';
+    if (!app.duplicates.empty()) {
+        size_t skipped = 0;
+        for (const ledger::DuplicateNote& d : app.duplicates) if (d.skipped) ++skipped;
+        std::cout << "WARNING: " << app.duplicates.size() << " duplicate/overlapping ledger"
+                  << (app.duplicates.size() == 1 ? "" : "s") << " found (" << skipped
+                  << " skipped so nothing is counted twice). Menu 16 shows the details.\n";
+    }
     if (app.games.empty()) {
         std::cerr << "No ledger CSV files found under " << app.root.string() << '\n';
         return 1;
@@ -414,6 +437,9 @@ int main(int argc, char** argv) {
     }
     settlement::loadPreferencesCSV(app.file("payment_preferences.csv").string(), app.prefs);
     settlement::loadSettingsCSV(app.file("settings.csv").string(), app.settings);
+    if (adjustments::loadCSV(app.file("adjustments.csv").string(), app.adjustmentList)) {
+        std::cout << "Loaded " << app.adjustmentList.size() << " adjustment rows.\n";
+    }
     if (sessions::load(app.file("session_balances.csv").string(), app.balances)) {
         std::cout << "Loaded " << app.balances.size() << " session balances.\n";
     }

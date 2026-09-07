@@ -13,6 +13,7 @@ add_executable(Poker_Ledger_Reader
         src/settlement.cpp
         src/sessions.cpp
         src/report.cpp
+        src/adjustments.cpp
 )
 
 target_include_directories(Poker_Ledger_Reader PRIVATE src)

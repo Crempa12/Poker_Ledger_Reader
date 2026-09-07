@@ -45,6 +45,7 @@ Poker_Ledger_Reader/
     merge_rules.csv        alias -> canonical name
     payment_preferences.csv  payer -> payee pins
     settings.csv           who "me" is, who the banker is
+    adjustments.csv        forgiven debts and manual corrections
     session_balances.csv   saved settlements and what has been paid
     player_summary.csv     export from menu 12
     settlements.csv        export from menu 13
@@ -53,7 +54,22 @@ Poker_Ledger_Reader/
 
 Any `.csv` whose header contains `player_nickname` is treated as a ledger. The
 app walks every sub-folder, so you can keep organising ledgers by week, month or
-group. The same ledger appearing in two folders is only counted once.
+group.
+
+### Duplicate ledgers
+
+Every file is checked against every other file when the app starts, and a
+warning is printed if anything matches. Menu 16 shows the details. Three cases:
+
+| Case | What the app does |
+|---|---|
+| Identical content (any file name, same folder or not) | Second copy skipped |
+| Same ledger id, different content (an earlier export of the same game, including browser copies named `ledger_x (1).csv`) | The fuller export is kept, the other skipped |
+| Different ids that share sit-down rows | Both kept but flagged, because the app cannot tell which is right |
+
+Seats that have no start time and no money moved (a buy-in that was requested
+but never played) are ignored, and a ledger made only of such rows is not a
+game.
 
 ## The menu
 
@@ -76,6 +92,8 @@ EXPORT & CHARTS
  13. Export settlement sheet CSV
  14. Generate HTML report with charts
  15. Terminal charts
+ 16. Check for duplicate ledgers
+ 17. Adjustments: forgive a debt or correct a total
   0. Save and exit
 ```
 
@@ -97,6 +115,25 @@ Menu 5 builds the sheet in three passes:
    credit, so the number of payments stays small.
 
 The "Why" column on the sheet shows which pass produced each line.
+
+### Adjustments (menu 17)
+
+When someone lets a payment go, or a total is simply wrong, add an adjustment.
+Two kinds:
+
+- **Forgive a debt.** Pick who is letting the money go and who owed it. The
+  debtor's total goes up by the amount and the creditor's goes down by the same
+  amount, so everything still sums to zero and the next settlement sheet no
+  longer asks for that money.
+- **One-sided correction.** Add or subtract any amount from one player. The
+  leaderboard then says how much the books are off by, so you cannot forget it.
+
+Each adjustment has a date and is tagged with the folder you were scoped to
+when you added it. It is counted in the "all folders" view and in that folder's
+view, and only inside date ranges that include its date. Adjustments show up in
+a player's history and running total, in an "Adjust" column on the leaderboard
+and report, and are saved in `Saved_Data/adjustments.csv`. Removing one half of
+a forgiven debt removes the other half too.
 
 ### Sessions and payments
 
@@ -120,6 +157,21 @@ for "me" in the terminal. Menu 14 writes a self-contained HTML file with:
 
 It works offline, follows your light/dark system setting, and can be opened
 from the app straight after it is written.
+
+## Checking the math
+
+`tools/validate.py` recomputes every number the app produces from the raw
+CSVs using exact integer cents and compares them to the app's own exports:
+player totals per scope, settlement sheets (plain, pinned preferences, banker),
+session balances and payments, history dates and running totals, and the
+duplicate-ledger detection. Run it against a copy of the project folder,
+because it drives the app's menus and writes to that copy's Saved_Data:
+
+```bash
+cp -RX . /tmp/plr_check && python3 tools/validate.py /tmp/plr_check ./cmake-build-debug/Poker_Ledger_Reader
+```
+
+It ends with `ALL CHECKS PASSED` or a list of every mismatch.
 
 ## Name merging
 
