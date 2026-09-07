@@ -1,1207 +1,432 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
+// Poker Ledger Reader
+//
+// Reads every poker-ledger CSV under the project folder (recursively), builds
+// per-player and per-game statistics, produces settlement sheets (who pays
+// whom, honoring pinned preferences or a banker), tracks payments across
+// sessions, and generates charts in the terminal and as an HTML report.
+//
+// Usage:
+//   Poker_Ledger_Reader                      interactive menu
+//   Poker_Ledger_Reader --root /path         use a different data root
+//   Poker_Ledger_Reader --folder NAME        start scoped to one sub-folder
+//   Poker_Ledger_Reader --from 2026-05-01 --to 2026-05-31
+//   Poker_Ledger_Reader --report [file.html] write the HTML report and exit
+
+#include <cstdlib>
 #include <filesystem>
-#include <unordered_map>
+#include <iostream>
+#include <map>
+#include <string>
 #include <vector>
-#include <algorithm>
-#include <cctype>
-#include <iomanip>
-#include <limits>
 
-using namespace std;
+#include "console.hpp"
+#include "ledger.hpp"
+#include "models.hpp"
+#include "players.hpp"
+#include "report.hpp"
+#include "sessions.hpp"
+#include "settlement.hpp"
+#include "util.hpp"
+
 namespace fs = std::filesystem;
+using namespace util;
 
-struct PlayerStats {
-    string displayName;
-    string normalizedName;
-    double totalNet = 0.0;
-    double totalUps = 0.0;
-    double totalDowns = 0.0;
-    int sessions = 0;
+namespace {
+
+struct App {
+    fs::path root;
+    fs::path savedDir;
+    fs::path reportsDir;
+
+    std::vector<Game> games;
+    players::MergeRules rules;
+    std::vector<PaymentPreference> prefs;
+    Settings settings;
+    sessions::Balances balances;
+
+    Scope scope;
+    std::vector<const Game*> scoped;                 // games matching the scope
+    std::map<std::string, PlayerStats> stats;        // aggregated for the scope
+    std::vector<SettlementEntry> currentSettlements;
+
+    fs::path file(const char* name) const { return savedDir / name; }
+
+    void refresh() {
+        scoped = ledger::filterGames(games, scope);
+        stats = players::aggregate(scoped, rules);
+        currentSettlements.clear();
+    }
+
+    void saveAll() {
+        players::saveMergeRulesCSV(file("merge_rules.csv").string(), rules);
+        settlement::savePreferencesCSV(file("payment_preferences.csv").string(), prefs);
+        settlement::saveSettingsCSV(file("settings.csv").string(), settings);
+        sessions::save(file("session_balances.csv").string(), balances);
+    }
+
+    std::string focusPlayer() const {
+        if (!settings.me.empty() && stats.count(settings.me)) return settings.me;
+        std::vector<PlayerStats> byNet = players::sortedByNet(stats);
+        return byNet.empty() ? "" : byNet.front().normalizedName;
+    }
 };
 
-struct SettlementEntry {
-    string from;
-    string to;
-    double amount = 0.0;
-};
+// ---------------------------------------------------------------- scope menu
 
-struct SessionBalance {
-    string sessionId;
-    string fromDisplay;
-    string fromNormalized;
-    string toDisplay;
-    string toNormalized;
-    double originalAmount = 0.0;
-    double remainingAmount = 0.0;
-    string status = "open"; // open, partial, paid
-};
+void chooseScope(App& app) {
+    while (true) {
+        std::vector<std::string> folders = ledger::listFolders(app.games);
+        std::cout << "\nCurrent scope: " << app.scope.describe() << " (" << app.scoped.size() << " of "
+                  << app.games.size() << " games)\n" << divider(60)
+                  << "1. Use every folder\n"
+                  << "2. Pick one folder\n"
+                  << "3. Set a date range\n"
+                  << "4. Last N days\n"
+                  << "5. Clear the date range\n"
+                  << "0. Back\n";
+        int choice = console::askMenuChoice("Choose: ", 0, 5);
+        if (choice == 0) return;
 
-// --------------------------------------------------
-// Utility
-// --------------------------------------------------
-
-vector<string> splitCSVLine(const string& line) {
-    vector<string> result;
-    string current;
-    bool inQuotes = false;
-
-    for (size_t i = 0; i < line.size(); ++i) {
-        char c = line[i];
-
-        if (c == '"') {
-            if (inQuotes && i + 1 < line.size() && line[i + 1] == '"') {
-                current += '"';
-                ++i;
-            } else {
-                inQuotes = !inQuotes;
+        if (choice == 1) {
+            app.scope.folder.clear();
+        } else if (choice == 2) {
+            std::cout << '\n';
+            for (size_t i = 0; i < folders.size(); ++i) {
+                Scope probe;
+                probe.folder = folders[i];
+                size_t count = ledger::filterGames(app.games, probe).size();
+                std::cout << "  " << (i + 1) << ". " << padRight(folders[i], 34) << count << " game" << (count == 1 ? "" : "s") << '\n';
             }
-        } else if (c == ',' && !inQuotes) {
-            result.push_back(current);
-            current.clear();
-        } else {
-            current += c;
-        }
-    }
-
-    result.push_back(current);
-    return result;
-}
-
-string trim(const string& s) {
-    size_t start = 0;
-    while (start < s.size() && isspace(static_cast<unsigned char>(s[start]))) {
-        ++start;
-    }
-
-    size_t end = s.size();
-    while (end > start && isspace(static_cast<unsigned char>(s[end - 1]))) {
-        --end;
-    }
-
-    return s.substr(start, end - start);
-}
-
-string normalizeName(const string& name) {
-    string cleaned;
-    for (char ch : name) {
-        if (isalpha(static_cast<unsigned char>(ch))) {
-            cleaned += static_cast<char>(tolower(static_cast<unsigned char>(ch)));
-        }
-    }
-    return cleaned;
-}
-
-double toDollarAmountFromCents(const string& s) {
-    if (s.empty()) return 0.0;
-    try {
-        return stod(trim(s)) / 100.0;
-    } catch (...) {
-        return 0.0;
-    }
-}
-
-double toDoubleSafe(const string& s) {
-    if (s.empty()) return 0.0;
-    try {
-        return stod(trim(s));
-    } catch (...) {
-        return 0.0;
-    }
-}
-
-string escapeCSV(const string& s) {
-    if (s.find(',') != string::npos || s.find('"') != string::npos) {
-        string escaped = "\"";
-        for (char c : s) {
-            if (c == '"') escaped += "\"\"";
-            else escaped += c;
-        }
-        escaped += "\"";
-        return escaped;
-    }
-    return s;
-}
-
-string moneyString(double value) {
-    ostringstream oss;
-    oss << fixed << setprecision(2) << value;
-    return "$" + oss.str();
-}
-
-void printDivider(int width = 100, char ch = '=') {
-    cout << string(width, ch) << '\n';
-}
-
-char askYesNo(const string& prompt) {
-    char choice;
-    while (true) {
-        cout << prompt;
-        cin >> choice;
-        choice = static_cast<char>(tolower(static_cast<unsigned char>(choice)));
-
-        if (choice == 'y' || choice == 'n') {
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            return choice;
-        }
-
-        cout << "Please enter y or n.\n";
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    }
-}
-
-int askMenuChoice(const string& prompt, int minChoice, int maxChoice) {
-    int choice;
-    while (true) {
-        cout << prompt;
-        if (cin >> choice && choice >= minChoice && choice <= maxChoice) {
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            return choice;
-        }
-
-        cout << "Invalid choice. Please try again.\n";
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    }
-}
-
-double askAmount(const string& prompt) {
-    double amount;
-    while (true) {
-        cout << prompt;
-        if (cin >> amount && amount >= 0.0) {
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            return amount;
-        }
-
-        cout << "Invalid amount. Please enter a non-negative number.\n";
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    }
-}
-
-string askLine(const string& prompt) {
-    cout << prompt;
-    string input;
-    getline(cin, input);
-    return trim(input);
-}
-
-// --------------------------------------------------
-// Ledger loading
-// --------------------------------------------------
-
-void readCSV(const string& filename, unordered_map<string, PlayerStats>& players) {
-    ifstream file(filename);
-    if (!file.is_open()) {
-        cerr << "Could not open file: " << filename << '\n';
-        return;
-    }
-
-    string line;
-    if (!getline(file, line)) return;
-
-    vector<string> headers = splitCSVLine(line);
-
-    int nameIndex = -1;
-    int netIndex = -1;
-
-    for (int i = 0; i < static_cast<int>(headers.size()); ++i) {
-        string header = trim(headers[i]);
-        if (header == "player_nickname") nameIndex = i;
-        else if (header == "net") netIndex = i;
-    }
-
-    if (nameIndex == -1 || netIndex == -1) {
-        cerr << "Missing required columns in file: " << filename << '\n';
-        return;
-    }
-
-    while (getline(file, line)) {
-        if (line.empty()) continue;
-
-        vector<string> row = splitCSVLine(line);
-        if (nameIndex >= static_cast<int>(row.size()) || netIndex >= static_cast<int>(row.size())) {
-            continue;
-        }
-
-        string rawName = trim(row[nameIndex]);
-        string normalized = normalizeName(rawName);
-        double net = toDollarAmountFromCents(row[netIndex]);
-
-        if (normalized.empty()) continue;
-
-        if (players.find(normalized) == players.end()) {
-            PlayerStats newPlayer;
-            newPlayer.displayName = rawName;
-            newPlayer.normalizedName = normalized;
-            players[normalized] = newPlayer;
-        }
-
-        PlayerStats& player = players[normalized];
-        player.sessions++;
-        player.totalNet += net;
-
-        if (net > 0) player.totalUps += net;
-        else if (net < 0) player.totalDowns += net;
-    }
-}
-
-// --------------------------------------------------
-// Sorting / printing players
-// --------------------------------------------------
-
-vector<PlayerStats> sortPlayersByName(const unordered_map<string, PlayerStats>& players) {
-    vector<PlayerStats> sortedPlayers;
-    sortedPlayers.reserve(players.size());
-
-    for (const auto& pair : players) {
-        sortedPlayers.push_back(pair.second);
-    }
-
-    sort(sortedPlayers.begin(), sortedPlayers.end(),
-         [](const PlayerStats& a, const PlayerStats& b) {
-             return a.normalizedName < b.normalizedName;
-         });
-
-    return sortedPlayers;
-}
-
-void printCompactPlayerList(const vector<PlayerStats>& players) {
-    printDivider(82);
-    cout << left
-         << setw(5)  << "#"
-         << setw(28) << "Player"
-         << setw(22) << "Normalized"
-         << setw(15) << "Net"
-         << '\n';
-    printDivider(82);
-
-    for (size_t i = 0; i < players.size(); ++i) {
-        cout << left
-             << setw(5)  << (i + 1)
-             << setw(28) << players[i].displayName
-             << setw(22) << players[i].normalizedName
-             << setw(15) << moneyString(players[i].totalNet)
-             << '\n';
-    }
-
-    printDivider(82);
-}
-
-void printPlayerTable(const vector<PlayerStats>& players) {
-    double grandTotal = 0.0;
-
-    printDivider(112);
-    cout << left
-         << setw(5)  << "#"
-         << setw(24) << "Player"
-         << setw(22) << "Normalized"
-         << setw(10) << "Buyins"
-         << setw(16) << "Total Ups"
-         << setw(16) << "Total Downs"
-         << setw(16) << "Total Net"
-         << '\n';
-    printDivider(112);
-
-    for (size_t i = 0; i < players.size(); ++i) {
-        const PlayerStats& p = players[i];
-        grandTotal += p.totalNet;
-
-        cout << left
-             << setw(5)  << (i + 1)
-             << setw(24) << p.displayName
-             << setw(22) << p.normalizedName
-             << setw(10) << p.sessions
-             << setw(16) << moneyString(p.totalUps)
-             << setw(16) << moneyString(p.totalDowns)
-             << setw(16) << moneyString(p.totalNet)
-             << '\n';
-    }
-
-    printDivider(112);
-    cout << "Grand Total: " << moneyString(grandTotal) << "\n\n";
-}
-
-// --------------------------------------------------
-// Merge rule system
-// --------------------------------------------------
-
-string resolveCanonical(const unordered_map<string, string>& mergeRules, const string& key) {
-    string current = key;
-    while (true) {
-        auto it = mergeRules.find(current);
-        if (it == mergeRules.end() || it->second == current) {
-            return current;
-        }
-        current = it->second;
-    }
-}
-
-void flattenMergeRules(unordered_map<string, string>& mergeRules) {
-    for (auto& pair : mergeRules) {
-        pair.second = resolveCanonical(mergeRules, pair.second);
-    }
-}
-
-void mergeTwoPlayers(unordered_map<string, PlayerStats>& players,
-                     unordered_map<string, string>& mergeRules,
-                     const string& keepKey,
-                     const string& removeKey) {
-    if (keepKey == removeKey) return;
-    if (players.find(keepKey) == players.end()) return;
-    if (players.find(removeKey) == players.end()) return;
-
-    PlayerStats& keepPlayer = players[keepKey];
-    PlayerStats& removePlayer = players[removeKey];
-
-    keepPlayer.totalNet += removePlayer.totalNet;
-    keepPlayer.totalUps += removePlayer.totalUps;
-    keepPlayer.totalDowns += removePlayer.totalDowns;
-    keepPlayer.sessions += removePlayer.sessions;
-
-    if (removePlayer.displayName.size() < keepPlayer.displayName.size()) {
-        keepPlayer.displayName = removePlayer.displayName;
-    }
-
-    players.erase(removeKey);
-    mergeRules[removeKey] = keepKey;
-
-    for (auto& pair : mergeRules) {
-        if (resolveCanonical(mergeRules, pair.second) == removeKey) {
-            pair.second = keepKey;
-        }
-    }
-
-    flattenMergeRules(mergeRules);
-}
-
-void applySavedMergeRules(unordered_map<string, PlayerStats>& players,
-                          unordered_map<string, string>& mergeRules) {
-    flattenMergeRules(mergeRules);
-
-    vector<pair<string, string>> rules;
-    for (const auto& pair : mergeRules) {
-        rules.push_back(pair);
-    }
-
-    for (const auto& pair : rules) {
-        string alias = pair.first;
-        string canonical = resolveCanonical(mergeRules, pair.second);
-        if (alias == canonical) continue;
-
-        auto aliasIt = players.find(alias);
-        if (aliasIt == players.end()) continue;
-
-        auto canonicalIt = players.find(canonical);
-
-        if (canonicalIt == players.end()) {
-            PlayerStats moved = aliasIt->second;
-            moved.normalizedName = canonical;
-            players[canonical] = moved;
-            players.erase(aliasIt);
-        } else {
-            PlayerStats& keepPlayer = players[canonical];
-            PlayerStats& removePlayer = players[alias];
-
-            keepPlayer.totalNet += removePlayer.totalNet;
-            keepPlayer.totalUps += removePlayer.totalUps;
-            keepPlayer.totalDowns += removePlayer.totalDowns;
-            keepPlayer.sessions += removePlayer.sessions;
-
-            if (removePlayer.displayName.size() < keepPlayer.displayName.size()) {
-                keepPlayer.displayName = removePlayer.displayName;
+            int f = console::askMenuChoice("Folder number (0 to cancel): ", 0, static_cast<int>(folders.size()));
+            if (f > 0) app.scope.folder = folders[f - 1];
+        } else if (choice == 3) {
+            std::string from = console::askLine("Start date YYYY-MM-DD (blank = no start): ");
+            std::string to = console::askLine("End date YYYY-MM-DD (blank = no end): ");
+            app.scope.from = from.empty() ? NO_TIME : parseLocalDate(from, false);
+            app.scope.to = to.empty() ? NO_TIME : parseLocalDate(to, true);
+            if ((!from.empty() && app.scope.from == NO_TIME) || (!to.empty() && app.scope.to == NO_TIME)) {
+                std::cout << "Could not read one of those dates. Use YYYY-MM-DD.\n";
+                app.scope.from = app.scope.to = NO_TIME;
             }
-
-            players.erase(alias);
+        } else if (choice == 4) {
+            int days = console::askMenuChoice("How many days back? ", 1, 3650);
+            app.scope.from = nowEpoch() - static_cast<std::int64_t>(days) * 86400;
+            app.scope.to = NO_TIME;
+        } else if (choice == 5) {
+            app.scope.from = app.scope.to = NO_TIME;
         }
+        app.refresh();
+        std::cout << "Scope is now: " << app.scope.describe() << " (" << app.scoped.size() << " games, "
+                  << app.stats.size() << " players)\n";
     }
 }
 
-bool loadMergeRulesFromCSV(const string& filename, unordered_map<string, string>& mergeRules) {
-    ifstream file(filename);
-    if (!file.is_open()) return false;
+// ---------------------------------------------------------------- merging
 
-    string line;
-    bool firstLine = true;
-
-    while (getline(file, line)) {
-        if (line.empty()) continue;
-
-        if (firstLine) {
-            firstLine = false;
-            continue; // skip header no matter what it says
-        }
-
-        vector<string> row = splitCSVLine(line);
-        if (row.size() < 2) continue;
-
-        string aliasRaw = trim(row[0]);
-        string canonicalRaw = trim(row[1]);
-
-        string alias = normalizeName(aliasRaw);
-        string canonical = normalizeName(canonicalRaw);
-
-        if (!alias.empty() && !canonical.empty() && alias != canonical) {
-            mergeRules[alias] = canonical;
+void mergeNames(App& app) {
+    // 1. Automatic suggestions: nicknames that share a ledger player_id.
+    std::vector<players::MergeSuggestion> suggestions = players::suggestMergesByPlayerId(app.games, app.rules);
+    if (!suggestions.empty()) {
+        std::cout << "\nThese names share the same ledger account (player_id), so they are probably one person:\n";
+        for (const players::MergeSuggestion& s : suggestions) {
+            std::cout << "\n  Account " << s.playerId << ":\n";
+            for (size_t i = 0; i < s.canonicals.size(); ++i) {
+                const PlayerStats* p = players::find(app.stats, s.canonicals[i]);
+                std::cout << "    " << (i + 1) << ". " << s.canonicals[i]
+                          << (p ? "  (" + p->displayName + ", " + moneySigned(p->totalNet) + ")" : "") << '\n';
+            }
+            int keep = console::askMenuChoice("  Merge all of these into which name? (0 = leave them separate): ", 0,
+                                              static_cast<int>(s.canonicals.size()));
+            if (keep == 0) continue;
+            for (size_t i = 0; i < s.canonicals.size(); ++i) {
+                if (static_cast<int>(i) + 1 != keep) players::addMergeRule(app.rules, s.canonicals[i], s.canonicals[keep - 1]);
+            }
+            app.refresh();
         }
     }
 
-    flattenMergeRules(mergeRules);
-    return true;
-}
-
-bool saveMergeRulesToCSV(const string& filename, unordered_map<string, string>& mergeRules) {
-    flattenMergeRules(mergeRules);
-
-    ofstream out(filename);
-    if (!out.is_open()) return false;
-
-    out << "alias_normalized,canonical_normalized\n";
-
-    vector<pair<string, string>> rules;
-    for (const auto& pair : mergeRules) {
-        if (pair.first != pair.second) {
-            rules.push_back(pair);
-        }
-    }
-
-    sort(rules.begin(), rules.end(),
-         [](const auto& a, const auto& b) {
-             if (a.second == b.second) return a.first < b.first;
-             return a.second < b.second;
-         });
-
-    for (const auto& pair : rules) {
-        out << escapeCSV(pair.first) << ',' << escapeCSV(pair.second) << '\n';
-    }
-
-    return true;
-}
-
-void manuallyMergePlayers(unordered_map<string, PlayerStats>& players,
-                          unordered_map<string, string>& mergeRules) {
+    // 2. Manual merges.
     while (true) {
-        vector<PlayerStats> sortedPlayers = sortPlayersByName(players);
+        std::vector<PlayerStats> list = players::sortedByName(app.stats);
+        std::cout << "\nPlayers in scope:\n";
+        players::printCompactList(list);
+        if (console::askYesNo("Merge two names by hand? (y/n): ") == 'n') break;
 
-        cout << "\nCurrent player list:\n";
-        printCompactPlayerList(sortedPlayers);
-
-        char choice = askYesNo("Would you like to merge any names? (y/n): ");
-        if (choice == 'n') break;
-
-        size_t keepIndex, mergeIndex;
-
-        cout << "Enter the number of the player you want to KEEP: ";
-        cin >> keepIndex;
-        cout << "Enter the number of the player you want to MERGE INTO that player: ";
-        cin >> mergeIndex;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-        if (keepIndex < 1 || keepIndex > sortedPlayers.size() ||
-            mergeIndex < 1 || mergeIndex > sortedPlayers.size()) {
-            cout << "Invalid selection.\n";
+        int keep = console::askMenuChoice("Number of the name to KEEP: ", 1, static_cast<int>(list.size()));
+        int drop = console::askMenuChoice("Number of the name to MERGE INTO it: ", 1, static_cast<int>(list.size()));
+        if (keep == drop) {
+            std::cout << "Those are the same player.\n";
             continue;
         }
-
-        if (keepIndex == mergeIndex) {
-            cout << "You cannot merge a player into themselves.\n";
-            continue;
-        }
-
-        string keepKey = sortedPlayers[keepIndex - 1].normalizedName;
-        string removeKey = sortedPlayers[mergeIndex - 1].normalizedName;
-
-        cout << "Merging \"" << sortedPlayers[mergeIndex - 1].displayName
-             << "\" into \"" << sortedPlayers[keepIndex - 1].displayName << "\"...\n";
-
-        mergeTwoPlayers(players, mergeRules, keepKey, removeKey);
-        cout << "Merge complete.\n";
+        players::addMergeRule(app.rules, list[drop - 1].normalizedName, list[keep - 1].normalizedName);
+        app.refresh();
+        std::cout << "Merged \"" << list[drop - 1].displayName << "\" into \"" << list[keep - 1].displayName << "\".\n";
     }
+    players::saveMergeRulesCSV(app.file("merge_rules.csv").string(), app.rules);
+    std::cout << "Merge rules saved.\n";
 }
 
-// --------------------------------------------------
-// Export summary
-// --------------------------------------------------
+// ---------------------------------------------------------------- reports
 
-bool exportPlayerSummaryCSV(const string& filename, const vector<PlayerStats>& players) {
-    ofstream out(filename);
-    if (!out.is_open()) return false;
-
-    out << "display_name,normalized_name,sessions,total_ups,total_downs,total_net\n";
-    out << fixed << setprecision(2);
-
-    for (const PlayerStats& p : players) {
-        out << escapeCSV(p.displayName) << ','
-            << escapeCSV(p.normalizedName) << ','
-            << p.sessions << ','
-            << p.totalUps << ','
-            << p.totalDowns << ','
-            << p.totalNet << '\n';
+std::string defaultSessionId(const App& app) {
+    if (!app.scope.folder.empty()) return app.scope.folder;
+    if (app.scope.from != NO_TIME || app.scope.to != NO_TIME) {
+        return (app.scope.from == NO_TIME ? "start" : formatLocalDate(app.scope.from)) + "_to_" +
+               (app.scope.to == NO_TIME ? formatLocalDate(nowEpoch()) : formatLocalDate(app.scope.to));
     }
-
-    return true;
+    return "all_games_as_of_" + formatLocalDate(nowEpoch());
 }
 
-// --------------------------------------------------
-// Settlement calculation
-// --------------------------------------------------
-
-vector<SettlementEntry> calculateSettlements(const vector<PlayerStats>& players) {
-    struct Balance {
-        string name;
-        string normalized;
-        double amount;
-    };
-
-    vector<Balance> winners;
-    vector<Balance> losers;
-    vector<SettlementEntry> settlements;
-
-    const double EPSILON = 0.009;
-
-    for (const PlayerStats& player : players) {
-        if (player.totalNet > EPSILON) {
-            winners.push_back({player.displayName, player.normalizedName, player.totalNet});
-        } else if (player.totalNet < -EPSILON) {
-            losers.push_back({player.displayName, player.normalizedName, -player.totalNet});
-        }
-    }
-
-    sort(winners.begin(), winners.end(),
-         [](const Balance& a, const Balance& b) {
-             return a.amount > b.amount;
-         });
-
-    sort(losers.begin(), losers.end(),
-         [](const Balance& a, const Balance& b) {
-             return a.amount > b.amount;
-         });
-
-    size_t i = 0;
-    size_t j = 0;
-
-    while (i < losers.size() && j < winners.size()) {
-        double payment = min(losers[i].amount, winners[j].amount);
-
-        if (payment > EPSILON) {
-            settlements.push_back({losers[i].name, winners[j].name, payment});
-        }
-
-        losers[i].amount -= payment;
-        winners[j].amount -= payment;
-
-        if (losers[i].amount <= EPSILON) ++i;
-        if (winners[j].amount <= EPSILON) ++j;
-    }
-
-    return settlements;
-}
-
-void printSettlements(const vector<SettlementEntry>& settlements) {
-    cout << "\nSettlement instructions:\n";
-    printDivider(74);
-
-    if (settlements.empty()) {
-        cout << "No payments needed. Everyone is already settled.\n";
-        printDivider(74);
-        cout << '\n';
-        return;
-    }
-
-    cout << left
-         << setw(28) << "From"
-         << setw(28) << "To"
-         << setw(18) << "Amount"
-         << '\n';
-    printDivider(74);
-
-    for (const SettlementEntry& s : settlements) {
-        cout << left
-             << setw(28) << s.from
-             << setw(28) << s.to
-             << setw(18) << moneyString(s.amount)
-             << '\n';
-    }
-
-    printDivider(74);
-    cout << '\n';
-}
-
-bool exportSettlementsCSV(const string& filename, const vector<SettlementEntry>& settlements) {
-    ofstream out(filename);
-    if (!out.is_open()) return false;
-
-    out << "from,to,amount\n";
-    out << fixed << setprecision(2);
-
-    for (const SettlementEntry& s : settlements) {
-        out << escapeCSV(s.from) << ','
-            << escapeCSV(s.to) << ','
-            << s.amount << '\n';
-    }
-
-    return true;
-}
-
-// --------------------------------------------------
-// Session balances
-// --------------------------------------------------
-
-string makeSessionBalanceKey(const string& sessionId,
-                             const string& fromNorm,
-                             const string& toNorm) {
-    return sessionId + "|" + fromNorm + "->" + toNorm;
-}
-
-void updateBalanceStatus(SessionBalance& bal) {
-    const double EPSILON = 0.009;
-
-    if (bal.remainingAmount <= EPSILON) {
-        bal.remainingAmount = 0.0;
-        bal.status = "paid";
-    } else if (bal.remainingAmount < bal.originalAmount) {
-        bal.status = "partial";
+fs::path writeReport(App& app, fs::path outPath) {
+    if (outPath.empty()) {
+        fs::create_directories(app.reportsDir);
+        std::string stamp = formatLocalDateTime(nowEpoch());
+        for (char& c : stamp) if (c == ' ' || c == ':') c = '-';
+        outPath = app.reportsDir / ("report_" + stamp + ".html");
     } else {
-        bal.status = "open";
+        std::error_code ec;
+        if (outPath.has_parent_path()) fs::create_directories(outPath.parent_path(), ec);
     }
+    report::ReportInput in;
+    in.byNet = players::sortedByNet(app.stats);
+    in.games = app.scoped;
+    in.settlements = app.currentSettlements.empty()
+                         ? settlement::calculate(in.byNet, app.prefs, app.settings.banker)
+                         : app.currentSettlements;
+    in.scope = app.scope;
+    in.meNormalized = app.settings.me;
+    in.focusNormalized = app.focusPlayer();
+    if (!report::writeHTMLReport(outPath.string(), in)) {
+        std::cout << "Could not write " << outPath.string() << '\n';
+        return {};
+    }
+    std::cout << "Report written to " << outPath.string() << '\n';
+    return outPath;
 }
 
-bool loadSessionBalancesCSV(const string& filename,
-                            unordered_map<string, SessionBalance>& balances) {
-    ifstream file(filename);
-    if (!file.is_open()) return false;
+void openInBrowser(const fs::path& file) {
+#if defined(__APPLE__)
+    std::string cmd = "open \"" + file.string() + "\"";
+#elif defined(_WIN32)
+    std::string cmd = "start \"\" \"" + file.string() + "\"";
+#else
+    std::string cmd = "xdg-open \"" + file.string() + "\"";
+#endif
+    std::system(cmd.c_str());
+}
 
-    string line;
-    bool firstLine = true;
+// ---------------------------------------------------------------- menu
 
-    while (getline(file, line)) {
-        if (line.empty()) continue;
+void printMenu(const App& app) {
+    std::int64_t first = app.scoped.empty() ? NO_TIME : app.scoped.front()->start;
+    std::int64_t last = app.scoped.empty() ? NO_TIME : app.scoped.back()->start;
+    std::string meName = app.settings.me.empty() ? "(not set)" : app.settings.me;
+    std::string banker = app.settings.banker.empty() ? "off" : app.settings.banker;
 
-        if (firstLine) {
-            firstLine = false;
-            if (line.find("session_id") != string::npos) {
-                continue;
+    std::cout << '\n' << divider(72) << "POKER LEDGER\n" << divider(72)
+              << "Scope: " << app.scope.describe() << "  |  " << app.scoped.size() << " games, " << app.stats.size()
+              << " players, " << formatLocalDate(first) << " to " << formatLocalDate(last) << '\n'
+              << "Me: " << meName << "  |  Banker: " << banker << "  |  Pinned preferences: " << app.prefs.size() << '\n'
+              << divider(72, '-')
+              << "DATA\n"
+              << "  1. Change scope (folder / date range)\n"
+              << "  2. Leaderboard: everyone's net wins and losses\n"
+              << "  3. Player detail: game-by-game history and running total\n"
+              << "  4. Merge duplicate player names\n"
+              << "SETTLEMENT\n"
+              << "  5. Calculate settlement sheet (who sends what to whom)\n"
+              << "  6. Payment preferences (pinned payer -> payee, banker, me)\n"
+              << "  7. Save settlement sheet as a session\n"
+              << "  8. View all session balances\n"
+              << "  9. View open session balances\n"
+              << " 10. Record a payment\n"
+              << " 11. Combined unpaid summary\n"
+              << "EXPORT & CHARTS\n"
+              << " 12. Export player summary CSV\n"
+              << " 13. Export settlement sheet CSV\n"
+              << " 14. Generate HTML report with charts\n"
+              << " 15. Terminal charts\n"
+              << "  0. Save and exit\n" << divider(72);
+}
+
+void runMenu(App& app) {
+    bool running = true;
+    while (running) {
+        printMenu(app);
+        int choice = console::askMenuChoice("Choose an option: ", 0, 15);
+        std::vector<PlayerStats> byNet = players::sortedByNet(app.stats);
+
+        switch (choice) {
+            case 1: chooseScope(app); break;
+
+            case 2:
+                std::cout << "\nLeaderboard for " << app.scope.describe() << ":\n";
+                players::printLeaderboard(byNet);
+                break;
+
+            case 3: {
+                if (byNet.empty()) { std::cout << "No players in scope.\n"; break; }
+                players::printCompactList(byNet);
+                int idx = console::askMenuChoice("Player number (0 to cancel): ", 0, static_cast<int>(byNet.size()));
+                if (idx == 0) break;
+                players::printPlayerHistory(byNet[idx - 1]);
+                report::printCumulativeChart(byNet[idx - 1]);
+                break;
             }
-        }
 
-        vector<string> row = splitCSVLine(line);
-        if (row.size() < 8) continue;
+            case 4: mergeNames(app); break;
 
-        SessionBalance bal;
-        bal.sessionId = trim(row[0]);
-        bal.fromDisplay = trim(row[1]);
-        bal.fromNormalized = normalizeName(trim(row[2]));
-        bal.toDisplay = trim(row[3]);
-        bal.toNormalized = normalizeName(trim(row[4]));
-        bal.originalAmount = toDoubleSafe(row[5]);
-        bal.remainingAmount = toDoubleSafe(row[6]);
-        bal.status = trim(row[7]);
+            case 5:
+                app.currentSettlements = settlement::calculate(byNet, app.prefs, app.settings.banker);
+                std::cout << "\nSettlement for " << app.scope.describe()
+                          << (app.settings.banker.empty() ? "" : " (banker mode)") << '\n';
+                settlement::print(app.currentSettlements);
+                break;
 
-        if (bal.sessionId.empty() || bal.fromNormalized.empty() || bal.toNormalized.empty()) {
-            continue;
-        }
+            case 6:
+                settlement::managePreferences(app.prefs, app.settings, byNet,
+                                              app.file("payment_preferences.csv").string(),
+                                              app.file("settings.csv").string());
+                app.currentSettlements.clear();
+                break;
 
-        string key = makeSessionBalanceKey(bal.sessionId, bal.fromNormalized, bal.toNormalized);
-        balances[key] = bal;
-    }
-
-    return true;
-}
-
-bool saveSessionBalancesCSV(const string& filename,
-                            const unordered_map<string, SessionBalance>& balances) {
-    ofstream out(filename);
-    if (!out.is_open()) return false;
-
-    out << "session_id,from_display,from_normalized,to_display,to_normalized,original_amount,remaining_amount,status\n";
-    out << fixed << setprecision(2);
-
-    vector<SessionBalance> rows;
-    for (const auto& pair : balances) {
-        rows.push_back(pair.second);
-    }
-
-    sort(rows.begin(), rows.end(),
-         [](const SessionBalance& a, const SessionBalance& b) {
-             if (a.sessionId == b.sessionId) {
-                 if (a.fromNormalized == b.fromNormalized) {
-                     return a.toNormalized < b.toNormalized;
-                 }
-                 return a.fromNormalized < b.fromNormalized;
-             }
-             return a.sessionId < b.sessionId;
-         });
-
-    for (const auto& b : rows) {
-        out << escapeCSV(b.sessionId) << ','
-            << escapeCSV(b.fromDisplay) << ','
-            << escapeCSV(b.fromNormalized) << ','
-            << escapeCSV(b.toDisplay) << ','
-            << escapeCSV(b.toNormalized) << ','
-            << b.originalAmount << ','
-            << b.remainingAmount << ','
-            << escapeCSV(b.status) << '\n';
-    }
-
-    return true;
-}
-
-void addSettlementBatchToSession(
-    const string& sessionId,
-    const vector<SettlementEntry>& settlements,
-    const unordered_map<string, PlayerStats>& playersByNorm,
-    unordered_map<string, SessionBalance>& balances)
-{
-    unordered_map<string, string> displayToNorm;
-    for (const auto& pair : playersByNorm) {
-        displayToNorm[pair.second.displayName] = pair.second.normalizedName;
-    }
-
-    for (const SettlementEntry& s : settlements) {
-        auto fromIt = displayToNorm.find(s.from);
-        auto toIt = displayToNorm.find(s.to);
-
-        if (fromIt == displayToNorm.end() || toIt == displayToNorm.end()) {
-            continue;
-        }
-
-        string fromNorm = fromIt->second;
-        string toNorm = toIt->second;
-        string key = makeSessionBalanceKey(sessionId, fromNorm, toNorm);
-
-        if (balances.find(key) == balances.end()) {
-            SessionBalance bal;
-            bal.sessionId = sessionId;
-            bal.fromDisplay = s.from;
-            bal.fromNormalized = fromNorm;
-            bal.toDisplay = s.to;
-            bal.toNormalized = toNorm;
-            bal.originalAmount = s.amount;
-            bal.remainingAmount = s.amount;
-            bal.status = "open";
-            balances[key] = bal;
-        } else {
-            balances[key].originalAmount += s.amount;
-            balances[key].remainingAmount += s.amount;
-            balances[key].status = "open";
-        }
-    }
-}
-
-vector<pair<string, SessionBalance>> getOpenSessionBalanceRows(
-    const unordered_map<string, SessionBalance>& balances) {
-    vector<pair<string, SessionBalance>> rows;
-
-    for (const auto& pair : balances) {
-        if (pair.second.remainingAmount > 0.009) {
-            rows.push_back(pair);
-        }
-    }
-
-    sort(rows.begin(), rows.end(),
-         [](const auto& a, const auto& b) {
-             if (a.second.sessionId == b.second.sessionId) {
-                 if (a.second.fromNormalized == b.second.fromNormalized) {
-                     return a.second.toNormalized < b.second.toNormalized;
-                 }
-                 return a.second.fromNormalized < b.second.fromNormalized;
-             }
-             return a.second.sessionId < b.second.sessionId;
-         });
-
-    return rows;
-}
-
-void printSessionBalances(const unordered_map<string, SessionBalance>& balances, bool openOnly = false) {
-    vector<SessionBalance> rows;
-
-    for (const auto& pair : balances) {
-        if (!openOnly || pair.second.remainingAmount > 0.009) {
-            rows.push_back(pair.second);
-        }
-    }
-
-    sort(rows.begin(), rows.end(),
-         [](const SessionBalance& a, const SessionBalance& b) {
-             if (a.sessionId == b.sessionId) {
-                 if (a.fromNormalized == b.fromNormalized) {
-                     return a.toNormalized < b.toNormalized;
-                 }
-                 return a.fromNormalized < b.fromNormalized;
-             }
-             return a.sessionId < b.sessionId;
-         });
-
-    cout << "\nSession balances:\n";
-    printDivider(132);
-
-    if (rows.empty()) {
-        cout << "No session balances found.\n";
-        printDivider(132);
-        cout << '\n';
-        return;
-    }
-
-    cout << left
-         << setw(5)  << "#"
-         << setw(24) << "Session"
-         << setw(22) << "From"
-         << setw(22) << "To"
-         << setw(16) << "Original"
-         << setw(16) << "Remaining"
-         << setw(12) << "Status"
-         << '\n';
-    printDivider(132);
-
-    for (size_t i = 0; i < rows.size(); ++i) {
-        cout << left
-             << setw(5)  << (i + 1)
-             << setw(24) << rows[i].sessionId
-             << setw(22) << rows[i].fromDisplay
-             << setw(22) << rows[i].toDisplay
-             << setw(16) << moneyString(rows[i].originalAmount)
-             << setw(16) << moneyString(rows[i].remainingAmount)
-             << setw(12) << rows[i].status
-             << '\n';
-    }
-
-    printDivider(132);
-    cout << '\n';
-}
-
-void recordPaymentBySession(unordered_map<string, SessionBalance>& balances) {
-    vector<pair<string, SessionBalance>> rows = getOpenSessionBalanceRows(balances);
-
-    if (rows.empty()) {
-        cout << "There are no unpaid session balances.\n";
-        return;
-    }
-
-    cout << "\nOpen session balances:\n";
-    printDivider(132);
-    cout << left
-         << setw(5)  << "#"
-         << setw(24) << "Session"
-         << setw(22) << "From"
-         << setw(22) << "To"
-         << setw(16) << "Original"
-         << setw(16) << "Remaining"
-         << setw(12) << "Status"
-         << '\n';
-    printDivider(132);
-
-    for (size_t i = 0; i < rows.size(); ++i) {
-        const SessionBalance& b = rows[i].second;
-        cout << left
-             << setw(5)  << (i + 1)
-             << setw(24) << b.sessionId
-             << setw(22) << b.fromDisplay
-             << setw(22) << b.toDisplay
-             << setw(16) << moneyString(b.originalAmount)
-             << setw(16) << moneyString(b.remainingAmount)
-             << setw(12) << b.status
-             << '\n';
-    }
-
-    printDivider(132);
-
-    int choice = askMenuChoice("Choose a session balance to update (0 to cancel): ",
-                               0, static_cast<int>(rows.size()));
-    if (choice == 0) return;
-
-    double amount = askAmount("Enter amount paid: ");
-
-    string key = rows[choice - 1].first;
-    SessionBalance& bal = balances[key];
-
-    if (amount >= bal.remainingAmount) {
-        bal.remainingAmount = 0.0;
-    } else {
-        bal.remainingAmount -= amount;
-    }
-
-    updateBalanceStatus(bal);
-    cout << "Payment recorded.\n";
-}
-
-void printCombinedUnpaidSummary(const unordered_map<string, SessionBalance>& balances) {
-    struct CombinedDebt {
-        string fromDisplay;
-        string fromNormalized;
-        string toDisplay;
-        string toNormalized;
-        double totalRemaining = 0.0;
-    };
-
-    unordered_map<string, CombinedDebt> combined;
-
-    for (const auto& pair : balances) {
-        const SessionBalance& bal = pair.second;
-        if (bal.remainingAmount <= 0.009) continue;
-
-        string key = bal.fromNormalized + "->" + bal.toNormalized;
-
-        if (combined.find(key) == combined.end()) {
-            CombinedDebt debt;
-            debt.fromDisplay = bal.fromDisplay;
-            debt.fromNormalized = bal.fromNormalized;
-            debt.toDisplay = bal.toDisplay;
-            debt.toNormalized = bal.toNormalized;
-            debt.totalRemaining = bal.remainingAmount;
-            combined[key] = debt;
-        } else {
-            combined[key].totalRemaining += bal.remainingAmount;
-        }
-    }
-
-    vector<CombinedDebt> rows;
-    for (const auto& pair : combined) {
-        rows.push_back(pair.second);
-    }
-
-    sort(rows.begin(), rows.end(),
-         [](const CombinedDebt& a, const CombinedDebt& b) {
-             if (a.totalRemaining == b.totalRemaining) {
-                 if (a.fromNormalized == b.fromNormalized) {
-                     return a.toNormalized < b.toNormalized;
-                 }
-                 return a.fromNormalized < b.fromNormalized;
-             }
-             return a.totalRemaining > b.totalRemaining;
-         });
-
-    cout << "\nCombined unpaid summary across all sessions:\n";
-    printDivider(90);
-
-    if (rows.empty()) {
-        cout << "No unpaid balances.\n";
-        printDivider(90);
-        cout << '\n';
-        return;
-    }
-
-    cout << left
-         << setw(5)  << "#"
-         << setw(28) << "From"
-         << setw(28) << "To"
-         << setw(20) << "Total Remaining"
-         << '\n';
-    printDivider(90);
-
-    for (size_t i = 0; i < rows.size(); ++i) {
-        cout << left
-             << setw(5)  << (i + 1)
-             << setw(28) << rows[i].fromDisplay
-             << setw(28) << rows[i].toDisplay
-             << setw(20) << moneyString(rows[i].totalRemaining)
-             << '\n';
-    }
-
-    printDivider(90);
-    cout << '\n';
-}
-
-// --------------------------------------------------
-// Main menu
-// --------------------------------------------------
-
-void printMainMenu() {
-    printDivider(72);
-    cout << "POKER LEDGER MENU\n";
-    printDivider(72);
-    cout << "1. View player summary\n";
-    cout << "2. Merge player names manually\n";
-    cout << "3. Save merge rules\n";
-    cout << "4. Export player summary CSV\n";
-    cout << "5. Calculate settlements for current loaded ledger\n";
-    cout << "6. Save current settlements as a session\n";
-    cout << "7. View all session balances\n";
-    cout << "8. View only open session balances\n";
-    cout << "9. Record a payment for a specific session balance\n";
-    cout << "10. View combined unpaid summary across all sessions\n";
-    cout << "11. Export current settlements CSV\n";
-    cout << "12. Save session balances now\n";
-    cout << "0. Exit\n";
-    printDivider(72);
-}
-
-// --------------------------------------------------
-// Main
-// --------------------------------------------------
-
-int main() {
-    fs::path projectRoot = "C:\\Users\\Camer\\CLionProjects\\Poker_Ledger_Reader";
-    fs::path dataFolder = projectRoot / "SingleGameSettlement";
-    fs::path savedDataFolder = projectRoot / "Saved_Data";
-
-    fs::create_directories(savedDataFolder);
-
-    fs::path mergeRulesFile = savedDataFolder / "merge_rules.csv";
-    fs::path summaryFile = savedDataFolder / "player_summary.csv";
-    fs::path settlementFile = savedDataFolder / "settlements.csv";
-    fs::path sessionBalancesFile = savedDataFolder / "session_balances.csv";
-
-    unordered_map<string, PlayerStats> players;
-    unordered_map<string, string> mergeRules;
-    unordered_map<string, SessionBalance> sessionBalances;
-    vector<SettlementEntry> currentSettlements;
-
-    try {
-        for (const auto& entry : fs::directory_iterator(dataFolder)) {
-            if (entry.path().extension() == ".csv") {
-                readCSV(entry.path().string(), players);
+            case 7: {
+                if (app.currentSettlements.empty()) {
+                    std::cout << "Calculate a settlement sheet first (option 5).\n";
+                    break;
+                }
+                std::string suggested = defaultSessionId(app);
+                std::string id = console::askLine("Session ID [" + suggested + "]: ");
+                if (id.empty()) id = suggested;
+                bool exists = false;
+                for (const auto& pair : app.balances) {
+                    if (pair.second.sessionId == id) { exists = true; break; }
+                }
+                if (exists && console::askYesNo("Session \"" + id + "\" already has balances. Add these on top of them? (y/n): ") == 'n') {
+                    std::cout << "Nothing saved. Pick a different session ID next time.\n";
+                    break;
+                }
+                sessions::addSettlementBatch(id, app.currentSettlements, app.balances);
+                sessions::save(app.file("session_balances.csv").string(), app.balances);
+                std::cout << "Saved " << app.currentSettlements.size() << " balances under session \"" << id << "\".\n";
+                break;
             }
+
+            case 8: sessions::printBalances(app.balances, false); break;
+            case 9: sessions::printBalances(app.balances, true); break;
+
+            case 10:
+                sessions::recordPayment(app.balances);
+                sessions::save(app.file("session_balances.csv").string(), app.balances);
+                break;
+
+            case 11: sessions::printCombinedUnpaid(app.balances); break;
+
+            case 12: {
+                fs::path out = app.file("player_summary.csv");
+                std::cout << (players::exportPlayerSummaryCSV(out.string(), byNet) ? "Exported to " : "Could not write ")
+                          << out.string() << '\n';
+                break;
+            }
+
+            case 13: {
+                if (app.currentSettlements.empty()) {
+                    app.currentSettlements = settlement::calculate(byNet, app.prefs, app.settings.banker);
+                }
+                fs::path out = app.file("settlements.csv");
+                std::cout << (settlement::exportCSV(out.string(), app.currentSettlements) ? "Exported to " : "Could not write ")
+                          << out.string() << '\n';
+                break;
+            }
+
+            case 14: {
+                fs::path written = writeReport(app, {});
+                if (!written.empty() && console::askYesNo("Open it in your browser now? (y/n): ") == 'y') openInBrowser(written);
+                break;
+            }
+
+            case 15: {
+                report::printNetBarChart(byNet);
+                std::string focus = app.focusPlayer();
+                const PlayerStats* p = players::find(app.stats, focus);
+                if (p) report::printCumulativeChart(*p);
+                break;
+            }
+
+            case 0:
+                app.saveAll();
+                std::cout << "Saved merge rules, preferences, settings and session balances. Bye.\n";
+                running = false;
+                break;
         }
-    } catch (const exception& e) {
-        cerr << "Error reading directory: " << e.what() << '\n';
+    }
+}
+
+void printUsage() {
+    std::cout << "Usage: Poker_Ledger_Reader [--root PATH] [--folder NAME] [--from YYYY-MM-DD] [--to YYYY-MM-DD]\n"
+              << "                           [--report [FILE.html]] [--help]\n";
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+    App app;
+#ifdef PLR_PROJECT_ROOT
+    app.root = PLR_PROJECT_ROOT;
+#else
+    app.root = fs::current_path();
+#endif
+    bool reportOnly = false;
+    fs::path reportPath;
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        auto next = [&](const char* flag) -> std::string {
+            if (i + 1 >= argc) { std::cerr << flag << " needs a value\n"; std::exit(1); }
+            return argv[++i];
+        };
+        if (arg == "--root") app.root = next("--root");
+        else if (arg == "--folder") app.scope.folder = next("--folder");
+        else if (arg == "--from") app.scope.from = parseLocalDate(next("--from"), false);
+        else if (arg == "--to") app.scope.to = parseLocalDate(next("--to"), true);
+        else if (arg == "--report") {
+            reportOnly = true;
+            if (i + 1 < argc && argv[i + 1][0] != '-') reportPath = argv[++i];
+        } else if (arg == "--help" || arg == "-h") { printUsage(); return 0; }
+        else { std::cerr << "Unknown option " << arg << "\n"; printUsage(); return 1; }
+    }
+
+    app.savedDir = app.root / "Saved_Data";
+    app.reportsDir = app.savedDir / "reports";
+    std::error_code ec;
+    fs::create_directories(app.savedDir, ec);
+
+    std::vector<std::string> messages;
+    app.games = ledger::loadAllGames(app.root, messages);
+    for (const std::string& m : messages) std::cout << m << '\n';
+    if (app.games.empty()) {
+        std::cerr << "No ledger CSV files found under " << app.root.string() << '\n';
         return 1;
     }
 
-    cout << "\nLoaded " << players.size() << " normalized players from ledger files.\n";
-
-    if (fs::exists(mergeRulesFile)) {
-        if (askYesNo("Found merge_rules.csv in Saved_data. Load saved merge rules? (y/n): ") == 'y') {
-            if (loadMergeRulesFromCSV(mergeRulesFile.string(), mergeRules)) {
-                applySavedMergeRules(players, mergeRules);
-                cout << "Saved merge rules applied.\n";
-            } else {
-                cout << "Could not load merge rules file.\n";
-            }
-        }
+    if (players::loadMergeRulesCSV(app.file("merge_rules.csv").string(), app.rules)) {
+        std::cout << "Loaded " << app.rules.size() << " merge rules.\n";
+    }
+    settlement::loadPreferencesCSV(app.file("payment_preferences.csv").string(), app.prefs);
+    settlement::loadSettingsCSV(app.file("settings.csv").string(), app.settings);
+    if (sessions::load(app.file("session_balances.csv").string(), app.balances)) {
+        std::cout << "Loaded " << app.balances.size() << " session balances.\n";
     }
 
-    if (fs::exists(sessionBalancesFile)) {
-        if (loadSessionBalancesCSV(sessionBalancesFile.string(), sessionBalances)) {
-            cout << "Loaded session balances from " << sessionBalancesFile.string() << ".\n";
-        }
+    app.refresh();
+    std::cout << "Loaded " << app.games.size() << " games from " << ledger::listFolders(app.games).size()
+              << " folders under " << app.root.string() << '\n';
+
+    if (reportOnly) {
+        players::printLeaderboard(players::sortedByNet(app.stats));
+        return writeReport(app, reportPath).empty() ? 1 : 0;
     }
 
-    bool running = true;
-
-    while (running) {
-        vector<PlayerStats> sortedPlayers = sortPlayersByName(players);
-
-        printMainMenu();
-        int choice = askMenuChoice("Choose an option: ", 0, 12);
-
-        switch (choice) {
-            case 1: {
-                cout << "\nPlayer summary:\n";
-                printPlayerTable(sortedPlayers);
-                break;
-            }
-
-            case 2: {
-                manuallyMergePlayers(players, mergeRules);
-                currentSettlements.clear();
-                cout << "Player names updated.\n";
-                break;
-            }
-
-            case 3: {
-                if (saveMergeRulesToCSV(mergeRulesFile.string(), mergeRules)) {
-                    cout << "Merge rules saved to " << mergeRulesFile.string() << '\n';
-                } else {
-                    cout << "Could not save merge rules.\n";
-                }
-                break;
-            }
-
-            case 4: {
-                if (exportPlayerSummaryCSV(summaryFile.string(), sortedPlayers)) {
-                    cout << "Player summary exported to " << summaryFile.string() << '\n';
-                } else {
-                    cout << "Could not export player summary.\n";
-                }
-                break;
-            }
-
-            case 5: {
-                currentSettlements = calculateSettlements(sortedPlayers);
-                printSettlements(currentSettlements);
-                break;
-            }
-
-            case 6: {
-                if (currentSettlements.empty()) {
-                    cout << "No current settlements are loaded. Calculate settlements first.\n";
-                } else {
-                    string sessionId = askLine("Enter a session ID (example: 2026-04-04_to_2026-04-21): ");
-                    if (sessionId.empty()) {
-                        cout << "Session ID cannot be empty.\n";
-                    } else {
-                        addSettlementBatchToSession(sessionId, currentSettlements, players, sessionBalances);
-                        if (saveSessionBalancesCSV(sessionBalancesFile.string(), sessionBalances)) {
-                            cout << "Session balances saved to " << sessionBalancesFile.string() << '\n';
-                        } else {
-                            cout << "Session balances updated in memory, but could not save the file.\n";
-                        }
-                    }
-                }
-                break;
-            }
-
-            case 7: {
-                printSessionBalances(sessionBalances, false);
-                break;
-            }
-
-            case 8: {
-                printSessionBalances(sessionBalances, true);
-                break;
-            }
-
-            case 9: {
-                recordPaymentBySession(sessionBalances);
-                if (saveSessionBalancesCSV(sessionBalancesFile.string(), sessionBalances)) {
-                    cout << "Session balances saved to " << sessionBalancesFile.string() << '\n';
-                } else {
-                    cout << "Payment updated in memory, but could not save the file.\n";
-                }
-                break;
-            }
-
-            case 10: {
-                printCombinedUnpaidSummary(sessionBalances);
-                break;
-            }
-
-            case 11: {
-                if (currentSettlements.empty()) {
-                    cout << "No current settlements are loaded. Calculate settlements first.\n";
-                } else {
-                    if (exportSettlementsCSV(settlementFile.string(), currentSettlements)) {
-                        cout << "Settlements exported to " << settlementFile.string() << '\n';
-                    } else {
-                        cout << "Could not export settlements.\n";
-                    }
-                }
-                break;
-            }
-
-            case 12: {
-                if (saveSessionBalancesCSV(sessionBalancesFile.string(), sessionBalances)) {
-                    cout << "Session balances saved to " << sessionBalancesFile.string() << '\n';
-                } else {
-                    cout << "Could not save session balances.\n";
-                }
-                break;
-            }
-
-            case 0: {
-                saveMergeRulesToCSV(mergeRulesFile.string(), mergeRules);
-                saveSessionBalancesCSV(sessionBalancesFile.string(), sessionBalances);
-                cout << "Saved merge rules and session balances.\n";
-                cout << "Done.\n";
-                running = false;
-                break;
-            }
-        }
-    }
-
+    runMenu(app);
     return 0;
 }

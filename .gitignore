@@ -1,0 +1,9 @@
+# CLion / CMake build output
+cmake-build-*/
+build/
+
+# Generated HTML reports (regenerate any time from the app)
+Saved_Data/reports/
+
+# macOS
+.DS_Store
