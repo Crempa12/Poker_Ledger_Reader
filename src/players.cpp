@@ -205,32 +205,54 @@ std::vector<MergeSuggestion> suggestMergesByPlayerId(const std::vector<Game>& ga
 
 // ---------------- printing / export ----------------
 
+namespace {
+// Prints comma-separated items, wrapping so no line exceeds `width`, with every
+// continuation line indented to `indent` columns.
+void printWrapped(const std::vector<std::string>& items, size_t indent, size_t width) {
+    size_t col = indent;
+    for (size_t i = 0; i < items.size(); ++i) {
+        std::string piece = items[i] + (i + 1 < items.size() ? "," : "");
+        if (col > indent && col + 1 + piece.size() > width) {
+            std::cout << '\n' << std::string(indent, ' ');
+            col = indent;
+        } else if (col > indent) {
+            std::cout << ' ';
+            ++col;
+        }
+        std::cout << piece;
+        col += piece.size();
+    }
+    std::cout << '\n';
+}
+}  // namespace
+
 void printLeaderboard(const std::vector<PlayerStats>& list) {
-    const int W = 136;
+    bool anyAdjust = false;
+    for (const PlayerStats& p : list) {
+        if (p.adjustments > EPSILON || p.adjustments < -EPSILON) anyAdjust = true;
+    }
+    const size_t NAME = 22;
+    const int W = anyAdjust ? 122 : 112;
     double grandTotal = 0.0;
     double adjustmentTotal = 0.0;
+
     std::cout << divider(W)
-              << padRight("#", 4) << padRight("Player", 18) << padRight("Games", 7) << padRight("Buy-ins", 9)
-              << padLeft("Won", 12) << padLeft("Lost", 12) << padLeft("Adjust", 10) << padLeft("Net", 12)
-              << padLeft("Avg/game", 12) << padLeft("Best", 12) << padLeft("Worst", 12) << "  Aliases\n"
+              << padRight("#", 4) << padRight("Player", NAME) << padLeft("Games", 6) << padLeft("Buy-ins", 8)
+              << padLeft("Won", 12) << padLeft("Lost", 12) << (anyAdjust ? padLeft("Adjust", 10) : "")
+              << padLeft("Net", 12) << padLeft("Avg/game", 12) << padLeft("Best", 12) << padLeft("Worst", 12) << '\n'
               << divider(W);
 
     for (size_t i = 0; i < list.size(); ++i) {
         const PlayerStats& p = list[i];
         grandTotal += p.totalNet;
         adjustmentTotal += p.adjustments;
-        std::string aliases;
-        for (const std::string& a : p.aliases) {
-            if (a == p.normalizedName || a == normalizeName(p.displayName)) continue;
-            aliases += (aliases.empty() ? "" : ", ") + a;
-        }
-        std::cout << padRight(std::to_string(i + 1), 4) << padRight(p.displayName, 18)
-                  << padRight(std::to_string(p.games), 7) << padRight(std::to_string(p.buyIns), 9)
+        bool hasAdjust = p.adjustments > EPSILON || p.adjustments < -EPSILON;
+        std::cout << padRight(std::to_string(i + 1), 4) << padRight(p.displayName, NAME)
+                  << padLeft(std::to_string(p.games), 6) << padLeft(std::to_string(p.buyIns), 8)
                   << padLeft(money(p.totalWon), 12) << padLeft(money(p.totalLost), 12)
-                  << padLeft(p.adjustments > -EPSILON && p.adjustments < EPSILON ? "" : moneySigned(p.adjustments), 10)
+                  << (anyAdjust ? padLeft(hasAdjust ? moneySigned(p.adjustments) : "-", 10) : "")
                   << padLeft(moneySigned(p.totalNet), 12) << padLeft(moneySigned(p.averagePerGame()), 12)
-                  << padLeft(moneySigned(p.biggestWin), 12) << padLeft(moneySigned(p.biggestLoss), 12)
-                  << "  " << aliases << '\n';
+                  << padLeft(moneySigned(p.biggestWin), 12) << padLeft(moneySigned(p.biggestLoss), 12) << '\n';
     }
     std::cout << divider(W) << "Sum of all nets: " << moneySigned(grandTotal);
     if (adjustmentTotal > EPSILON || adjustmentTotal < -EPSILON) {
@@ -239,6 +261,24 @@ void printLeaderboard(const std::vector<PlayerStats>& list) {
         std::cout << "  (should be $0.00 when every ledger balances)";
     }
     std::cout << "\n\n";
+
+    // Aliases live in their own section so long lists never break the table.
+    bool anyAlias = false;
+    for (const PlayerStats& p : list) {
+        std::vector<std::string> aliases;
+        for (const std::string& a : p.aliases) {
+            if (a == p.normalizedName || a == normalizeName(p.displayName)) continue;
+            aliases.push_back(a);
+        }
+        if (aliases.empty()) continue;
+        if (!anyAlias) {
+            std::cout << "Merged names (menu 4 to change)\n" << divider(W, '-');
+            anyAlias = true;
+        }
+        std::cout << "  " << padRight(p.displayName, NAME) << "  also: ";
+        printWrapped(aliases, 2 + NAME + 8, static_cast<size_t>(W));
+    }
+    if (anyAlias) std::cout << divider(W, '-') << '\n';
 }
 
 void printCompactList(const std::vector<PlayerStats>& list) {

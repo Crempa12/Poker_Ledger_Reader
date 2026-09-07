@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -51,6 +52,8 @@ struct App {
     std::vector<const Game*> scoped;                 // games matching the scope
     std::map<std::string, PlayerStats> stats;        // aggregated for the scope
     std::vector<SettlementEntry> currentSettlements;
+    Scope settledScope;                              // what currentSettlements was built for
+    std::string settledLabel;                        // folder name or game_<date>_<id>
 
     fs::path file(const char* name) const { return savedDir / name; }
 
@@ -58,6 +61,7 @@ struct App {
         scoped = ledger::filterGames(games, scope);
         stats = players::aggregate(scoped, rules, adjustments::filter(adjustmentList, scope));
         currentSettlements.clear();
+        settledLabel.clear();
     }
 
     void saveAll() {
@@ -181,6 +185,156 @@ std::string defaultSessionId(const App& app) {
     return "all_games_as_of_" + formatLocalDate(nowEpoch());
 }
 
+// ---------------------------------------------------------------- settlement
+
+std::string nameOf(const std::vector<PlayerStats>& players, const std::string& normalized) {
+    for (const PlayerStats& p : players) {
+        if (p.normalizedName == normalized) return p.displayName;
+    }
+    return normalized.empty() ? "(none)" : normalized;
+}
+
+// One line per game so the user can pick which night to settle.
+void printGameList(const std::vector<const Game*>& games) {
+    std::cout << '\n' << padRight("#", 5) << padRight("Date", 18) << padRight("Folder", 28)
+              << padRight("Players", 9) << padLeft("Buy-ins", 12) << "  Ledger\n" << divider(96, '-');
+    for (size_t i = 0; i < games.size(); ++i) {
+        const Game& g = *games[i];
+        std::set<std::string> names;
+        for (const LedgerRow& r : g.rows) names.insert(normalizeName(r.nickname));
+        std::cout << padRight(std::to_string(i + 1), 5) << padRight(formatLocalDateTime(g.start), 18)
+                  << padRight(g.folder.empty() ? "(root)" : g.folder, 28) << padRight(std::to_string(names.size()), 9)
+                  << padLeft(money(g.totalBuyIn), 12) << "  " << g.id << '\n';
+    }
+    std::cout << divider(96, '-');
+}
+
+// Guided flow behind menu 5: pick a game or folder, ask whether anyone wants to
+// send to a specific person, then fill in the rest automatically.
+void calculateSettlement(App& app) {
+    std::cout << "\nWhat would you like to settle?\n" << divider(60)
+              << "1. One game (a single ledger)\n"
+              << "2. One folder (every game in it)\n"
+              << "3. Everything in the current scope (" << app.scope.describe() << ")\n"
+              << "0. Cancel\n";
+    int what = console::askMenuChoice("Choose: ", 0, 3);
+    if (what == 0) return;
+
+    std::vector<const Game*> games;
+    Scope target;
+    std::string label;
+
+    if (what == 1) {
+        // Newest first: the game being settled is usually the last one played.
+        std::vector<const Game*> list(app.scoped.rbegin(), app.scoped.rend());
+        if (list.empty()) { std::cout << "No games in the current scope.\n"; return; }
+        if (!app.scope.isEverything()) std::cout << "(Only games in the current scope are listed. Option 1 widens it.)\n";
+        printGameList(list);
+        int pick = console::askMenuChoice("Game number (0 to cancel): ", 0, static_cast<int>(list.size()));
+        if (pick == 0) return;
+        const Game* g = list[pick - 1];
+        games = {g};
+        target.folder = g->folder;
+        target.from = parseLocalDate(formatLocalDate(g->start), false);
+        target.to = parseLocalDate(formatLocalDate(g->start), true);
+        label = "game_" + formatLocalDate(g->start) + "_" + g->id;
+    } else if (what == 2) {
+        std::vector<std::string> folders = ledger::listFolders(app.games);
+        if (folders.empty()) { std::cout << "No folders found.\n"; return; }
+        std::cout << '\n';
+        for (size_t i = 0; i < folders.size(); ++i) {
+            Scope probe;
+            probe.folder = folders[i];
+            size_t count = ledger::filterGames(app.games, probe).size();
+            std::cout << "  " << (i + 1) << ". " << padRight(folders[i], 34) << count << " game" << (count == 1 ? "" : "s") << '\n';
+        }
+        int pick = console::askMenuChoice("Folder number (0 to cancel): ", 0, static_cast<int>(folders.size()));
+        if (pick == 0) return;
+        target.folder = folders[pick - 1];
+        games = ledger::filterGames(app.games, target);
+        label = target.folder;
+    } else {
+        games = app.scoped;
+        target = app.scope;
+        label = defaultSessionId(app);
+    }
+
+    std::map<std::string, PlayerStats> stats =
+        players::aggregate(games, app.rules, adjustments::filter(app.adjustmentList, target));
+    std::vector<PlayerStats> byNet = players::sortedByNet(stats);
+    if (byNet.empty()) { std::cout << "No players found in that selection.\n"; return; }
+
+    std::cout << "\nResults for " << label << " (" << games.size() << " game" << (games.size() == 1 ? "" : "s") << "):\n";
+    players::printCompactList(byNet);
+
+    // Saved pins always apply; one-off requests are added on top for this sheet only.
+    std::vector<PaymentPreference> prefs = app.prefs;
+
+    if (!app.settings.banker.empty()) {
+        std::cout << "\nBanker mode is on: everyone settles through " << nameOf(byNet, app.settings.banker)
+                  << ", so payer -> payee requests are skipped. Turn the banker off in option 6 to use them.\n";
+    } else {
+        std::vector<PlayerStats> losers, winners;
+        for (const PlayerStats& p : byNet) {
+            if (p.totalNet < -EPSILON) losers.push_back(p);
+            else if (p.totalNet > EPSILON) winners.push_back(p);
+        }
+        auto owes = [&](const std::string& n) {
+            for (const PlayerStats& p : losers) if (p.normalizedName == n) return true;
+            return false;
+        };
+        auto owed = [&](const std::string& n) {
+            for (const PlayerStats& p : winners) if (p.normalizedName == n) return true;
+            return false;
+        };
+
+        bool anyPinned = false;
+        for (const PaymentPreference& pref : app.prefs) {
+            if (!owes(pref.payerNormalized) || !owed(pref.payeeNormalized)) continue;
+            if (!anyPinned) std::cout << "\nSaved preferences that apply here:\n";
+            anyPinned = true;
+            std::cout << "  " << nameOf(byNet, pref.payerNormalized) << " always pays " << nameOf(byNet, pref.payeeNormalized) << '\n';
+        }
+
+        if (losers.empty() || winners.empty()) {
+            std::cout << "\nNobody owes anything in that selection.\n";
+        } else if (console::askYesNo("\nDoes anyone want to send their money to a specific person? (y/n): ") == 'y') {
+            while (true) {
+                std::string payer = console::pickPlayer(losers, "Who is sending? (players who owe)");
+                if (payer.empty()) break;
+                std::string payee = console::pickPlayer(winners, "Who should " + nameOf(byNet, payer) + " send to? (players who are owed)");
+                if (payee.empty()) break;
+
+                bool already = false;
+                for (const PaymentPreference& pref : prefs) {
+                    if (pref.payerNormalized == payer && pref.payeeNormalized == payee) already = true;
+                }
+                if (already) {
+                    std::cout << "That pairing is already on the list.\n";
+                } else {
+                    PaymentPreference pref{payer, payee, "", true};
+                    prefs.push_back(pref);
+                    std::cout << nameOf(byNet, payer) << " will send to " << nameOf(byNet, payee) << " first.\n";
+                    if (console::askYesNo("Remember this for future settlements too? (y/n): ") == 'y') {
+                        pref.oneOff = false;
+                        app.prefs.push_back(pref);
+                        settlement::savePreferencesCSV(app.file("payment_preferences.csv").string(), app.prefs);
+                        std::cout << "Saved as a pinned preference.\n";
+                    }
+                }
+                if (console::askYesNo("Anyone else? (y/n): ") == 'n') break;
+            }
+        }
+    }
+
+    app.currentSettlements = settlement::calculate(byNet, prefs, app.settings.banker);
+    app.settledScope = target;
+    app.settledLabel = label;
+    std::cout << "\nSettlement for " << label << (app.settings.banker.empty() ? "" : " (banker mode)") << '\n';
+    settlement::print(app.currentSettlements);
+    std::cout << "Option 7 saves this sheet as a session; option 13 exports it as CSV.\n";
+}
+
 fs::path writeReport(App& app, fs::path outPath) {
     if (outPath.empty()) {
         fs::create_directories(app.reportsDir);
@@ -194,9 +348,10 @@ fs::path writeReport(App& app, fs::path outPath) {
     report::ReportInput in;
     in.byNet = players::sortedByNet(app.stats);
     in.games = app.scoped;
-    in.settlements = app.currentSettlements.empty()
-                         ? settlement::calculate(in.byNet, app.prefs, app.settings.banker)
-                         : app.currentSettlements;
+    // Reuse the sheet from menu 5 only if it was built for this same scope.
+    bool sheetMatches = !app.currentSettlements.empty() && app.settledScope.describe() == app.scope.describe();
+    in.settlements = sheetMatches ? app.currentSettlements
+                                  : settlement::calculate(in.byNet, app.prefs, app.settings.banker);
     in.scope = app.scope;
     in.meNormalized = app.settings.me;
     in.focusNormalized = app.focusPlayer();
@@ -238,7 +393,7 @@ void printMenu(const App& app) {
               << "  3. Player detail: game-by-game history and running total\n"
               << "  4. Merge duplicate player names\n"
               << "SETTLEMENT\n"
-              << "  5. Calculate settlement sheet (who sends what to whom)\n"
+              << "  5. Calculate settlement sheet (pick a game or folder, then who sends to whom)\n"
               << "  6. Payment preferences (pinned payer -> payee, banker, me)\n"
               << "  7. Save settlement sheet as a session\n"
               << "  8. View all session balances\n"
@@ -282,12 +437,7 @@ void runMenu(App& app) {
 
             case 4: mergeNames(app); break;
 
-            case 5:
-                app.currentSettlements = settlement::calculate(byNet, app.prefs, app.settings.banker);
-                std::cout << "\nSettlement for " << app.scope.describe()
-                          << (app.settings.banker.empty() ? "" : " (banker mode)") << '\n';
-                settlement::print(app.currentSettlements);
-                break;
+            case 5: calculateSettlement(app); break;
 
             case 6:
                 settlement::managePreferences(app.prefs, app.settings, byNet,
@@ -298,10 +448,11 @@ void runMenu(App& app) {
 
             case 7: {
                 if (app.currentSettlements.empty()) {
-                    std::cout << "Calculate a settlement sheet first (option 5).\n";
-                    break;
+                    std::cout << "No settlement sheet yet. Let's build one first.\n";
+                    calculateSettlement(app);
+                    if (app.currentSettlements.empty()) break;
                 }
-                std::string suggested = defaultSessionId(app);
+                std::string suggested = app.settledLabel.empty() ? defaultSessionId(app) : app.settledLabel;
                 std::string id = console::askLine("Session ID [" + suggested + "]: ");
                 if (id.empty()) id = suggested;
                 bool exists = false;
@@ -337,7 +488,9 @@ void runMenu(App& app) {
 
             case 13: {
                 if (app.currentSettlements.empty()) {
-                    app.currentSettlements = settlement::calculate(byNet, app.prefs, app.settings.banker);
+                    std::cout << "No settlement sheet yet. Let's build one first.\n";
+                    calculateSettlement(app);
+                    if (app.currentSettlements.empty()) break;
                 }
                 fs::path out = app.file("settlements.csv");
                 std::cout << (settlement::exportCSV(out.string(), app.currentSettlements) ? "Exported to " : "Could not write ")

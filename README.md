@@ -80,7 +80,7 @@ DATA
   3. Player detail: game-by-game history and running total
   4. Merge duplicate player names
 SETTLEMENT
-  5. Calculate settlement sheet (who sends what to whom)
+  5. Calculate settlement sheet (pick a game or folder, then who sends to whom)
   6. Payment preferences (pinned payer -> payee, banker, me)
   7. Save settlement sheet as a session
   8. View all session balances
@@ -105,16 +105,33 @@ The header of the menu always shows the scope in effect.
 
 ### Settlement rules
 
-Menu 5 builds the sheet in three passes:
+Menu 5 is a short guided flow:
+
+1. **Pick what to settle**: one game (listed newest first), one folder, or
+   everything in the current scope. The results for that selection are shown.
+2. **Specific sends**: the app asks whether anyone wants to send their money
+   to a specific person. Pick the payer from those who owe and the payee from
+   those who are owed; repeat for as many pairs as you like, or answer "n" to
+   skip straight to the automatic fill. Each request can be remembered as a
+   pinned preference for future sheets, or used just this once.
+3. **Auto fill**: everything left over is matched automatically.
+
+Saving the sheet as a session (menu 7) suggests the game or folder name as the
+session ID. Menus 7 and 13 start this same flow if no sheet exists yet.
+
+Under the hood the sheet is built in three passes:
 
 1. **Banker mode** (if a banker is set in menu 6): every loser pays the banker,
    the banker pays every winner. Nothing else runs.
-2. **Pinned preferences** (menu 6): each "A always pays B" rule is applied in
-   the order it was added, for as much as A owes and B is owed.
-3. **Automatic matching**: whatever is left is matched biggest debt to biggest
-   credit, so the number of payments stays small.
+2. **Pinned preferences** (menu 6) and then the one-off requests from menu 5:
+   each "A pays B" rule is applied in order, for as much as A owes and B is owed.
+3. **Automatic matching**: whatever is left is split into as many self-contained
+   zero-sum groups as possible (a group of m people needs only m-1 payments),
+   and inside each group every debt goes to the smallest credit that covers it
+   in full, so most people send to just one person.
 
-The "Why" column on the sheet shows which pass produced each line.
+The "Why" column on the sheet shows which pass produced each line: "banker",
+"preference" (a saved pin), "requested" (asked for on this sheet) or "auto".
 
 ### Adjustments (menu 17)
 

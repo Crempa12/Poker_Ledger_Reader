@@ -14,8 +14,11 @@ bool saveSettingsCSV(const std::string& filename, const Settings& settings);
 
 // Order of operations:
 //   1. banker mode (if set): every loser pays the banker, the banker pays every winner.
-//   2. preferences, in file order: payer sends to payee as long as both have room.
-//   3. greedy largest-debt -> largest-credit matching for whatever is left.
+//   2. preferences, in order: payer sends to payee as long as both have room
+//      (saved pins first, then one-off requests made while building the sheet).
+//   3. fewest payments for whatever is left: the balances are split into as many
+//      zero-sum groups as possible (m people need m-1 payments), and inside each
+//      group every debt goes to the smallest credit that covers it in full.
 std::vector<SettlementEntry> calculate(const std::vector<PlayerStats>& players,
                                        const std::vector<PaymentPreference>& prefs,
                                        const std::string& bankerNormalized);

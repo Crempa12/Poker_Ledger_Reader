@@ -86,6 +86,7 @@ struct PaymentPreference {
     std::string payerNormalized;
     std::string payeeNormalized;
     std::string note;
+    bool oneOff = false;   // true = requested for one sheet only, never written to disk
 };
 
 struct SessionBalance {
