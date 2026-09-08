@@ -84,7 +84,8 @@ void printCumulativeChart(const PlayerStats& p) {
 
 namespace {
 
-const char* kSeriesVars[8] = {"--s1", "--s2", "--s3", "--s4", "--s5", "--s6", "--s7", "--s8"};
+const char* kSeriesVars[12] = {"--s1", "--s2", "--s3", "--s4", "--s5", "--s6", "--s7", "--s8", "--s9", "--s10", "--s11", "--s12"};
+const size_t kSeriesCount = 12;
 
 std::string fmtNum(double v) {
     std::ostringstream o;
@@ -113,10 +114,12 @@ void writeStyle(std::ostream& o) {
     o << R"(<style>
 :root{color-scheme:light dark;
  --surface:#f6f5f2;--card:#fcfcfb;--text:#0b0b0b;--text2:#52514e;--grid:#e3e2dd;--pos:#2a78d6;--neg:#e34948;
- --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#4a3aa7;--s8:#e34948;}
+ --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#4a3aa7;--s8:#e34948;
+ --s9:#0aa0c8;--s10:#b5651d;--s11:#7a7a7a;--s12:#c2185b;}
 @media (prefers-color-scheme:dark){:root{
  --surface:#141413;--card:#1f1f1e;--text:#ffffff;--text2:#c3c2b7;--grid:#3a3a37;--pos:#3987e5;--neg:#e66767;
- --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;}}
+ --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
+ --s9:#2bb5dc;--s10:#c9803f;--s11:#9a9a9a;--s12:#e0498a;}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--surface);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 60px}
@@ -140,6 +143,9 @@ svg text{fill:var(--text2);font-size:11px}svg text.lbl{fill:var(--text);font-siz
 #tip{position:fixed;display:none;pointer-events:none;background:var(--card);color:var(--text);border:1px solid var(--grid);
  border-radius:6px;padding:6px 9px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.15);z-index:10;max-width:260px}
 #tip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+details.card summary{cursor:pointer;font-size:17px;font-weight:600}
+details.card summary .meta{font-weight:400;font-size:12px;color:var(--text2);margin-left:8px}
+details.card svg{margin-top:10px}
 .tag{display:inline-block;font-size:11px;color:var(--text2);border:1px solid var(--grid);border-radius:4px;padding:0 5px}
 </style>
 )";
@@ -298,7 +304,7 @@ void writeCumulativeLines(std::ostream& o, const ReportInput& in) {
     for (const EndLabel& e : ends) {
         o << "<text x=" << L + plotW + 8 << " y=" << e.y + 4 << " class=lbl>" << escapeHTML(e.name) << "</text>";
     }
-    o << "<line id=cross x1=0 x2=0 y1=" << T << " y2=" << T + plotH << " style=\"stroke:var(--text2);stroke-dasharray:3 3;display:none\"/>";
+    o << "<line id=cross-cum x1=0 x2=0 y1=" << T << " y2=" << T + plotH << " style=\"stroke:var(--text2);stroke-dasharray:3 3;display:none\"/>";
     o << "</svg><div class=legend>";
     for (size_t s = 0; s < chosen.size(); ++s) {
         o << "<span><i style=\"background:var(" << kSeriesVars[s] << ")\"></i>" << escapeHTML(chosen[s]->displayName)
@@ -307,7 +313,7 @@ void writeCumulativeLines(std::ostream& o, const ReportInput& in) {
     o << "</div></div>\n";
 
     // Data for the hover layer.
-    o << "<script>var LC={w:" << W << ",l:" << L << ",n:" << n << ",step:" << (n > 1 ? plotW / (n - 1) : 0) << ",labels:[";
+    o << "<script>window.LCS=window.LCS||[];LCS.push({id:'cum',w:" << W << ",l:" << L << ",n:" << n << ",step:" << (n > 1 ? plotW / (n - 1) : 0) << ",labels:[";
     for (size_t i = 0; i < n; ++i) {
         o << (i ? "," : "") << "\"" << escapeHTML(formatLocalDate(in.games[i]->start)) << " · " << escapeHTML(in.games[i]->folder) << "\"";
     }
@@ -321,7 +327,7 @@ void writeCumulativeLines(std::ostream& o, const ReportInput& in) {
         }
         o << "]}";
     }
-    o << "]};</script>\n";
+    o << "]});</script>\\n";
 }
 
 // ---------- chart 3: per-game results for the focus player ----------
@@ -442,6 +448,151 @@ void writeGamesTable(std::ostream& o, const ReportInput& in) {
     o << "</table></div></div>\n";
 }
 
+// ---------- hand logs: playing style table ----------
+void writeStyleTable(std::ostream& o, const ReportInput& in) {
+    if (in.style.empty()) return;
+    auto pct = [](double v) { std::ostringstream s; s.setf(std::ios::fixed); s.precision(0); s << v << '%'; return s.str(); };
+    auto af = [](double v) { if (v >= 99) return std::string("inf"); std::ostringstream s; s.setf(std::ios::fixed); s.precision(1); s << v; return s.str(); };
+    o << "<div class=card><h2>Playing style (from hand logs)</h2><p class=note>"
+      << "VPIP = hands where money went in voluntarily preflop. PFR = raised preflop. Flop = hands that saw the flop. "
+      << "WTSD = flops that went to showdown. W$SD = showdowns won. Fold to raise = folded when facing a preflop raise. "
+      << "AF = postflop (bets + raises) / calls.</p><div class=scroll><table><tr><th class=l>Player</th><th>Games</th><th>Hands</th>"
+      << "<th>VPIP</th><th>PFR</th><th>Flop</th><th>WTSD</th><th>W$SD</th><th>Fold to raise</th><th>AF</th><th>Hands won</th>"
+      << "<th>Biggest pot</th><th>Bounties</th><th class=l>Style</th></tr>";
+    for (const handlog::StyleStats& r : in.style) {
+        bool isMe = r.normalizedName == in.meNormalized;
+        o << "<tr" << (isMe ? " class=me" : "") << "><td class=l>" << escapeHTML(r.displayName) << "</td><td>" << r.games << "</td><td>" << r.hands
+          << "</td><td>" << pct(r.vpipPct()) << "</td><td>" << pct(r.pfrPct()) << "</td><td>" << pct(r.sawFlopPct())
+          << "</td><td>" << pct(r.wtsdPct()) << "</td><td>" << pct(r.wsdPct()) << "</td><td>" << pct(r.foldToRaisePct())
+          << "</td><td>" << af(r.aggression()) << "</td><td>" << r.handsWon << "</td><td>" << money(r.biggestPotWon)
+          << "</td><td>" << (std::fabs(r.bountiesNet) < EPSILON ? "-" : moneySigned(r.bountiesNet))
+          << "</td><td class=l><span class=tag>" << escapeHTML(r.styleLabel()) << "</span></td></tr>";
+    }
+    o << "</table></div></div>\n";
+}
+
+// ---------- hand logs: running net through each night ----------
+void writeNightCharts(std::ostream& o, const ReportInput& in) {
+    if (in.nights.empty()) return;
+    o << "<h2 style=\"margin-top:24px\">Night by night (from hand logs)</h2>"
+      << "<p class=note style=\"color:var(--text2);font-size:12px\">Each line is a player's running result through the night, one step per hand. "
+      << "Hover to read every stack at a hand. Click a night to open or close it.</p>";
+
+    for (size_t k = 0; k < in.nights.size(); ++k) {
+        const NightChart& night = in.nights[k];
+        const handlog::HandLog& log = *night.log;
+        const size_t n = log.hands.size();
+        if (n == 0) continue;
+        std::string id = "night" + std::to_string(k);
+
+        // Up to 12 lines: the biggest movers.
+        std::vector<const handlog::NightSeries*> chosen;
+        for (const handlog::NightSeries& s : night.series) chosen.push_back(&s);
+        std::sort(chosen.begin(), chosen.end(), [](const handlog::NightSeries* a, const handlog::NightSeries* b) {
+            return std::fabs(a->finalNet) > std::fabs(b->finalNet);
+        });
+        if (chosen.size() > 12) chosen.resize(12);
+        std::sort(chosen.begin(), chosen.end(), [](const handlog::NightSeries* a, const handlog::NightSeries* b) {
+            return a->finalNet > b->finalNet;
+        });
+
+        double lo = 0, hi = 0;
+        for (const handlog::NightSeries* s : chosen) {
+            for (double v : s->netByHand) {
+                if (std::isnan(v)) continue;
+                lo = std::min(lo, v);
+                hi = std::max(hi, v);
+            }
+        }
+        if (hi - lo < 1) hi = lo + 1;
+        double step = niceStep(hi - lo, 5);
+        lo = std::floor(lo / step) * step;
+        hi = std::ceil(hi / step) * step;
+
+        const double W = 900, H = 380, L = 64, R = 130, T = 16, B = 44;
+        const double plotW = W - L - R, plotH = H - T - B;
+        auto X = [&](size_t i) { return n > 1 ? L + plotW * i / (n - 1) : L + plotW / 2; };
+        auto Y = [&](double v) { return T + plotH * (1 - (v - lo) / (hi - lo)); };
+
+        double hours = (log.start == NO_TIME || log.end == NO_TIME) ? 0.0 : (log.end - log.start) / 3600.0;
+        std::ostringstream hrs;
+        hrs.setf(std::ios::fixed); hrs.precision(1); hrs << hours;
+        auto nm = log.names.find(log.biggestPotWinner);
+        std::string winner = nm == log.names.end() ? log.biggestPotWinner : nm->second;
+
+        o << "<details class=card" << (k == 0 ? " open" : "") << "><summary>" << formatLocalDate(log.start)
+          << " <span class=meta>" << escapeHTML(log.folder) << " · " << n << " hands · " << hrs.str() << " h · "
+          << night.series.size() << " players · biggest pot " << money(log.biggestPot) << " (" << escapeHTML(winner)
+          << ", hand #" << log.biggestPotHand << ")</span></summary>";
+        o << "<svg id=" << id << " viewBox=\"0 0 " << W << " " << H << "\" role=img aria-label=\"Running result through the night\">";
+
+        for (double v = lo; v <= hi + step / 2; v += step) {
+            o << "<line class=" << (std::fabs(v) < step / 100 ? "zero" : "grid") << " x1=" << L << " x2=" << L + plotW
+              << " y1=" << fmtNum(Y(v)) << " y2=" << fmtNum(Y(v)) << " />";
+            o << "<text x=" << L - 8 << " y=" << fmtNum(Y(v) + 4) << " text-anchor=end>" << axisMoney(v) << "</text>";
+        }
+        size_t labelEvery = std::max<size_t>(1, (n + 7) / 8);
+        for (size_t i = 0; i < n; i += labelEvery) {
+            o << "<text x=" << fmtNum(X(i)) << " y=" << H - B + 18 << " text-anchor=middle>#" << log.hands[i].number
+              << " " << formatLocalDateTime(log.hands[i].start).substr(11) << "</text>";
+        }
+
+        struct EndLabel { double y; std::string name; };
+        std::vector<EndLabel> ends;
+        for (size_t s = 0; s < chosen.size(); ++s) {
+            std::string color = std::string("var(") + kSeriesVars[s % kSeriesCount] + ")";
+            std::ostringstream path;
+            bool started = false;
+            double lastY = 0;
+            bool any = false;
+            for (size_t i = 0; i < n; ++i) {
+                double v = chosen[s]->netByHand[i];
+                if (std::isnan(v)) { started = false; continue; }
+                path << (started ? "L" : "M") << fmtNum(X(i)) << " " << fmtNum(Y(v)) << " ";
+                started = true;
+                any = true;
+                lastY = Y(v);
+            }
+            if (!any) continue;
+            o << "<path d=\"" << path.str() << "\" fill=none stroke=\"" << color << "\" stroke-width=2 stroke-linejoin=\"round\" stroke-linecap=\"round\"/>";
+            ends.push_back({lastY, chosen[s]->displayName});
+        }
+        std::sort(ends.begin(), ends.end(), [](const EndLabel& a, const EndLabel& b) { return a.y < b.y; });
+        for (size_t j = 1; j < ends.size(); ++j) {
+            if (ends[j].y - ends[j - 1].y < 13) ends[j].y = ends[j - 1].y + 13;
+        }
+        for (const EndLabel& e : ends) {
+            o << "<text x=" << L + plotW + 8 << " y=" << fmtNum(e.y + 4) << " class=lbl>" << escapeHTML(e.name) << "</text>";
+        }
+        o << "<line id=cross-" << id << " x1=0 x2=0 y1=" << T << " y2=" << T + plotH
+          << " style=\"stroke:var(--text2);stroke-dasharray:3 3;display:none\"/>";
+        o << "</svg><div class=legend>";
+        for (size_t s = 0; s < chosen.size(); ++s) {
+            o << "<span><i style=\"background:var(" << kSeriesVars[s % kSeriesCount] << ")\"></i>" << escapeHTML(chosen[s]->displayName)
+              << " " << moneySigned(chosen[s]->finalNet) << "</span>";
+        }
+        o << "</div></details>\n";
+
+        o << "<script>window.LCS=window.LCS||[];LCS.push({id:'" << id << "',w:" << W << ",l:" << L << ",n:" << n
+          << ",step:" << (n > 1 ? plotW / (n - 1) : 0) << ",labels:[";
+        for (size_t i = 0; i < n; ++i) {
+            o << (i ? "," : "") << "\"Hand #" << log.hands[i].number << " · " << formatLocalDateTime(log.hands[i].start).substr(11)
+              << " · pot " << money(log.hands[i].pot) << "\"";
+        }
+        o << "],series:[";
+        for (size_t s = 0; s < chosen.size(); ++s) {
+            o << (s ? "," : "") << "{name:\"" << escapeHTML(chosen[s]->displayName) << "\",color:\"var(" << kSeriesVars[s % kSeriesCount] << ")\",vals:[";
+            for (size_t i = 0; i < n; ++i) {
+                o << (i ? "," : "");
+                double v = chosen[s]->netByHand[i];
+                if (std::isnan(v)) o << "null"; else o << fixed2(v);
+            }
+            o << "]}";
+        }
+        o << "]});</script>\n";
+    }
+}
+
 void writeScript(std::ostream& o) {
     o << R"(<div id=tip></div>
 <script>
@@ -453,10 +604,10 @@ function hide(){tip.style.display='none';}
 document.querySelectorAll('[data-tip]').forEach(function(el){
  el.addEventListener('mousemove',function(e){show(el.getAttribute('data-tip'),e.clientX,e.clientY);});
  el.addEventListener('mouseleave',hide);});
-var svg=document.getElementById('cum');
-if(svg&&window.LC&&LC.n>0){
- var cross=document.getElementById('cross');
- function money(v){var s=Math.abs(v).toFixed(2);return (v<0?'-$':'+$')+s;}
+function money(v){var s=Math.abs(v).toFixed(2);return (v<0?'-$':'+$')+s;}
+(window.LCS||[]).forEach(function(LC){
+ var svg=document.getElementById(LC.id);var cross=document.getElementById('cross-'+LC.id);
+ if(!svg||!cross||LC.n<1)return;
  svg.addEventListener('mousemove',function(e){
   var r=svg.getBoundingClientRect();var sx=(e.clientX-r.left)*LC.w/r.width;
   var i=LC.step>0?Math.round((sx-LC.l)/LC.step):0;if(i<0)i=0;if(i>LC.n-1)i=LC.n-1;
@@ -465,7 +616,7 @@ if(svg&&window.LC&&LC.n>0){
    .sort(function(a,b){return b.v-a.v;});
   show('<b>'+LC.labels[i]+'</b><br>'+rows.map(function(o){return '<i style="background:'+o.c+'"></i>'+o.n+' '+money(o.v);}).join('<br>'),e.clientX,e.clientY);});
  svg.addEventListener('mouseleave',function(){cross.style.display='none';hide();});
-}
+});
 })();
 </script>
 )";
@@ -512,6 +663,8 @@ bool writeHTMLReport(const std::string& path, const ReportInput& in) {
     writeLeaderboardTable(o, in);
     writeSettlementTable(o, in);
     writeGamesTable(o, in);
+    writeStyleTable(o, in);
+    writeNightCharts(o, in);
     o << "</div>";
     writeScript(o);
     o << "</body></html>\n";

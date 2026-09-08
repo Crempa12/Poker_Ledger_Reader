@@ -47,16 +47,17 @@ def load_adjustments():
         out.append({"date": r["date"], "player": norm(r["player_normalized"]), "amount": cents(r["amount"]), "folder": r["folder"], "note": r["note"]})
     return out
 
-# ---- games
+# ---- games (under Games/ when that folder exists, matching the app)
+DATA = os.path.join(ROOT, "Games") if os.path.isdir(os.path.join(ROOT, "Games")) else ROOT
 games = {}
-for path in sorted(glob.glob(os.path.join(ROOT, "**", "*.csv"), recursive=True)):
-    if "Saved_Data" in path: continue
+for path in sorted(glob.glob(os.path.join(DATA, "**", "*.csv"), recursive=True)):
+    if "Saved_Data" in path or os.path.basename(path).startswith("poker_now_log_"): continue
     with open(path) as f:
         rows = list(csv.DictReader(f))
     if not rows or "player_nickname" not in rows[0]: continue
     gid = os.path.splitext(os.path.basename(path))[0]
     if gid in games: continue
-    folder = os.path.relpath(os.path.dirname(path), ROOT)
+    folder = os.path.relpath(os.path.dirname(path), DATA)
     g = {"id": gid, "folder": folder, "rows": [], "start": None, "buyin": 0}
     for row in rows:
         if not norm(row["player_nickname"]): continue

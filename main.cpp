@@ -20,8 +20,9 @@
 #include <string>
 #include <vector>
 
-#include "console.hpp"
 #include "adjustments.hpp"
+#include "console.hpp"
+#include "handlog.hpp"
 #include "ledger.hpp"
 #include "models.hpp"
 #include "players.hpp"
@@ -39,6 +40,7 @@ struct App {
     fs::path root;
     fs::path savedDir;
     fs::path reportsDir;
+    fs::path dataDir;                                // where the ledgers and hand logs live
 
     std::vector<Game> games;
     std::vector<ledger::DuplicateNote> duplicates;
@@ -47,6 +49,7 @@ struct App {
     std::vector<Adjustment> adjustmentList;
     Settings settings;
     sessions::Balances balances;
+    std::map<std::string, handlog::HandLog> logs;    // hand logs by game id
 
     Scope scope;
     std::vector<const Game*> scoped;                 // games matching the scope
@@ -172,6 +175,183 @@ void mergeNames(App& app) {
     }
     players::saveMergeRulesCSV(app.file("merge_rules.csv").string(), app.rules);
     std::cout << "Merge rules saved.\n";
+}
+
+// ---------------------------------------------------------------- data loading
+
+// Games live under <root>/Games when that folder exists (the recommended layout),
+// otherwise anywhere under the root itself.
+void locateData(App& app) {
+    app.dataDir = fs::exists(app.root / "Games") ? app.root / "Games" : app.root;
+    app.savedDir = app.root / "Saved_Data";
+    app.reportsDir = app.savedDir / "reports";
+}
+
+// (Re)loads every ledger and hand log. Returns false if no ledgers were found.
+bool loadData(App& app) {
+    ledger::LoadResult loaded = ledger::loadAllGames(app.dataDir);
+    app.games = std::move(loaded.games);
+    app.duplicates = std::move(loaded.duplicates);
+    for (const std::string& m : loaded.messages) std::cout << m << '\n';
+    if (!app.duplicates.empty()) {
+        size_t skipped = 0;
+        for (const ledger::DuplicateNote& d : app.duplicates) if (d.skipped) ++skipped;
+        std::cout << "WARNING: " << app.duplicates.size() << " duplicate/overlapping ledger"
+                  << (app.duplicates.size() == 1 ? "" : "s") << " found (" << skipped
+                  << " skipped so nothing is counted twice). Menu 16 shows the details.\n";
+    }
+    std::vector<std::string> logMessages;
+    app.logs = handlog::loadAllLogs(app.dataDir, logMessages);
+    for (const std::string& m : logMessages) std::cout << m << '\n';
+    return !app.games.empty();
+}
+
+std::string logIdOf(const Game& g) {
+    return g.id.rfind("ledger_", 0) == 0 ? g.id.substr(7) : g.id;
+}
+
+// Hand logs for the games in scope, oldest first.
+std::vector<const handlog::HandLog*> logsInScope(const App& app) {
+    std::vector<const handlog::HandLog*> out;
+    for (const Game* g : app.scoped) {
+        auto it = app.logs.find(logIdOf(*g));
+        if (it != app.logs.end()) out.push_back(&it->second);
+    }
+    return out;
+}
+
+// ---------------------------------------------------------------- hand logs
+
+void handLogStats(App& app) {
+    std::vector<const handlog::HandLog*> logs = logsInScope(app);
+    std::cout << "\nHand-log statistics for " << app.scope.describe() << ": " << logs.size() << " of " << app.scoped.size()
+              << " games have a log.\n";
+    if (logs.size() < app.scoped.size()) {
+        std::cout << "Games without a log (download \"poker_now_log_<id>.csv\" from PokerNow and drop it next to the ledger):\n";
+        int shown = 0;
+        for (auto it = app.scoped.rbegin(); it != app.scoped.rend() && shown < 5; ++it) {
+            if (app.logs.count(logIdOf(**it))) continue;
+            std::cout << "  " << formatLocalDate((*it)->start) << "  " << (*it)->folder << "  " << (*it)->id << '\n';
+            ++shown;
+        }
+        if (app.scoped.size() - logs.size() > 5) std::cout << "  ...\n";
+    }
+    if (logs.empty()) return;
+    std::cout << '\n';
+    handlog::printGameSummaries(logs);
+    std::vector<handlog::StyleStats> style = handlog::computeStyle(logs, app.rules, app.stats);
+    handlog::printStyleTable(style);
+    if (console::askYesNo("Export this table to Saved_Data/style_stats.csv? (y/n): ") == 'y') {
+        fs::path out = app.file("style_stats.csv");
+        std::cout << (handlog::exportStyleCSV(out.string(), style) ? "Exported to " : "Could not write ") << out.string() << '\n';
+    }
+}
+
+// ---------------------------------------------------------------- import from Downloads
+
+fs::path downloadsDir() {
+#if defined(_WIN32)
+    const char* home = std::getenv("USERPROFILE");
+#else
+    const char* home = std::getenv("HOME");
+#endif
+    return home ? fs::path(home) / "Downloads" : fs::path();
+}
+
+// Strips browser copy suffixes: "ledger_pglX (1)" -> "ledger_pglX".
+std::string cleanStem(const std::string& stem) {
+    size_t sp = stem.find(' ');
+    return trim(sp == std::string::npos ? stem : stem.substr(0, sp));
+}
+
+void importDownloads(App& app) {
+    fs::path dl = downloadsDir();
+    std::error_code ec;
+    if (dl.empty() || !fs::exists(dl, ec)) { std::cout << "Could not find a Downloads folder.\n"; return; }
+
+    struct Incoming { fs::path ledger; fs::path log; };
+    std::map<std::string, Incoming> found;   // game id -> files
+    for (const fs::directory_entry& entry : fs::directory_iterator(dl, ec)) {
+        if (!entry.is_regular_file(ec) || lower(entry.path().extension().string()) != ".csv") continue;
+        std::string stem = cleanStem(entry.path().stem().string());
+        if (stem.rfind("ledger_", 0) == 0) found[stem.substr(7)].ledger = entry.path();
+        else if (stem.rfind("poker_now_log_", 0) == 0) found[stem.substr(14)].log = entry.path();
+    }
+    if (found.empty()) {
+        std::cout << "No ledger_*.csv or poker_now_log_*.csv files in " << dl.string() << ".\n";
+        return;
+    }
+
+    std::set<std::string> knownLedgers;
+    for (const Game& g : app.games) knownLedgers.insert(logIdOf(g));
+
+    std::cout << "\nPokerNow files in " << dl.string() << ":\n" << divider(90, '-');
+    int newFiles = 0;
+    for (const auto& pair : found) {
+        const std::string& id = pair.first;
+        const Incoming& f = pair.second;
+        std::cout << "  " << padRight(id, 30);
+        if (!f.ledger.empty()) {
+            bool known = knownLedgers.count(id) > 0;
+            std::cout << "ledger" << (known ? " (already loaded)" : "") << "  ";
+            if (!known) ++newFiles;
+        }
+        if (!f.log.empty()) {
+            bool known = app.logs.count(id) > 0;
+            std::cout << "hand log" << (known ? " (already loaded)" : "");
+            if (!known) ++newFiles;
+        }
+        std::cout << '\n';
+    }
+    std::cout << divider(90, '-');
+    if (newFiles == 0) { std::cout << "Everything there is already loaded. Nothing to do.\n"; return; }
+
+    std::vector<std::string> folders = ledger::listFolders(app.games);
+    std::string suggested = app.games.empty() ? "" : app.games.back().folder;
+    std::cout << "Where should the " << newFiles << " new file" << (newFiles == 1 ? "" : "s") << " go?\n";
+    for (size_t i = 0; i < folders.size(); ++i) {
+        std::cout << "  " << (i + 1) << ". " << folders[i] << (folders[i] == suggested ? "   (most recent)" : "") << '\n';
+    }
+    std::cout << "  " << (folders.size() + 1) << ". A new folder\n";
+    int pick = console::askMenuChoice("Folder number (0 to cancel): ", 0, static_cast<int>(folders.size()) + 1);
+    if (pick == 0) return;
+    std::string folder;
+    if (pick == static_cast<int>(folders.size()) + 1) {
+        folder = console::askLine("New folder name (e.g. \"Fall 2026\"): ");
+        if (folder.empty()) return;
+    } else {
+        folder = folders[pick - 1];
+    }
+    fs::path dest = folder == "(root)" ? app.dataDir : app.dataDir / folder;
+    fs::create_directories(dest, ec);
+
+    int moved = 0;
+    auto place = [&](const fs::path& src, const std::string& id, bool known) {
+        if (src.empty()) return;
+        if (known) { std::cout << "  Left in Downloads (already loaded): " << src.filename().string() << '\n'; return; }
+        fs::path target = dest / (cleanStem(src.stem().string()) + ".csv");
+        if (fs::exists(target, ec)) { std::cout << "  Already in " << folder << ": " << target.filename().string() << '\n'; return; }
+        fs::rename(src, target, ec);
+        if (ec) {   // different drive: copy then delete
+            ec.clear();
+            fs::copy_file(src, target, ec);
+            if (!ec) fs::remove(src, ec);
+        }
+        if (ec) { std::cout << "  Could not move " << src.string() << ": " << ec.message() << '\n'; ec.clear(); return; }
+        std::cout << "  Moved " << src.filename().string() << " -> " << folder << '\n';
+        ++moved;
+        (void)id;
+    };
+    for (const auto& pair : found) {
+        place(pair.second.ledger, pair.first, knownLedgers.count(pair.first) > 0);
+        place(pair.second.log, pair.first, app.logs.count(pair.first) > 0);
+    }
+    if (moved == 0) return;
+
+    std::cout << "Reloading...\n";
+    if (!loadData(app)) { std::cout << "No ledgers found after the import.\n"; return; }
+    app.refresh();
+    std::cout << "Now " << app.games.size() << " games and " << app.logs.size() << " hand logs loaded.\n";
 }
 
 // ---------------------------------------------------------------- reports
@@ -355,6 +535,14 @@ fs::path writeReport(App& app, fs::path outPath) {
     in.scope = app.scope;
     in.meNormalized = app.settings.me;
     in.focusNormalized = app.focusPlayer();
+    std::vector<const handlog::HandLog*> logs = logsInScope(app);
+    in.style = handlog::computeStyle(logs, app.rules, app.stats);
+    for (auto it = logs.rbegin(); it != logs.rend(); ++it) {
+        report::NightChart night;
+        night.log = *it;
+        night.series = handlog::nightSeries(**it, app.rules, app.stats);
+        in.nights.push_back(std::move(night));
+    }
     if (!report::writeHTMLReport(outPath.string(), in)) {
         std::cout << "Could not write " << outPath.string() << '\n';
         return {};
@@ -385,7 +573,8 @@ void printMenu(const App& app) {
     std::cout << '\n' << divider(72) << "POKER LEDGER\n" << divider(72)
               << "Scope: " << app.scope.describe() << "  |  " << app.scoped.size() << " games, " << app.stats.size()
               << " players, " << formatLocalDate(first) << " to " << formatLocalDate(last) << '\n'
-              << "Me: " << meName << "  |  Banker: " << banker << "  |  Pinned preferences: " << app.prefs.size() << '\n'
+              << "Me: " << meName << "  |  Banker: " << banker << "  |  Pinned preferences: " << app.prefs.size()
+              << "  |  Hand logs: " << logsInScope(app).size() << "/" << app.scoped.size() << '\n'
               << divider(72, '-')
               << "DATA\n"
               << "  1. Change scope (folder / date range)\n"
@@ -407,6 +596,9 @@ void printMenu(const App& app) {
               << " 15. Terminal charts\n"
               << " 16. Check for duplicate ledgers" << (app.duplicates.empty() ? "" : "  (!)") << "\n"
               << " 17. Adjustments: forgive a debt or correct a total (" << app.adjustmentList.size() << " saved)\n"
+              << "HAND LOGS\n"
+              << " 18. Playing style stats from hand logs (VPIP, aggression, showdowns)\n"
+              << " 19. Import new PokerNow files from Downloads\n"
               << "  0. Save and exit\n" << divider(72);
 }
 
@@ -414,7 +606,7 @@ void runMenu(App& app) {
     bool running = true;
     while (running) {
         printMenu(app);
-        int choice = console::askMenuChoice("Choose an option: ", 0, 17);
+        int choice = console::askMenuChoice("Choose an option: ", 0, 19);
         std::vector<PlayerStats> byNet = players::sortedByNet(app.stats);
 
         switch (choice) {
@@ -521,6 +713,9 @@ void runMenu(App& app) {
                 }
                 break;
 
+            case 18: handLogStats(app); break;
+            case 19: importDownloads(app); break;
+
             case 0:
                 app.saveAll();
                 std::cout << "Saved merge rules, preferences, settings and session balances. Bye.\n";
@@ -564,24 +759,11 @@ int main(int argc, char** argv) {
         else { std::cerr << "Unknown option " << arg << "\n"; printUsage(); return 1; }
     }
 
-    app.savedDir = app.root / "Saved_Data";
-    app.reportsDir = app.savedDir / "reports";
+    locateData(app);
     std::error_code ec;
     fs::create_directories(app.savedDir, ec);
-
-    ledger::LoadResult loaded = ledger::loadAllGames(app.root);
-    app.games = std::move(loaded.games);
-    app.duplicates = std::move(loaded.duplicates);
-    for (const std::string& m : loaded.messages) std::cout << m << '\n';
-    if (!app.duplicates.empty()) {
-        size_t skipped = 0;
-        for (const ledger::DuplicateNote& d : app.duplicates) if (d.skipped) ++skipped;
-        std::cout << "WARNING: " << app.duplicates.size() << " duplicate/overlapping ledger"
-                  << (app.duplicates.size() == 1 ? "" : "s") << " found (" << skipped
-                  << " skipped so nothing is counted twice). Menu 16 shows the details.\n";
-    }
-    if (app.games.empty()) {
-        std::cerr << "No ledger CSV files found under " << app.root.string() << '\n';
+    if (!loadData(app)) {
+        std::cerr << "No ledger CSV files found under " << app.dataDir.string() << '\n';
         return 1;
     }
 
@@ -599,7 +781,7 @@ int main(int argc, char** argv) {
 
     app.refresh();
     std::cout << "Loaded " << app.games.size() << " games from " << ledger::listFolders(app.games).size()
-              << " folders under " << app.root.string() << '\n';
+              << " folders under " << app.dataDir.string() << ", " << app.logs.size() << " hand log" << (app.logs.size() == 1 ? "" : "s") << '\n';
 
     if (reportOnly) {
         players::printLeaderboard(players::sortedByNet(app.stats));

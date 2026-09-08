@@ -2,59 +2,94 @@
 
 A C++20 console app that reads every poker-night ledger CSV under this folder,
 tells you who is up and who is down, works out who should pay whom, remembers
-what has been paid, and draws charts of results over time.
+what has been paid, draws charts of results over time, and (when you also save
+the PokerNow hand log) shows how everyone actually plays.
+
+## After a game night (the whole routine)
+
+1. On PokerNow, open the finished game and download both files:
+   - the **ledger** (`ledger_<gameId>.csv`), and
+   - the **log** (`poker_now_log_<gameId>.csv`, "Download log" on the game page).
+   Leave the file names as they are. Both land in your Downloads folder.
+2. Run the app and choose **19. Import new PokerNow files from Downloads**. It
+   lists what it found, asks which folder under `Games/` to file them in
+   (the most recent folder is suggested), moves them there, and reloads.
+3. Choose **5** to build the settlement sheet for that game, **14** for the HTML
+   report, **18** for the playing-style table.
+
+That is it. Nothing else needs to be renamed or copied by hand.
+
+## Where each file goes
+
+```
+Poker_Ledger_Reader/
+  Games/                            all game data, one sub-folder per period
+    Post Summer 2026/
+      ledger_pglMu8P6Y6CHdreUuqi1LEw6F.csv          the ledger (who bought in / cashed out)
+      poker_now_log_pglMu8P6Y6CHdreUuqi1LEw6F.csv   the hand log for the same game (optional)
+      ...
+    Fall 2026/                      make a new folder whenever you like (menu 19 can do it)
+  Saved_Data/                       everything the app remembers between runs
+    merge_rules.csv                 alias -> canonical name
+    payment_preferences.csv         payer -> payee pins
+    settings.csv                    who "me" is, who the banker is
+    adjustments.csv                 forgiven debts and manual corrections
+    session_balances.csv            saved settlements and what has been paid
+    player_summary.csv              export from menu 12
+    settlements.csv                 export from menu 13
+    style_stats.csv                 export from menu 18
+    reports/                        HTML reports from menu 14
+  main.cpp                          menu and program flow
+  src/
+    util.*                          CSV parsing, name normalizing, money and date formatting
+    models.hpp                      the data structures every module shares
+    console.*                       input prompts
+    ledger.*                        finds and parses ledger CSVs (recursively)
+    handlog.*                       finds and parses PokerNow hand logs, playing-style stats
+    players.*                       per-player stats, merge rules, leaderboard, history
+    settlement.*                    who-pays-whom, pinned preferences, banker mode
+    sessions.*                      saved settlement sessions and payments against them
+    adjustments.*                   forgiven debts and manual corrections
+    report.*                        terminal charts and the HTML/SVG report
+  tools/validate.py                 recomputes every number from the raw CSVs
+```
+
+Rules of thumb:
+
+- A ledger and its log are paired by the game id in the file name, so keep the
+  names PokerNow gives them. They should sit in the same folder.
+- Folder names are yours to choose. The app walks every sub-folder of `Games/`,
+  so a folder per season, month or group all work. The folder name is what the
+  scope menu shows.
+- Any `.csv` whose header contains `player_nickname` is treated as a ledger;
+  any `poker_now_log_*.csv` is treated as a hand log. Other files are ignored.
+- Browser copies such as `ledger_x (1).csv` are recognised; the import strips
+  the suffix and the duplicate check keeps the fuller export.
 
 ## Building and running
 
-Open the folder in CLion and run the `Poker_Ledger_Reader` target as before.
-The CMake file passes the project folder in as the default data root, so the
-program finds the ledger folders no matter where CLion puts the executable.
+Open the folder in CLion and run the `Poker_Ledger_Reader` target. The CMake
+file passes the project folder in as the default root, so the program finds
+`Games/` and `Saved_Data/` no matter where CLion puts the executable.
 
 From a terminal (no CMake needed):
 
 ```bash
-clang++ -std=c++20 -Isrc -DPLR_PROJECT_ROOT='"/Users/cameron/CLionProjects/Poker_Ledger_Reader"' main.cpp src/*.cpp -o plr && ./plr
+g++ -std=c++20 -Isrc -DPLR_PROJECT_ROOT='"C:/Users/Camer/CLionProjects/Poker_Ledger_Reader"' main.cpp src/*.cpp -o plr && ./plr
 ```
 
 Command-line options:
 
 | Flag | What it does |
 |---|---|
-| `--root PATH` | Use a different folder as the data root |
-| `--folder NAME` | Start scoped to one sub-folder (e.g. `data_folder_May_1-7`) |
+| `--root PATH` | Use a different root (the folder that contains `Games/` and `Saved_Data/`) |
+| `--folder NAME` | Start scoped to one sub-folder of `Games/` |
 | `--from YYYY-MM-DD` / `--to YYYY-MM-DD` | Start scoped to a date range |
 | `--report [file.html]` | Print the leaderboard, write the HTML report, and exit |
 | `--help` | Show usage |
 
-## Folder layout
-
-```
-Poker_Ledger_Reader/
-  main.cpp                 menu and program flow
-  src/
-    util.*                 CSV parsing, name normalizing, money and date formatting
-    models.hpp             the data structures every module shares
-    console.*              input prompts
-    ledger.*               finds and parses ledger CSVs (recursively)
-    players.*              per-player stats, merge rules, leaderboard, history
-    settlement.*           who-pays-whom, pinned preferences, banker mode
-    sessions.*             saved settlement sessions and payments against them
-    report.*               terminal charts and the HTML/SVG report
-  data_folder_*/ SFFS/     your ledger CSVs (any folder name works, any depth)
-  Saved_Data/              everything the app remembers between runs
-    merge_rules.csv        alias -> canonical name
-    payment_preferences.csv  payer -> payee pins
-    settings.csv           who "me" is, who the banker is
-    adjustments.csv        forgiven debts and manual corrections
-    session_balances.csv   saved settlements and what has been paid
-    player_summary.csv     export from menu 12
-    settlements.csv        export from menu 13
-    reports/               HTML reports from menu 14
-```
-
-Any `.csv` whose header contains `player_nickname` is treated as a ledger. The
-app walks every sub-folder, so you can keep organising ledgers by week, month or
-group.
+If there is no `Games/` folder, the root itself is searched, so an older layout
+with ledger folders directly under the project still works.
 
 ### Duplicate ledgers
 
@@ -69,7 +104,7 @@ warning is printed if anything matches. Menu 16 shows the details. Three cases:
 
 Seats that have no start time and no money moved (a buy-in that was requested
 but never played) are ignored, and a ledger made only of such rows is not a
-game.
+game. Two logs for the same game keep the one with more hands.
 
 ## The menu
 
@@ -94,14 +129,18 @@ EXPORT & CHARTS
  15. Terminal charts
  16. Check for duplicate ledgers
  17. Adjustments: forgive a debt or correct a total
+HAND LOGS
+ 18. Playing style stats from hand logs (VPIP, aggression, showdowns)
+ 19. Import new PokerNow files from Downloads
   0. Save and exit
 ```
 
-**Scope** is the key idea. Every view (leaderboard, settlement, charts, exports)
-is computed for the current scope, which is a folder choice plus an optional
-date range. "All folders, no dates" means every game you have ever loaded;
-"folder data_folder_May_1-7" is one week; "last 30 days" is a rolling window.
-The header of the menu always shows the scope in effect.
+**Scope** is the key idea. Every view (leaderboard, settlement, charts, exports,
+style stats) is computed for the current scope, which is a folder choice plus
+an optional date range. "All folders, no dates" means every game you have ever
+loaded; a folder is one period; "last 30 days" is a rolling window. The header
+of the menu always shows the scope in effect and how many games in it have a
+hand log.
 
 ### Settlement rules
 
@@ -154,11 +193,43 @@ a forgiven debt removes the other half too.
 
 ### Sessions and payments
 
-Menu 7 freezes the current sheet under a session ID (it suggests the folder
-name or date range). Menus 8 to 11 then show what is still owed, let you record
+Menu 7 freezes the current sheet under a session ID (it suggests the game or
+folder name). Menus 8 to 11 then show what is still owed, let you record
 partial or full payments, and roll unpaid amounts up per pair of people across
-every session. The file format is the same as before, so your existing
-`session_balances.csv` loads unchanged.
+every session.
+
+### Hand logs (menus 18 and 19)
+
+The PokerNow log records every hand of a night: who was seated with what stack,
+every fold, call, bet and raise, the board, the cards shown at showdown, and
+who collected the pot. Menu 18 turns the logs in scope into one row per player:
+
+| Column | Meaning |
+|---|---|
+| Hands | hands the player was dealt into |
+| VPIP | % of hands where they put money in voluntarily preflop (blinds do not count) |
+| PFR | % of hands they raised preflop |
+| Flop | % of hands where they saw the flop |
+| WTSD | of the flops they saw, % that went to showdown |
+| W$SD | % of showdowns they won |
+| FoldR | % of the time they folded when facing a preflop raise |
+| AF | postflop aggression: (bets + raises) / calls |
+| Won | hands where they collected the pot |
+| Big pot | the biggest pot they collected |
+| Style | a label from VPIP and AF: tight/loose, aggressive/passive (needs 30+ hands) |
+
+Nicknames are folded with the same merge rules as the ledgers, so a person who
+changes their PokerNow name stays one row. The 7-2 bounty payments PokerNow
+logs after a hand are counted in each player's net (they move real chips) and
+are also totalled separately in the CSV export and the HTML report.
+
+Menu 18 also lists any games in scope that have no log yet, so you can see what
+to download. Menu 19 files new downloads for you (see the routine at the top).
+
+The app checks its own reading of every log: each hand must sum to zero and
+every player's stack at the next hand must equal the previous stack plus the
+result of the hand (top-ups excepted). A log that fails this check is marked
+"did not reconcile" in the summary line so you know the numbers are suspect.
 
 ### Charts
 
@@ -171,6 +242,10 @@ for "me" in the terminal. Menu 14 writes a self-contained HTML file with:
   crosshair that reads every line at that game)
 - game-by-game bars for you (or the top earner if "me" is not set)
 - the full leaderboard, the settlement sheet, and a table of every game in scope
+- the playing-style table for every log in scope
+- **night by night**: one collapsible chart per game that has a hand log, with
+  each player's running result through the night, hand by hand. The newest
+  night starts open; hover to read every stack at any hand.
 
 It works offline, follows your light/dark system setting, and can be opened
 from the app straight after it is written.
@@ -192,8 +267,9 @@ It ends with `ALL CHECKS PASSED` or a list of every mismatch.
 
 ## Name merging
 
-Names are still matched on letters only, lower-cased, so "Yaden ):" and
-"yaden" are the same person automatically. Menu 4 first shows nicknames that
-share the same ledger account ID (the `player_id` column) and lets you merge
-them with one keypress, then lets you merge any two names by hand. Rules are
-saved to `merge_rules.csv` and applied every time the app starts.
+Names are matched on letters only, lower-cased, so "Yaden ):" and "yaden" are
+the same person automatically. Menu 4 first shows nicknames that share the same
+ledger account ID (the `player_id` column) and lets you merge them with one
+keypress, then lets you merge any two names by hand. Rules are saved to
+`merge_rules.csv` and applied every time the app starts, to ledgers and hand
+logs alike.
