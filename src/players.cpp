@@ -1,6 +1,7 @@
 #include "players.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -19,6 +20,10 @@ std::string resolveCanonical(const MergeRules& rules, const std::string& key) {
         current = it->second;
     }
     return current;
+}
+
+std::string personOf(const MergeRules& rules, const LedgerRow& row) {
+    return resolveCanonical(rules, row.owner.empty() ? normalizeName(row.nickname) : row.owner);
 }
 
 void flattenMergeRules(MergeRules& rules) {
@@ -87,15 +92,19 @@ std::map<std::string, PlayerStats> aggregate(const std::vector<const Game*>& gam
         std::map<std::string, GameResult> perGame;
 
         for (const LedgerRow& row : game->rows) {
-            std::string norm = normalizeName(row.nickname);
+            std::string norm = row.owner.empty() ? normalizeName(row.nickname) : row.owner;
             if (norm.empty()) continue;
             std::string canonical = resolveCanonical(rules, norm);
 
             PlayerStats& p = stats[canonical];
             p.normalizedName = canonical;
             p.aliases.insert(norm);
-            if (!row.playerId.empty()) p.playerIds.insert(row.playerId);
-            nicknameCounts[canonical][row.nickname]++;
+            // A reassigned seat was played under someone else's name or account, so
+            // neither that nickname nor that account says anything about this player.
+            if (row.owner.empty()) {
+                if (!row.playerId.empty()) p.playerIds.insert(row.playerId);
+                nicknameCounts[canonical][row.nickname]++;
+            }
             p.buyIns++;
             p.totalNet += row.net;
 
@@ -152,7 +161,11 @@ std::map<std::string, PlayerStats> aggregate(const std::vector<const Game*>& gam
                 bestCount = nc.second;
             }
         }
-        p.displayName = best.empty() ? pair.first : best;
+        if (best.empty()) {   // only reassigned seats or adjustments in scope: no nickname of their own to show
+            best = pair.first;
+            if (!best.empty()) best[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(best[0])));
+        }
+        p.displayName = best;
         std::sort(p.history.begin(), p.history.end(), [](const GameResult& a, const GameResult& b) {
             if (a.date != b.date) return a.date < b.date;
             return a.gameId < b.gameId;
@@ -186,7 +199,7 @@ std::vector<MergeSuggestion> suggestMergesByPlayerId(const std::vector<Game>& ga
     std::map<std::string, std::set<std::string>> byId;
     for (const Game& g : games) {
         for (const LedgerRow& row : g.rows) {
-            if (row.playerId.empty()) continue;
+            if (row.playerId.empty() || !row.owner.empty()) continue;
             std::string norm = normalizeName(row.nickname);
             if (norm.empty()) continue;
             byId[row.playerId].insert(resolveCanonical(rules, norm));

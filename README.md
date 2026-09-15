@@ -34,6 +34,7 @@ Poker_Ledger_Reader/
     payment_preferences.csv         payer -> payee pins
     settings.csv                    who "me" is, who the banker is
     adjustments.csv                 forgiven debts and manual corrections
+    seat_owners.csv                 buy-ins that belonged to someone other than the name on them
     session_balances.csv            saved settlements and what has been paid
     player_summary.csv              export from menu 12
     settlements.csv                 export from menu 13
@@ -50,6 +51,7 @@ Poker_Ledger_Reader/
     settlement.*                    who-pays-whom, pinned preferences, banker mode
     sessions.*                      saved settlement sessions and payments against them
     adjustments.*                   forgiven debts and manual corrections
+    seats.*                         seats bought on someone else's account or name
     report.*                        terminal charts and the HTML/SVG report
   tools/validate.py                 recomputes every number from the raw CSVs
 ```
@@ -114,6 +116,7 @@ DATA
   2. Leaderboard: everyone's net wins and losses
   3. Player detail: game-by-game history and running total
   4. Merge duplicate player names
+ 20. Shared accounts: fix buy-ins made under someone else's name
 SETTLEMENT
   5. Calculate settlement sheet (pick a game or folder, then who sends to whom)
   6. Payment preferences (pinned payer -> payee, banker, me)
@@ -190,6 +193,37 @@ view, and only inside date ranges that include its date. Adjustments show up in
 a player's history and running total, in an "Adjust" column on the leaderboard
 and report, and are saved in `Saved_Data/adjustments.csv`. Removing one half of
 a forgiven debt removes the other half too.
+
+### Shared accounts (menu 20)
+
+PokerNow credits every seat to the name and account it was bought on. When a
+friend plays on someone else's account (their phone, their laptop) or buys in
+under someone else's name, the ledger puts that result on the wrong person, and
+merging the names (menu 4) would only make it worse by folding the friend into
+the account owner for good.
+
+Menu 20 fixes it one seat at a time instead of one name at a time. Each seat
+(one row of one ledger) can be handed to the person whose money it really was;
+the leaderboard, player history, settlement sheets, HTML report and hand-log
+stats all count it for them. The ledger CSVs are never edited.
+
+The app flags seats that look shared, and warns at startup until they are checked:
+
+- the account is normally someone else's (one person has at least 3 seats and
+  more than half of all seats on it), or
+- the same person is sitting on two different accounts at the same time.
+
+For each flagged seat (seats with the same name on the same account in the same
+game are asked about together) choose: the name on the seat is right, the
+account's usual owner, someone else, or skip. "The name is right" is remembered
+too, so the seat stops being flagged. Option 2 reassigns any seat in any game,
+flagged or not; option 3 lists every saved choice and undoes one.
+
+Choices live in `Saved_Data/seat_owners.csv`, keyed by ledger id, account,
+sit-down time and nickname. If one seat mixed two people's money (a "first 20 /
+last 30" seat), give it to one of them here, then move the other person's share
+across with "forgive a debt" in menu 17 (it adds an amount to one player's
+total and takes the same amount off another's).
 
 ### Sessions and payments
 
@@ -270,6 +304,8 @@ It ends with `ALL CHECKS PASSED` or a list of every mismatch.
 Names are matched on letters only, lower-cased, so "Yaden ):" and "yaden" are
 the same person automatically. Menu 4 first shows nicknames that share the same
 ledger account ID (the `player_id` column) and lets you merge them with one
-keypress, then lets you merge any two names by hand. Rules are saved to
+keypress, then lets you merge any two names by hand. Only merge names that
+really are one person: if a friend played on someone's account, leave the names
+separate and use menu 20. Rules are saved to
 `merge_rules.csv` and applied every time the app starts, to ledgers and hand
 logs alike.

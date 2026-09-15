@@ -15,6 +15,7 @@ add_executable(Poker_Ledger_Reader
         src/report.cpp
         src/adjustments.cpp
         src/handlog.cpp
+        src/seats.cpp
 )
 
 target_include_directories(Poker_Ledger_Reader PRIVATE src)

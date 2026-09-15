@@ -47,15 +47,23 @@ def load_adjustments():
         out.append({"date": r["date"], "player": norm(r["player_normalized"]), "amount": cents(r["amount"]), "folder": r["folder"], "note": r["note"]})
     return out
 
+# ---- seat owners (optional file): buy-ins that belonged to someone other than the nickname
+owners = {}
+_seats = os.path.join(ROOT, "Saved_Data", "seat_owners.csv")
+if os.path.exists(_seats):
+    for r in csv.DictReader(open(_seats, encoding="utf-8")):
+        owners[(r["ledger_id"], r["player_id"], parse_iso(r["session_start_at"]), norm(r["nickname"]))] = norm(r["owner_normalized"])
+
 # ---- games (under Games/ when that folder exists, matching the app)
 DATA = os.path.join(ROOT, "Games") if os.path.isdir(os.path.join(ROOT, "Games")) else ROOT
 games = {}
 for path in sorted(glob.glob(os.path.join(DATA, "**", "*.csv"), recursive=True)):
     if "Saved_Data" in path or os.path.basename(path).startswith("poker_now_log_"): continue
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     if not rows or "player_nickname" not in rows[0]: continue
     gid = os.path.splitext(os.path.basename(path))[0]
+    ledger_id = re.sub(r" \(\d+\)$", "", gid)   # the app's id: browser copy suffix removed
     if gid in games: continue
     folder = os.path.relpath(os.path.dirname(path), DATA)
     g = {"id": gid, "folder": folder, "rows": [], "start": None, "buyin": 0}
@@ -64,7 +72,9 @@ for path in sorted(glob.glob(os.path.join(DATA, "**", "*.csv"), recursive=True))
         st = parse_iso(row["session_start_at"])
         net = int(row["net"]); bi = int(row["buy_in"])
         if st is None and net == 0: continue   # never-played seat, same rule as the app
-        g["rows"].append((row["player_nickname"], row["player_id"], st, bi, net))
+        owner = owners.get((ledger_id, row["player_id"], st, norm(row["player_nickname"])))
+        if owner is not None and canon(owner) == canon(norm(row["player_nickname"])): owner = None
+        g["rows"].append((row["player_nickname"], row["player_id"], st, bi, net, owner))
         g["buyin"] += bi
         if st is not None and (g["start"] is None or st < g["start"]): g["start"] = st
     if g["rows"]: games[gid] = g
@@ -83,10 +93,11 @@ def aggregate(scope_games, adjs=()):
     P = {}
     for g in scope_games:
         per = collections.defaultdict(lambda: [0, 0])
-        for nick, pid, st, bi, net in g["rows"]:
-            c = canon(norm(nick))
+        for nick, pid, st, bi, net, owner in g["rows"]:
+            c = canon(owner or norm(nick))
             p = P.setdefault(c, {"net": 0, "buyins": 0, "games": 0, "won": 0, "lost": 0, "best": None, "worst": None, "nicks": collections.Counter(), "hist": []})
-            p["net"] += net; p["buyins"] += 1; p["nicks"][nick] += 1
+            p["net"] += net; p["buyins"] += 1
+            if owner is None: p["nicks"][nick] += 1
             per[c][0] += net; per[c][1] += 1
         for c, (net, b) in per.items():
             p = P[c]; p["games"] += 1
@@ -100,10 +111,10 @@ def aggregate(scope_games, adjs=()):
         p = P.setdefault(c, {"net": 0, "buyins": 0, "games": 0, "won": 0, "lost": 0, "best": None, "worst": None, "nicks": collections.Counter(), "hist": [], "adj": 0})
         p.setdefault("adj", 0); p["adj"] += a["amount"]; p["net"] += a["amount"]
         p["hist"].append((int(datetime.datetime.strptime(a["date"], "%Y-%m-%d").timestamp()), "adjustment", a["amount"], 0))
-    for p in P.values():
+    for c, p in P.items():
         p.setdefault("adj", 0)
-        best = min(p["nicks"].items(), key=lambda kv: (-kv[1], len(kv[0]), kv[0])) if p["nicks"] else (None, 0)
-        p["display"] = best[0]
+        # No nickname of their own in scope (only reassigned seats): the app capitalizes the normalized name.
+        p["display"] = min(p["nicks"].items(), key=lambda kv: (-kv[1], len(kv[0]), kv[0]))[0] if p["nicks"] else c[:1].upper() + c[1:]
         p["hist"].sort(key=lambda h: (-1 if h[0] is None else h[0], h[1]))
     assert sum(p["net"] for p in P.values()) == sum(a["amount"] for a in adjs), "scope does not sum to adjustments"
     return P

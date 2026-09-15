@@ -17,6 +17,21 @@ struct LedgerRow {
     double buyOut = 0.0;
     double stack = 0.0;
     double net = 0.0;
+    // Normalized name of the person whose money this seat really was, when it
+    // was bought under someone else's account or name (Saved_Data/seat_owners.csv).
+    // Empty = the nickname says who it was.
+    std::string owner;
+    bool ownerReviewed = false;   // someone checked this seat in menu 20 (even if the nickname was right)
+};
+
+// "This buy-in belonged to <owner>", pinned to one sit-down in one ledger.
+struct SeatOwner {
+    std::string ledgerId;
+    std::string playerId;
+    std::int64_t start = util::NO_TIME;
+    std::string nickname;   // as it appears in the ledger, for matching and for reading the file
+    std::string owner;      // normalized
+    std::string note;
 };
 
 // One ledger file = one game night.

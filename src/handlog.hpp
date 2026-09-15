@@ -55,6 +55,7 @@ struct HandLog {
     std::string folder;
     std::vector<Hand> hands;                    // chronological
     std::map<std::string, std::string> names;   // playerId -> last nickname seen
+    std::map<std::string, std::string> owners;  // playerId -> real owner when the ledger seats were reassigned (menu 20)
     std::int64_t start = util::NO_TIME;
     std::int64_t end = util::NO_TIME;
     double biggestPot = 0.0;

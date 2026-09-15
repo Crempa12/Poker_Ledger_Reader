@@ -421,6 +421,14 @@ Identity identify(const std::string& nickname,
     id.display = it != ledgerStats.end() ? it->second.displayName : nickname;
     return id;
 }
+
+// The name a log's account is counted under: its reassigned owner, else its nickname.
+std::string nameIn(const HandLog& log, const std::string& pid) {
+    auto o = log.owners.find(pid);
+    if (o != log.owners.end()) return o->second;
+    auto n = log.names.find(pid);
+    return n == log.names.end() ? pid : n->second;
+}
 }  // namespace
 
 std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
@@ -434,8 +442,7 @@ std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
         auto row = [&](const std::string& pid) -> StyleStats& {
             auto c = canon.find(pid);
             if (c == canon.end()) {
-                auto n = log->names.find(pid);
-                Identity id = identify(n == log->names.end() ? pid : n->second, rules, ledgerStats);
+                Identity id = identify(nameIn(*log, pid), rules, ledgerStats);
                 c = canon.emplace(pid, id.canonical).first;
                 StyleStats& s = rows[id.canonical];
                 if (s.normalizedName.empty()) { s.normalizedName = id.canonical; s.displayName = id.display; }
@@ -530,8 +537,7 @@ std::vector<NightSeries> nightSeries(const HandLog& log,
                 index[pid] = series.size();
                 NightSeries s;
                 s.playerId = pid;
-                auto nm = log.names.find(pid);
-                s.displayName = identify(nm == log.names.end() ? pid : nm->second, rules, ledgerStats).display;
+                s.displayName = identify(nameIn(log, pid), rules, ledgerStats).display;
                 s.netByHand.assign(n, std::nan(""));
                 series.push_back(s);
             }
