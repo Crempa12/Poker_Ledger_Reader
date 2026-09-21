@@ -250,6 +250,22 @@ std::vector<SettlementEntry> calculate(const std::vector<PlayerStats>& players,
         if (pair.second.amount < -EPSILON || pair.second.amount > EPSILON) remaining.push_back(&pair.second);
     }
     for (std::vector<Balance*>& group : splitIntoGroups(remaining)) settleGroup(group, pay);
+
+    // Reconciliation. settleGroup gives up with `break` when no credit is left to pay a
+    // debt into, which happens whenever the balances handed to it do not sum to zero -
+    // a one-sided correction from menu 17 is enough to cause it. Without this check the
+    // abandoned money simply never appears on the sheet and nobody is told.
+    double unpaidDebt = 0.0, unpaidCredit = 0.0;
+    for (const auto& pair : balances) {
+        if (pair.second.amount < -EPSILON) unpaidDebt += -pair.second.amount;
+        else if (pair.second.amount > EPSILON) unpaidCredit += pair.second.amount;
+    }
+    if (unpaidDebt > EPSILON || unpaidCredit > EPSILON) {
+        std::cout << "\n  !! This sheet does not balance. " << util::money(unpaidDebt)
+                  << " of debt and " << util::money(unpaidCredit) << " of credit could not be paired.\n"
+                  << "     The totals in scope do not sum to zero, which normally means a one-sided\n"
+                  << "     adjustment (menu 17). Fix the adjustment or the sheet will be short.\n";
+    }
     return out;
 }
 

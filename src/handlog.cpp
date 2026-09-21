@@ -159,6 +159,14 @@ std::vector<fs::path> discoverLogFiles(const fs::path& root) {
     return found;
 }
 
+// "Q♦, J♣" -> 2 (tabled at showdown); "A♠" -> 1 (flashed voluntarily); "" -> 0.
+int Hand::shownCardCount(const std::string& cards) {
+    if (trim(cards).empty()) return 0;
+    int n = 1;
+    for (char c : cards) if (c == ',') ++n;
+    return n;
+}
+
 bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std::string& error) {
     out = HandLog{};
     out.gameId = gameIdFromFilename(file);
@@ -208,6 +216,12 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
         for (const Seat& s : hand.seats) hand.net.emplace(s.playerId, 0.0);
         for (const auto& b : hand.bounty) hand.net[b.first] += b.second;
         for (const auto& c : hand.collected) hand.pot += c.second;
+        // A hand reached showdown if PokerNow named a winning hand (it only prints
+        // "collected N from pot with <Rank>" at showdown), or if at least two players
+        // tabled both their cards. One player flashing a single card is neither.
+        int tabled = 0;
+        for (const auto& s : hand.shown) if (Hand::shownCardCount(s.second) >= 2) ++tabled;
+        hand.showdown = !hand.rank.empty() || tabled >= 2;
         out.hands.push_back(hand);
         inHand = false;
     };
@@ -339,6 +353,10 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
             if (q != std::string::npos && readPlayerRef(e, q, nick, pid)) money.won[pid] += amount;
             continue;
         }
+        // Authoritative run-it-twice marker. Unquoted, so it must be read before the guard
+        // below drops every line that does not start with a player reference.
+        if (startsWith(e, "All players in hand choose to run it twice")) { hand.runItTwice = true; continue; }
+
         if (e.empty() || e[0] != '"') continue;   // joins, rebuys, config changes ...
 
         size_t p = 0;
@@ -347,10 +365,16 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
         out.names[pid] = nick;
         std::string rest = trim(e.substr(p));
         bool allIn = rest.find("all in") != std::string::npos;
+        // Bomb pots force every seat to put money in before cards are dealt. The chips are
+        // real, but the decision is not the player's, so this money must not count toward
+        // VPIP, PFR or the aggression factor.
+        bool bomb = rest.find("(bomb pot bet)") != std::string::npos;
+        if (bomb) hand.bombPot = true;
 
-        auto act = [&](const char* kind, double amount) {
+        auto act = [&](const char* kind, double amount, Action::Post post = Action::Post::None) {
             Action a;
             a.playerId = pid; a.street = street; a.kind = kind; a.amount = amount; a.allIn = allIn;
+            a.post = post; a.bombPot = bomb;
             hand.actions.push_back(a);
         };
 
@@ -362,15 +386,24 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
         else if (startsWith(rest, "posts ")) {
             double n = numberAt(rest, rest.find(" of ") == std::string::npos ? 6 : rest.find(" of "));
             bool dead = rest.find("missing small blind") != std::string::npos;
+            // The dead/missed variants must be tested BEFORE the plain ones: a catch-up post
+            // contains "small blind"/"big blind" as a substring too, and can occur in the same
+            // hand as a normal live pair. Only the live pair may anchor a table position.
+            Action::Post pt = Action::Post::None;
+            if (dead) pt = Action::Post::DeadSmallBlind;
+            else if (rest.find("missed big blind") != std::string::npos) pt = Action::Post::MissedBigBlind;
+            else if (rest.find("small blind") != std::string::npos) pt = Action::Post::SmallBlind;
+            else if (rest.find("big blind") != std::string::npos) pt = Action::Post::BigBlind;
             if (dead) money.contributed[pid] += n;   // dead money: in the pot, but not live toward a call
             else money.live(pid, n);
-            act("post", n);
+            act("post", n, pt);
         }
         else if (startsWith(rest, "shows a ")) {
             std::string cards = trim(rest.substr(8));
             if (!cards.empty() && cards.back() == '.') cards.pop_back();
             hand.shown[pid] = cards;
-            hand.showdown = true;
+            // Whether this was a real showdown is decided in finish(): a single flashed card
+            // is a courtesy reveal, not a showdown, and often comes from a player who folded.
         }
         else if (startsWith(rest, "collected ") && rest.find("bounty") == std::string::npos) {
             double n = numberAt(rest, 10);
@@ -381,12 +414,12 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
                 std::string r = rest.substr(w + 15);
                 size_t comb = r.find(" (combination");
                 hand.rank[pid] = trim(comb == std::string::npos ? r : r.substr(0, comb));
-                hand.showdown = true;
             }
         }
-        else if (rest.find("run it twice") != std::string::npos && rest.find("not") == std::string::npos) {
-            hand.runItTwice = true;
-        }
+        // NOTE: the per-player '"X" chooses to  run it twice.' line only records that one
+        // player agreed, and fires for roughly 420 hands where only 161 actually ran twice.
+        // The authoritative marker is the unquoted "All players in hand choose to run it
+        // twice." line, handled above before the quoted-player guard.
     }
     finish();
 
@@ -541,6 +574,7 @@ std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
             for (const Seat& s : hand.seats) seated.insert(person(s.playerId));
             for (const std::string& k : seated) {
                 ++rows[k].hands;
+                if (!hand.bombPot) ++rows[k].handsVoluntary;
                 gamesOf[k].insert(log->gameId);
             }
 
@@ -552,14 +586,15 @@ std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
                 StyleStats& r = rows[k];
                 if (a.allIn) ++r.allIns;
                 if (a.street == "preflop") {
-                    if (a.kind == "call" || a.kind == "bet" || a.kind == "raise") vpip.insert(k);
+                    // Forced bomb-pot money is not a voluntary choice.
+                    if (!a.bombPot && (a.kind == "call" || a.kind == "bet" || a.kind == "raise")) vpip.insert(k);
                     if (raisedPre && lastRaiser != k && !faced.count(k) &&
                         (a.kind == "fold" || a.kind == "call" || a.kind == "raise")) {
                         faced.insert(k);
                         ++r.facedRaise;
                         if (a.kind == "fold") ++r.foldedToRaise;
                     }
-                    if (a.kind == "raise") { pfr.insert(k); raisedPre = true; lastRaiser = k; }
+                    if (a.kind == "raise") { if (!a.bombPot) pfr.insert(k); raisedPre = true; lastRaiser = k; }
                     if (a.kind == "fold") foldedPre.insert(a.playerId);
                 } else {
                     if (a.kind == "bet") ++r.bets;
@@ -567,15 +602,26 @@ std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
                     else if (a.kind == "call") ++r.calls;
                 }
             }
-            for (const std::string& k : vpip) ++rows[k].vpip;
-            for (const std::string& k : pfr) ++rows[k].pfr;
-            if (hand.board.size() >= 3) {
-                std::set<std::string> sawFlop;
-                for (const Seat& s : hand.seats) if (!foldedPre.count(s.playerId)) sawFlop.insert(person(s.playerId));
-                for (const std::string& k : sawFlop) ++rows[k].sawFlop;
+            if (!hand.bombPot) {
+                for (const std::string& k : vpip) ++rows[k].vpip;
+                for (const std::string& k : pfr) ++rows[k].pfr;
+                if (hand.board.size() >= 3) {
+                    std::set<std::string> sawFlop;
+                    for (const Seat& s : hand.seats) if (!foldedPre.count(s.playerId)) sawFlop.insert(person(s.playerId));
+                    for (const std::string& k : sawFlop) ++rows[k].sawFlop;
+                }
             }
+            // Only players who tabled BOTH cards in a hand that actually reached showdown
+            // count toward WTSD/W$SD. A single flashed card is a courtesy reveal, and in
+            // this corpus it frequently comes from someone who had already folded.
             std::set<std::string> atShowdown, showdownWinners;
-            for (const auto& s : hand.shown) atShowdown.insert(person(s.first));
+            for (const auto& s : hand.shown) {
+                if (Hand::shownCardCount(s.second) >= 2) {
+                    if (hand.showdown) atShowdown.insert(person(s.first));
+                } else {
+                    ++rows[person(s.first)].courtesyReveals;
+                }
+            }
             for (const auto& r : hand.rank) { atShowdown.insert(person(r.first)); showdownWinners.insert(person(r.first)); }
             for (const std::string& k : atShowdown) {
                 ++rows[k].showdowns;

@@ -26,6 +26,7 @@
 #include "ledger.hpp"
 #include "models.hpp"
 #include "players.hpp"
+#include "playstyle.hpp"
 #include "report.hpp"
 #include "seats.hpp"
 #include "sessions.hpp"
@@ -263,6 +264,45 @@ void handLogStats(App& app) {
     if (console::askYesNo("Export this table to Saved_Data/style_stats.csv? (y/n): ") == 'y') {
         fs::path out = app.file("style_stats.csv");
         std::cout << (handlog::exportStyleCSV(out.string(), style) ? "Exported to " : "Could not write ") << out.string() << '\n';
+    }
+}
+
+// ------------------------------------------------------------- deep playstyle profiles
+
+void deepPlaystyle(App& app) {
+    std::vector<const handlog::HandLog*> logs = logsInScope(app);
+    if (logs.empty()) {
+        std::cout << "\nNo hand logs in scope. Download \"poker_now_log_<id>.csv\" from PokerNow\n"
+                  << "and drop it next to the matching ledger, then use menu 19 to import.\n";
+        return;
+    }
+    std::size_t hands = 0;
+    for (const handlog::HandLog* l : logs) hands += l->hands.size();
+    std::cout << "\nDeep playstyle for " << app.scope.describe() << ": " << logs.size() << " of "
+              << app.scoped.size() << " games have a log, " << hands << " hands analysed.\n";
+    if (logs.size() < app.scoped.size())
+        std::cout << "NOTE: " << (app.scoped.size() - logs.size())
+                  << " games in scope have no hand log, so these reads cover only part of the money.\n";
+
+    std::vector<playstyle::Profile> profiles = playstyle::analyze(logs, app.rules, app.stats);
+    playstyle::printProfiles(profiles);
+
+    while (console::askYesNo("Show the long read for one player? (y/n): ") == 'y') {
+        std::string name = console::askLine("Player name (blank to stop): ");
+        if (name.empty()) break;
+        const std::string want = normalizeName(name);
+        bool found = false;
+        for (const playstyle::Profile& p : profiles)
+            if (p.normalizedName == want || normalizeName(p.displayName) == want) {
+                playstyle::printOnePlayer(p, profiles);
+                found = true;
+            }
+        if (!found) std::cout << "No player matching \"" << name << "\" in these logs.\n";
+    }
+    if (console::askYesNo("Export these profiles to Saved_Data/playstyle.csv? (y/n): ") == 'y') {
+        fs::path out = app.file("playstyle.csv");
+        std::cout << (playstyle::exportCSV(out.string(), profiles) ? "Exported to " : "Could not write ")
+                  << out.string() << '\n';
     }
 }
 
@@ -620,6 +660,7 @@ void printMenu(const App& app) {
               << " 17. Adjustments: forgive a debt or correct a total (" << app.adjustmentList.size() << " saved)\n"
               << "HAND LOGS\n"
               << " 18. Playing style stats from hand logs (VPIP, aggression, showdowns)\n"
+              << " 21. Deep playstyle profiles (position, 3-bet, c-bet, sizing, archetypes)\n"
               << " 19. Import new PokerNow files from Downloads\n"
               << "  0. Save and exit\n" << divider(72);
 }
@@ -628,7 +669,7 @@ void runMenu(App& app) {
     bool running = true;
     while (running) {
         printMenu(app);
-        int choice = console::askMenuChoice("Choose an option: ", 0, 20);
+        int choice = console::askMenuChoice("Choose an option: ", 0, 21);
         std::vector<PlayerStats> byNet = players::sortedByNet(app.stats);
 
         switch (choice) {
@@ -745,10 +786,24 @@ void runMenu(App& app) {
                 }
                 break;
 
+            case 21: deepPlaystyle(app); break;
+
             case 0:
                 app.saveAll();
                 std::cout << "Saved merge rules, preferences, settings, seat owners and session balances. Bye.\n";
                 running = false;
+                break;
+        }
+
+        // Every long view used to scroll away under the 30-line menu redraw: the table
+        // would be printed and immediately buried. console::pause() existed but was
+        // called from nowhere. These are the views that overflow a standard terminal.
+        switch (choice) {
+            case 2: case 3: case 5: case 8: case 9: case 11:
+            case 15: case 16: case 18: case 21:
+                console::pause();
+                break;
+            default:
                 break;
         }
     }

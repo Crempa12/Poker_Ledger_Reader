@@ -21,11 +21,18 @@ struct Seat {
 };
 
 struct Action {
+    // Which blind a "post" was. Only SmallBlind and BigBlind mark the live blinds that
+    // anchor a table position: a dead or missed blind is posted by someone re-entering,
+    // and can appear in the same hand as a perfectly normal SB/BB pair.
+    enum class Post { None, SmallBlind, BigBlind, DeadSmallBlind, MissedBigBlind };
+
     std::string playerId;
     std::string street;     // preflop, flop, turn, river
     std::string kind;       // post, fold, check, call, bet, raise
     double amount = 0.0;    // "to" amount for call/bet/raise, blind size for post
     bool allIn = false;
+    Post post = Post::None; // set on "post" actions only
+    bool bombPot = false;   // forced bomb-pot money: real chips, but not a voluntary choice
 };
 
 struct Hand {
@@ -42,8 +49,15 @@ struct Hand {
     std::map<std::string, double> net;          // playerId -> collected + returned - contributed
     std::map<std::string, std::string> rank;    // playerId -> winning hand name ("Pair, J's")
     std::map<std::string, double> bounty;       // playerId -> 7-2 bounty received (+) or paid (-), already included in net
+    // A real showdown: at least two players tabled BOTH cards. PokerNow also logs a single
+    // card when someone chooses to flash one (often after folding), which is not a showdown
+    // and must not count toward WTSD or W$SD - 2,861 of 12,693 reveals in this corpus.
     bool showdown = false;
-    bool runItTwice = false;
+    bool bombPot = false;                       // forced-money hand; excluded from VPIP/PFR/aggression
+    bool runItTwice = false;                    // set only by the authoritative all-players marker
+
+    // Cards in a "shows a ..." reveal: 2 = tabled at showdown, 1 = flashed voluntarily.
+    static int shownCardCount(const std::string& cards);
     double pot = 0.0;                           // total collected in the hand
 
     const Seat* seatOf(const std::string& playerId) const;
@@ -97,9 +111,14 @@ struct StyleStats {
     std::string normalizedName;     // canonical (after merge rules)
     int games = 0;
     int hands = 0;                  // hands dealt in
+    // Bomb pots force every seat in before cards are dealt, so they say nothing about a
+    // player's voluntary preflop choices. They are excluded from both the numerator and
+    // the denominator of VPIP, PFR and flop-seen; this is that denominator.
+    int handsVoluntary = 0;
     int vpip = 0;                   // voluntarily put money in preflop
     int pfr = 0;                    // raised preflop
     int sawFlop = 0;
+    int courtesyReveals = 0;        // flashed a single card; not a showdown
     int showdowns = 0;
     int showdownWins = 0;
     int handsWon = 0;
@@ -113,9 +132,9 @@ struct StyleStats {
     double bountiesNet = 0.0;       // 7-2 bounties received minus paid (part of netFromLog)
 
     double pct(int part, int whole) const { return whole == 0 ? 0.0 : 100.0 * part / whole; }
-    double vpipPct() const { return pct(vpip, hands); }
-    double pfrPct() const { return pct(pfr, hands); }
-    double sawFlopPct() const { return pct(sawFlop, hands); }
+    double vpipPct() const { return pct(vpip, handsVoluntary); }
+    double pfrPct() const { return pct(pfr, handsVoluntary); }
+    double sawFlopPct() const { return pct(sawFlop, handsVoluntary); }
     double wtsdPct() const { return pct(showdowns, sawFlop); }
     double wsdPct() const { return pct(showdownWins, showdowns); }
     double foldToRaisePct() const { return pct(foldedToRaise, facedRaise); }
