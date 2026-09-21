@@ -420,21 +420,6 @@ int apply(std::vector<Game>& games, const std::vector<SeatOwner>& list, const pl
     return static_cast<int>(std::count(used.begin(), used.end(), false));
 }
 
-std::map<std::string, std::string> accountOwners(const Game& game, const players::MergeRules& rules) {
-    std::map<std::string, std::set<std::string>> people;
-    std::set<std::string> reassigned;
-    for (const LedgerRow& r : game.rows) {
-        if (r.playerId.empty()) continue;
-        people[r.playerId].insert(players::personOf(rules, r));
-        if (!r.owner.empty()) reassigned.insert(r.playerId);
-    }
-    std::map<std::string, std::string> out;
-    for (const std::string& pid : reassigned) {
-        if (people[pid].size() == 1) out[pid] = *people[pid].begin();
-    }
-    return out;
-}
-
 std::vector<Flag> findSuspicious(const std::vector<Game>& games, const players::MergeRules& rules) {
     std::map<std::string, std::string> usual = usualOwners(games, rules);
     std::vector<Flag> out;

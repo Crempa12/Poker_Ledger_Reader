@@ -66,7 +66,7 @@ struct App {
         seats::apply(games, seatOwners, rules);
         for (const Game& g : games) {
             auto log = logs.find(g.id.rfind("ledger_", 0) == 0 ? g.id.substr(7) : g.id);
-            if (log != logs.end()) log->second.owners = seats::accountOwners(g, rules);
+            if (log != logs.end()) handlog::pairWithLedger(log->second, g, rules);
         }
         scoped = ledger::filterGames(games, scope);
         stats = players::aggregate(scoped, rules, adjustments::filter(adjustmentList, scope));

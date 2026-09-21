@@ -49,13 +49,32 @@ struct Hand {
     const Seat* seatOf(const std::string& playerId) const;
 };
 
+// Chips put on the table between hands: a rebuy after busting, or an admin top-up.
+struct StackEvent {
+    std::int64_t at = util::NO_TIME;
+    int hand = 0;             // index of the first hand dealt after it (may equal hands.size())
+    std::string playerId;
+    std::string kind;         // "rebuy", "topup", or "remove" (an admin took chips off)
+    double amount = 0.0;      // dollars, always positive
+};
+
+// One ledger seat on an account: who was really playing it, and when.
+struct SeatWindow {
+    std::int64_t start = util::NO_TIME;
+    std::int64_t end = util::NO_TIME;   // NO_TIME = still seated when the ledger was exported
+    std::string person;                 // canonical name
+};
+
 struct HandLog {
     std::string gameId;                         // "pgl..." (the ledger's id without the "ledger_" prefix)
     std::string path;
     std::string folder;
     std::vector<Hand> hands;                    // chronological
+    std::vector<StackEvent> events;             // chronological
     std::map<std::string, std::string> names;   // playerId -> last nickname seen
-    std::map<std::string, std::string> owners;  // playerId -> real owner when the ledger seats were reassigned (menu 20)
+    // playerId -> that account's seats in the paired ledger, with menu 20 owners and merge rules applied.
+    // Empty when the ledger is not loaded; the nickname then decides who a player is.
+    std::map<std::string, std::vector<SeatWindow>> seats;
     std::int64_t start = util::NO_TIME;
     std::int64_t end = util::NO_TIME;
     double biggestPot = 0.0;
@@ -104,16 +123,30 @@ struct StyleStats {
     std::string styleLabel() const;
 };
 
-// Folds nicknames with the merge rules so the same person is one row.
+// Fills log.seats from the ledger of the same game (call again whenever seat owners or merge rules change).
+void pairWithLedger(HandLog& log, const Game& game, const players::MergeRules& rules);
+
+// Who was really playing an account at a moment: the owner of the ledger seat on that
+// account covering the time (or the nearest one), else the log nickname after merge rules.
+std::string personAt(const HandLog& log, const std::string& playerId, std::int64_t at, const players::MergeRules& rules);
+
+// The name to show for that person: their leaderboard name when they have one.
+std::string displayNameAt(const HandLog& log, const std::string& playerId, std::int64_t at,
+                          const players::MergeRules& rules,
+                          const std::map<std::string, PlayerStats>& ledgerStats);
+
+// One row per person: every account they played on is folded in, and a shared account
+// is split by who held each seat.
 std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
                                      const players::MergeRules& rules,
                                      const std::map<std::string, PlayerStats>& ledgerStats);
 
-// One player's running net through a night, hand by hand (NaN = not seated).
+// One person's running net through a night, hand by hand (NaN = not seated), all accounts combined.
 struct NightSeries {
-    std::string playerId;
+    std::string person;                  // canonical name
     std::string displayName;
-    std::vector<double> netByHand;   // size = hands
+    std::vector<std::string> accounts;   // nicknames of the accounts they played on
+    std::vector<double> netByHand;       // size = hands
     double finalNet = 0.0;
 };
 std::vector<NightSeries> nightSeries(const HandLog& log,

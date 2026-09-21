@@ -1,6 +1,7 @@
 #include "handlog.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -184,6 +185,17 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
     if (recs.empty()) { error = "no log entries in " + file.string(); return false; }
     std::stable_sort(recs.begin(), recs.end(), [](const Rec& a, const Rec& b) { return a.order < b.order; });
 
+    // Amounts are logged in cents until "Cents Mode" is switched on. Hands only start once it is,
+    // but seat requests and rebuys can come before, so the factor follows the config changes.
+    const std::string centsOn = "Cents Mode: off \xC2\xBB on";
+    const std::string centsOff = "Cents Mode: on \xC2\xBB off";
+    double centsFactor = 1.0;
+    for (const Rec& rec : recs) {
+        if (rec.entry.find(centsOn) != std::string::npos) { centsFactor = 0.01; break; }
+        if (rec.entry.find(centsOff) != std::string::npos) break;
+    }
+    std::map<std::string, double> pendingRebuy;   // playerId -> amount asked for, until "rebought"
+
     Hand hand;
     bool inHand = false;
     std::string street;
@@ -246,6 +258,45 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
             target->bounty[pid] -= n;
             target->bounty[pid2] += n;
             if (!inHand) { target->net[pid] -= n; target->net[pid2] += n; }
+            continue;
+        }
+
+        if (e.find("Cents Mode: ") != std::string::npos) {
+            if (e.find(centsOn) != std::string::npos) centsFactor = 1.0;
+            else if (e.find(centsOff) != std::string::npos) centsFactor = 0.01;
+            continue;
+        }
+
+        // Chips put on the table between hands: "requested a rebuy of 40.00" then "rebought. New stack 40.00.",
+        // or "The admin updated the player "A @ id" stack from 1.27 to 51.27." They take effect next hand.
+        if (startsWith(e, "The player \"") || startsWith(e, "The admin updated the player \"")) {
+            size_t q = e.find('"');
+            std::string nick, pid;
+            if (!readPlayerRef(e, q, nick, pid)) continue;
+            std::string rest = e.substr(q);
+            StackEvent ev;
+            ev.at = rec.at;
+            ev.playerId = pid;
+            ev.hand = static_cast<int>(out.hands.size()) + (inHand ? 1 : 0);
+            if (startsWith(rest, " requested a rebuy of ")) {
+                pendingRebuy[pid] = numberAt(rest, 22) * centsFactor;
+                continue;
+            }
+            if (startsWith(rest, " rebought.")) {
+                auto asked = pendingRebuy.find(pid);
+                ev.kind = "rebuy";
+                ev.amount = asked != pendingRebuy.end() ? asked->second : numberAt(rest, rest.find("stack")) * centsFactor;
+                if (asked != pendingRebuy.end()) pendingRebuy.erase(asked);
+            } else if (startsWith(rest, " stack from ")) {
+                size_t to = rest.find(" to ", 12);
+                if (to == std::string::npos) continue;
+                double diff = (numberAt(rest, to + 4) - numberAt(rest, 12)) * centsFactor;
+                ev.kind = diff >= 0 ? "topup" : "remove";
+                ev.amount = std::fabs(diff);
+            } else {
+                continue;   // joins, stand-ups, seat requests: the ledger already has the seats
+            }
+            if (ev.amount > EPSILON) out.events.push_back(ev);
             continue;
         }
         if (!inHand) continue;
@@ -406,30 +457,63 @@ std::string StyleStats::styleLabel() const {
     return "Balanced";
 }
 
+void pairWithLedger(HandLog& log, const Game& game, const players::MergeRules& rules) {
+    log.seats.clear();
+    for (const LedgerRow& r : game.rows) {
+        if (r.playerId.empty()) continue;
+        log.seats[r.playerId].push_back({r.start, r.end, players::personOf(rules, r)});
+    }
+}
+
+std::string personAt(const HandLog& log, const std::string& playerId, std::int64_t at, const players::MergeRules& rules) {
+    auto it = log.seats.find(playerId);
+    if (it != log.seats.end() && !it->second.empty()) {
+        const SeatWindow* best = nullptr;
+        std::int64_t bestGap = 0;
+        for (const SeatWindow& w : it->second) {
+            std::int64_t gap = 0;
+            if (at != NO_TIME && w.start != NO_TIME && at < w.start) gap = w.start - at;
+            else if (at != NO_TIME && w.end != NO_TIME && at > w.end) gap = at - w.end;
+            if (!best || gap < bestGap) { best = &w; bestGap = gap; }
+        }
+        return best->person;
+    }
+    auto n = log.names.find(playerId);
+    return players::resolveCanonical(rules, normalizeName(n == log.names.end() ? playerId : n->second));
+}
+
 namespace {
 struct Identity {
-    std::string canonical;
+    std::string key;       // canonical name ("@<account>" for a nickname with no letters)
     std::string display;
 };
 
-Identity identify(const std::string& nickname,
+Identity identify(const HandLog& log, const std::string& pid, std::int64_t at,
                   const players::MergeRules& rules,
                   const std::map<std::string, PlayerStats>& ledgerStats) {
     Identity id;
-    id.canonical = players::resolveCanonical(rules, normalizeName(nickname));
-    auto it = ledgerStats.find(id.canonical);
-    id.display = it != ledgerStats.end() ? it->second.displayName : nickname;
+    id.key = personAt(log, pid, at, rules);
+    auto n = log.names.find(pid);
+    std::string nickname = n == log.names.end() ? pid : n->second;
+    if (id.key.empty()) id.key = "@" + pid;
+    auto it = ledgerStats.find(id.key);
+    if (it != ledgerStats.end()) {
+        id.display = it->second.displayName;
+    } else if (players::resolveCanonical(rules, normalizeName(nickname)) == id.key || id.key[0] == '@') {
+        id.display = nickname;
+    } else {   // a seat handed to someone with no ledger stats in scope
+        id.display = id.key;
+        id.display[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(id.display[0])));
+    }
     return id;
 }
-
-// The name a log's account is counted under: its reassigned owner, else its nickname.
-std::string nameIn(const HandLog& log, const std::string& pid) {
-    auto o = log.owners.find(pid);
-    if (o != log.owners.end()) return o->second;
-    auto n = log.names.find(pid);
-    return n == log.names.end() ? pid : n->second;
-}
 }  // namespace
+
+std::string displayNameAt(const HandLog& log, const std::string& playerId, std::int64_t at,
+                          const players::MergeRules& rules,
+                          const std::map<std::string, PlayerStats>& ledgerStats) {
+    return identify(log, playerId, at, rules, ledgerStats).display;
+}
 
 std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
                                      const players::MergeRules& rules,
@@ -438,42 +522,44 @@ std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
     std::map<std::string, std::set<std::string>> gamesOf;
 
     for (const HandLog* log : logs) {
-        std::map<std::string, std::string> canon;   // playerId -> canonical
-        auto row = [&](const std::string& pid) -> StyleStats& {
-            auto c = canon.find(pid);
-            if (c == canon.end()) {
-                Identity id = identify(nameIn(*log, pid), rules, ledgerStats);
-                c = canon.emplace(pid, id.canonical).first;
-                StyleStats& s = rows[id.canonical];
-                if (s.normalizedName.empty()) { s.normalizedName = id.canonical; s.displayName = id.display; }
-            }
-            return rows[c->second];
-        };
-
         for (const Hand& hand : log->hands) {
+            // Accounts are resolved to people hand by hand, since a shared account can change hands mid-night.
+            std::map<std::string, std::string> keyOf;   // playerId -> person
+            auto person = [&](const std::string& pid) -> const std::string& {
+                auto c = keyOf.find(pid);
+                if (c == keyOf.end()) {
+                    Identity id = identify(*log, pid, hand.start, rules, ledgerStats);
+                    StyleStats& s = rows[id.key];
+                    if (s.normalizedName.empty()) { s.normalizedName = id.key; s.displayName = id.display; }
+                    c = keyOf.emplace(pid, id.key).first;
+                }
+                return c->second;
+            };
+
+            // Someone holding two seats in one hand was still dealt one hand.
             std::set<std::string> seated;
-            for (const Seat& s : hand.seats) {
-                seated.insert(s.playerId);
-                StyleStats& r = row(s.playerId);
-                ++r.hands;
-                gamesOf[r.normalizedName].insert(log->gameId);
+            for (const Seat& s : hand.seats) seated.insert(person(s.playerId));
+            for (const std::string& k : seated) {
+                ++rows[k].hands;
+                gamesOf[k].insert(log->gameId);
             }
 
-            std::set<std::string> vpip, pfr, foldedPre, faced;
+            std::set<std::string> vpip, pfr, faced, foldedPre;   // people, except foldedPre (accounts)
             bool raisedPre = false;
             std::string lastRaiser;
             for (const Action& a : hand.actions) {
-                StyleStats& r = row(a.playerId);
+                const std::string& k = person(a.playerId);
+                StyleStats& r = rows[k];
                 if (a.allIn) ++r.allIns;
                 if (a.street == "preflop") {
-                    if (a.kind == "call" || a.kind == "bet" || a.kind == "raise") vpip.insert(a.playerId);
-                    if (raisedPre && lastRaiser != a.playerId && !faced.count(a.playerId) &&
+                    if (a.kind == "call" || a.kind == "bet" || a.kind == "raise") vpip.insert(k);
+                    if (raisedPre && lastRaiser != k && !faced.count(k) &&
                         (a.kind == "fold" || a.kind == "call" || a.kind == "raise")) {
-                        faced.insert(a.playerId);
+                        faced.insert(k);
                         ++r.facedRaise;
                         if (a.kind == "fold") ++r.foldedToRaise;
                     }
-                    if (a.kind == "raise") { pfr.insert(a.playerId); raisedPre = true; lastRaiser = a.playerId; }
+                    if (a.kind == "raise") { pfr.insert(k); raisedPre = true; lastRaiser = k; }
                     if (a.kind == "fold") foldedPre.insert(a.playerId);
                 } else {
                     if (a.kind == "bet") ++r.bets;
@@ -481,27 +567,30 @@ std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
                     else if (a.kind == "call") ++r.calls;
                 }
             }
-            for (const std::string& pid : vpip) ++row(pid).vpip;
-            for (const std::string& pid : pfr) ++row(pid).pfr;
+            for (const std::string& k : vpip) ++rows[k].vpip;
+            for (const std::string& k : pfr) ++rows[k].pfr;
             if (hand.board.size() >= 3) {
-                for (const std::string& pid : seated) if (!foldedPre.count(pid)) ++row(pid).sawFlop;
+                std::set<std::string> sawFlop;
+                for (const Seat& s : hand.seats) if (!foldedPre.count(s.playerId)) sawFlop.insert(person(s.playerId));
+                for (const std::string& k : sawFlop) ++rows[k].sawFlop;
             }
-            std::set<std::string> atShowdown;
-            for (const auto& s : hand.shown) atShowdown.insert(s.first);
-            for (const auto& r : hand.rank) atShowdown.insert(r.first);
-            for (const std::string& pid : atShowdown) {
-                StyleStats& r = row(pid);
-                ++r.showdowns;
-                if (hand.rank.count(pid)) ++r.showdownWins;
+            std::set<std::string> atShowdown, showdownWinners;
+            for (const auto& s : hand.shown) atShowdown.insert(person(s.first));
+            for (const auto& r : hand.rank) { atShowdown.insert(person(r.first)); showdownWinners.insert(person(r.first)); }
+            for (const std::string& k : atShowdown) {
+                ++rows[k].showdowns;
+                if (showdownWinners.count(k)) ++rows[k].showdownWins;
             }
-            for (const auto& c : hand.collected) {
-                StyleStats& r = row(c.first);
+            std::map<std::string, double> collected;
+            for (const auto& c : hand.collected) collected[person(c.first)] += c.second;
+            for (const auto& c : collected) {
+                StyleStats& r = rows[c.first];
                 if (c.second > EPSILON) ++r.handsWon;
                 r.wonTotal += c.second;
                 r.biggestPotWon = std::max(r.biggestPotWon, c.second);
             }
-            for (const auto& n : hand.net) row(n.first).netFromLog += n.second;
-            for (const auto& b : hand.bounty) row(b.first).bountiesNet += b.second;
+            for (const auto& n : hand.net) rows[person(n.first)].netFromLog += n.second;
+            for (const auto& b : hand.bounty) rows[person(b.first)].bountiesNet += b.second;
         }
     }
 
@@ -524,31 +613,41 @@ std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
 std::vector<NightSeries> nightSeries(const HandLog& log,
                                      const players::MergeRules& rules,
                                      const std::map<std::string, PlayerStats>& ledgerStats) {
-    std::map<std::string, size_t> index;
+    std::map<std::string, size_t> index;                // person -> series
     std::vector<NightSeries> series;
-    std::map<std::string, double> running;
+    std::vector<double> running;
+    std::vector<std::set<std::string>> accounts;
     const size_t n = log.hands.size();
+
+    auto seriesOf = [&](const std::string& pid, std::int64_t at) -> size_t {
+        Identity id = identify(log, pid, at, rules, ledgerStats);
+        auto it = index.find(id.key);
+        if (it == index.end()) {
+            it = index.emplace(id.key, series.size()).first;
+            NightSeries s;
+            s.person = id.key;
+            s.displayName = id.display;
+            s.netByHand.assign(n, std::nan(""));
+            series.push_back(std::move(s));
+            running.push_back(0.0);
+            accounts.emplace_back();
+        }
+        return it->second;
+    };
 
     for (size_t h = 0; h < n; ++h) {
         const Hand& hand = log.hands[h];
-        for (const auto& net : hand.net) {
-            const std::string& pid = net.first;
-            if (!index.count(pid)) {
-                index[pid] = series.size();
-                NightSeries s;
-                s.playerId = pid;
-                s.displayName = identify(nameIn(log, pid), rules, ledgerStats).display;
-                s.netByHand.assign(n, std::nan(""));
-                series.push_back(s);
-            }
-            running[pid] += net.second;
-        }
+        for (const auto& net : hand.net) running[seriesOf(net.first, hand.start)] += net.second;
         for (const Seat& s : hand.seats) {
-            auto it = index.find(s.playerId);
-            if (it != index.end()) series[it->second].netByHand[h] = running[s.playerId];
+            size_t i = seriesOf(s.playerId, hand.start);
+            series[i].netByHand[h] = running[i];
+            accounts[i].insert(s.nickname);
         }
     }
-    for (NightSeries& s : series) s.finalNet = running[s.playerId];
+    for (size_t i = 0; i < series.size(); ++i) {
+        series[i].finalNet = running[i];
+        series[i].accounts.assign(accounts[i].begin(), accounts[i].end());
+    }
     std::sort(series.begin(), series.end(), [](const NightSeries& a, const NightSeries& b) { return a.finalNet > b.finalNet; });
     return series;
 }

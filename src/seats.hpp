@@ -18,10 +18,6 @@ bool saveCSV(const std::string& filename, const std::vector<SeatOwner>& list);
 // Returns how many saved entries matched no row (their ledger is not loaded).
 int apply(std::vector<Game>& games, const std::vector<SeatOwner>& list, const players::MergeRules& rules);
 
-// playerId -> real owner, for accounts whose every seat in this game went to
-// one person other than the nickname. Used to fold the hand log the same way.
-std::map<std::string, std::string> accountOwners(const Game& game, const players::MergeRules& rules);
-
 // A seat that looks like it was bought by someone other than the name on it.
 struct Flag {
     const Game* game = nullptr;
