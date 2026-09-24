@@ -33,18 +33,9 @@ static bool byKey(const SessionBalance& a, const SessionBalance& b) {
 }
 
 bool load(const std::string& filename, Balances& balances) {
-    std::ifstream file(filename);
-    if (!file.is_open()) return false;
-
-    std::string line;
-    bool firstLine = true;
-    while (std::getline(file, line)) {
-        if (trim(line).empty()) continue;
-        if (firstLine) {
-            firstLine = false;
-            if (line.find("session_id") != std::string::npos) continue;
-        }
-        std::vector<std::string> row = splitCSVLine(line);
+    std::vector<std::vector<std::string>> rows;
+    if (!readCSV(filename, rows)) return false;
+    for (const std::vector<std::string>& row : rows) {
         if (row.size() < 8) continue;
 
         SessionBalance bal;

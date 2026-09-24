@@ -101,19 +101,9 @@ std::vector<std::string> bracketCards(const std::string& text) {
 bool startsWith(const std::string& s, const char* prefix) { return s.rfind(prefix, 0) == 0; }
 
 std::string gameIdFromFilename(const fs::path& file) {
-    std::string stem = file.stem().string();        // poker_now_log_pglXXXX or "poker_now_log_pglXXXX (1)"
+    std::string stem = cleanStem(file.stem().string());   // "poker_now_log_pglX (1)" -> "poker_now_log_pglX"
     const std::string prefix = "poker_now_log_";
-    if (!startsWith(stem, prefix.c_str())) return "";
-    std::string id = stem.substr(prefix.size());
-    size_t sp = id.find(' ');
-    if (sp != std::string::npos) id = id.substr(0, sp);
-    return trim(id);
-}
-
-bool isExcludedDir(const fs::path& p) {
-    std::string name = p.filename().string();
-    return name == "Saved_Data" || name == ".git" || name == ".idea" || name == "build" ||
-           name == "reports" || name.rfind("cmake-build", 0) == 0;
+    return startsWith(stem, prefix.c_str()) ? stem.substr(prefix.size()) : "";
 }
 
 // Per-hand money tracking while parsing.
@@ -149,7 +139,7 @@ std::vector<fs::path> discoverLogFiles(const fs::path& root) {
     while (!ec && it != end) {
         const fs::directory_entry& entry = *it;
         if (entry.is_directory(ec)) {
-            if (isExcludedDir(entry.path())) it.disable_recursion_pending();
+            if (isExcludedDir(entry.path().filename().string())) it.disable_recursion_pending();
         } else if (lower(entry.path().extension().string()) == ".csv" && !gameIdFromFilename(entry.path()).empty()) {
             found.push_back(entry.path());
         }
@@ -759,7 +749,8 @@ void printStyleTable(const std::vector<StyleStats>& rows) {
               << "FoldR = % folded when facing a preflop raise.  AF = postflop (bets + raises) / calls.  Won = hands won.\n\n";
 }
 
-void printGameSummaries(const std::vector<const HandLog*>& logs) {
+void printGameSummaries(const std::vector<const HandLog*>& logs, const players::MergeRules& rules,
+                        const std::map<std::string, PlayerStats>& ledgerStats) {
     if (logs.empty()) return;
     const int W = 128;
     std::cout << "Hand logs in scope:\n" << divider(W, '-')
@@ -776,8 +767,10 @@ void printGameSummaries(const std::vector<const HandLog*>& logs) {
         double hours = (log->start == NO_TIME || log->end == NO_TIME) ? 0.0 : (log->end - log->start) / 3600.0;
         std::ostringstream hrs;
         hrs.setf(std::ios::fixed); hrs.precision(1); hrs << hours;
-        auto nm = log->names.find(log->biggestPotWinner);
-        std::string winner = nm == log->names.end() ? log->biggestPotWinner : nm->second;
+        // The person, not the nickname of the night: "R Y A N" and "Wemby" are both Ryan.
+        std::int64_t at = NO_TIME;
+        for (const Hand& h : log->hands) if (h.number == log->biggestPotHand) at = h.start;
+        std::string winner = displayNameAt(*log, log->biggestPotWinner, at, rules, ledgerStats);
         std::cout << padRight(formatLocalDate(log->start), 12) << padRight(log->folder, 26)
                   << padLeft(std::to_string(log->hands.size()), 7) << padLeft(hrs.str(), 7)
                   << padLeft(std::to_string(players.size()), 9)

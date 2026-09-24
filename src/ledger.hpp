@@ -47,6 +47,9 @@ std::vector<std::string> listFolders(const std::vector<Game>& games);
 // Games that match the folder / date-range scope, sorted by start time.
 std::vector<const Game*> filterGames(const std::vector<Game>& games, const Scope& scope);
 
+// The id its hand log is filed under: "ledger_pglX" -> "pglX".
+std::string logId(const Game& g);
+
 void printDuplicates(const std::vector<DuplicateNote>& duplicates);
 
 }  // namespace ledger

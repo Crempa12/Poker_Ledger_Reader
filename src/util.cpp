@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstdio>
 #include <ctime>
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 
@@ -34,6 +35,29 @@ std::vector<std::string> splitCSVLine(const std::string& line) {
     return result;
 }
 
+bool readCSV(const std::string& filename, std::vector<std::vector<std::string>>& rows) {
+    std::ifstream in(filename);
+    if (!in.is_open()) return false;
+    std::string line;
+    bool header = true;
+    while (std::getline(in, line)) {
+        if (trim(line).empty()) continue;
+        if (header) { header = false; continue; }
+        rows.push_back(splitCSVLine(line));
+    }
+    return true;
+}
+
+std::string cleanStem(const std::string& stem) {
+    size_t space = stem.find(' ');   // PokerNow ids never contain spaces
+    return trim(space == std::string::npos ? stem : stem.substr(0, space));
+}
+
+bool isExcludedDir(const std::string& name) {
+    return name == "Saved_Data" || name == ".git" || name == ".idea" || name == "build" ||
+           name == "reports" || name.rfind("cmake-build", 0) == 0;
+}
+
 std::string trim(const std::string& s) {
     size_t start = 0;
     while (start < s.size() && std::isspace(static_cast<unsigned char>(s[start]))) ++start;
@@ -49,13 +73,14 @@ std::string lower(const std::string& s) {
 }
 
 std::string normalizeName(const std::string& name) {
-    std::string cleaned;
+    std::string letters, digits;
     for (char ch : name) {
-        if (std::isalpha(static_cast<unsigned char>(ch))) {
-            cleaned += static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-        }
+        unsigned char c = static_cast<unsigned char>(ch);
+        if (std::isalpha(c)) letters += static_cast<char>(std::tolower(c));
+        else if (std::isdigit(c)) digits += ch;
     }
-    return cleaned;
+    // A name with no letters ("24242424242424") is still a name: fall back to its digits.
+    return letters.empty() ? digits : letters;
 }
 
 double centsToDollars(const std::string& s) {
@@ -126,6 +151,18 @@ std::string padRight(const std::string& s, size_t width) {
 std::string padLeft(const std::string& s, size_t width) {
     if (s.size() >= width) return s;
     return std::string(width - s.size(), ' ') + s;
+}
+
+std::vector<int> parseNumbers(const std::string& text) {
+    std::vector<int> out;
+    std::string cleaned = text;
+    for (char& c : cleaned) if (c == ',') c = ' ';
+    std::istringstream in(cleaned);
+    std::string token;
+    while (in >> token) {
+        try { out.push_back(std::stoi(token)); } catch (...) { return {}; }
+    }
+    return out;
 }
 
 // ---------------- time ----------------

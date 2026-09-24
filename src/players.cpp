@@ -22,8 +22,16 @@ std::string resolveCanonical(const MergeRules& rules, const std::string& key) {
     return current;
 }
 
+// The name a row is filed under before merge rules: its reassigned owner, else its nickname.
+// A nickname with neither letters nor digits (emoji only) still has money on it: it is filed
+// under its account ("unnamed" + the account's letters), so two such players never share a row.
+static std::string rowName(const LedgerRow& row) {
+    std::string name = row.owner.empty() ? normalizeName(row.nickname) : row.owner;
+    return name.empty() ? normalizeName("unnamed " + row.playerId) : name;
+}
+
 std::string personOf(const MergeRules& rules, const LedgerRow& row) {
-    return resolveCanonical(rules, row.owner.empty() ? normalizeName(row.nickname) : row.owner);
+    return resolveCanonical(rules, rowName(row));
 }
 
 void flattenMergeRules(MergeRules& rules) {
@@ -42,17 +50,12 @@ void addMergeRule(MergeRules& rules, const std::string& alias, const std::string
     flattenMergeRules(rules);
 }
 
+void removeMergeRule(MergeRules& rules, const std::string& alias) { rules.erase(alias); }
+
 bool loadMergeRulesCSV(const std::string& filename, MergeRules& rules) {
-    std::ifstream file(filename);
-    if (!file.is_open()) return false;
-
-    std::string line;
-    bool firstLine = true;
-    while (std::getline(file, line)) {
-        if (trim(line).empty()) continue;
-        if (firstLine) { firstLine = false; continue; }
-
-        std::vector<std::string> row = splitCSVLine(line);
+    std::vector<std::vector<std::string>> rows;
+    if (!readCSV(filename, rows)) return false;
+    for (const std::vector<std::string>& row : rows) {
         if (row.size() < 2) continue;
         std::string alias = normalizeName(row[0]);
         std::string canonical = normalizeName(row[1]);
@@ -92,13 +95,11 @@ std::map<std::string, PlayerStats> aggregate(const std::vector<const Game*>& gam
         std::map<std::string, GameResult> perGame;
 
         for (const LedgerRow& row : game->rows) {
-            std::string norm = row.owner.empty() ? normalizeName(row.nickname) : row.owner;
-            if (norm.empty()) continue;
-            std::string canonical = resolveCanonical(rules, norm);
+            std::string canonical = personOf(rules, row);
 
             PlayerStats& p = stats[canonical];
             p.normalizedName = canonical;
-            p.aliases.insert(norm);
+            p.aliases.insert(rowName(row));
             // A reassigned seat was played under someone else's name or account, so
             // neither that nickname nor that account says anything about this player.
             if (row.owner.empty()) {
@@ -195,23 +196,44 @@ const PlayerStats* find(const std::map<std::string, PlayerStats>& stats, const s
     return it == stats.end() ? nullptr : &it->second;
 }
 
+std::string displayName(const std::vector<PlayerStats>& list, const std::string& normalized) {
+    if (normalized.empty()) return "(none)";
+    for (const PlayerStats& p : list) {
+        if (p.normalizedName == normalized || p.aliases.count(normalized)) return p.displayName;
+    }
+    return normalized;
+}
+
+std::map<std::string, std::set<std::string>> accountsByPerson(const std::vector<Game>& games, const MergeRules& rules) {
+    std::map<std::string, std::set<std::string>> out;
+    for (const Game& g : games) {
+        for (const LedgerRow& row : g.rows) {
+            if (!row.playerId.empty() && row.owner.empty()) out[personOf(rules, row)].insert(row.playerId);
+        }
+    }
+    return out;
+}
+
 std::vector<MergeSuggestion> suggestMergesByPlayerId(const std::vector<Game>& games, const MergeRules& rules) {
-    std::map<std::string, std::set<std::string>> byId;
+    std::map<std::string, std::set<std::string>> accounts = accountsByPerson(games, rules);
+    std::map<std::string, std::set<std::string>> people;   // account -> everyone seen on it
+    std::set<std::string> unchecked;                       // "account|person" with a seat nobody has confirmed
     for (const Game& g : games) {
         for (const LedgerRow& row : g.rows) {
             if (row.playerId.empty() || !row.owner.empty()) continue;
-            std::string norm = normalizeName(row.nickname);
-            if (norm.empty()) continue;
-            byId[row.playerId].insert(resolveCanonical(rules, norm));
+            std::string person = personOf(rules, row);
+            people[row.playerId].insert(person);
+            if (!row.ownerReviewed) unchecked.insert(row.playerId + "|" + person);
         }
     }
     std::vector<MergeSuggestion> out;
-    for (const auto& pair : byId) {
-        if (pair.second.size() < 2) continue;
-        MergeSuggestion s;
-        s.playerId = pair.first;
-        s.canonicals.assign(pair.second.begin(), pair.second.end());
-        out.push_back(s);
+    for (const auto& [account, names] : people) {
+        if (names.size() < 2) continue;
+        MergeSuggestion s{account, {names.begin(), names.end()}, {}};
+        for (const std::string& n : names) {
+            if (accounts[n].size() == 1 && unchecked.count(account + "|" + n)) s.newNames.push_back(n);
+        }
+        if (!s.newNames.empty()) out.push_back(s);
     }
     return out;
 }
@@ -267,11 +289,18 @@ void printLeaderboard(const std::vector<PlayerStats>& list) {
                   << padLeft(moneySigned(p.totalNet), 12) << padLeft(moneySigned(p.averagePerGame()), 12)
                   << padLeft(moneySigned(p.biggestWin), 12) << padLeft(moneySigned(p.biggestLoss), 12) << '\n';
     }
+    // Forgiven debts cancel out, so adjustmentTotal is exactly the one-sided corrections.
+    // Whatever is left over is money the games themselves do not account for.
+    double gap = grandTotal - adjustmentTotal;
     std::cout << divider(W) << "Sum of all nets: " << moneySigned(grandTotal);
     if (adjustmentTotal > EPSILON || adjustmentTotal < -EPSILON) {
-        std::cout << "  (includes " << moneySigned(adjustmentTotal) << " of one-sided adjustments)";
-    } else {
-        std::cout << "  (should be $0.00 when every ledger balances)";
+        std::cout << "  (" << moneySigned(adjustmentTotal) << " of it is one-sided adjustments, menu 17)";
+    } else if (gap > -EPSILON && gap < EPSILON) {
+        std::cout << "  (balanced)";
+    }
+    if (gap > EPSILON || gap < -EPSILON) {
+        std::cout << "\n!! The games themselves are off by " << moneySigned(gap)
+                  << ": a ledger does not balance (see the warning printed at startup).";
     }
     std::cout << "\n\n";
 

@@ -35,8 +35,11 @@ bool matches(const SeatOwner& s, const Game& g, const LedgerRow& r) {
            normalizeName(s.nickname) == normalizeName(r.nickname);
 }
 
+// Who the nickname on the seat says it was, ignoring any reassignment.
 std::string nicknamePerson(const players::MergeRules& rules, const LedgerRow& r) {
-    return players::resolveCanonical(rules, normalizeName(r.nickname));
+    LedgerRow asNamed = r;
+    asNamed.owner.clear();
+    return players::personOf(rules, asNamed);
 }
 
 // A seat still open when the ledger was exported ran to the end of the game.
@@ -73,10 +76,7 @@ struct People {
         for (const Game& g : games) all.push_back(&g);
         list = players::sortedByName(players::aggregate(all, rules));
     }
-    std::string display(const std::string& normalized) const {
-        for (const PlayerStats& p : list) if (p.normalizedName == normalized) return p.displayName;
-        return normalized;
-    }
+    std::string display(const std::string& normalized) const { return players::displayName(list, normalized); }
     bool known(const std::string& normalized) const {
         for (const PlayerStats& p : list) if (p.normalizedName == normalized) return true;
         return false;
@@ -272,18 +272,6 @@ bool review(std::vector<Game>& games, std::vector<SeatOwner>& list, const player
     return changed;
 }
 
-std::vector<int> parseNumbers(const std::string& text) {
-    std::vector<int> out;
-    std::string cleaned = text;
-    for (char& c : cleaned) if (c == ',') c = ' ';
-    std::istringstream in(cleaned);
-    std::string token;
-    while (in >> token) {
-        try { out.push_back(std::stoi(token)); } catch (...) { return {}; }
-    }
-    return out;
-}
-
 // Menu 20, option 2: pick a game, then any of its seats.
 bool reassignInGame(std::vector<Game>& games, std::vector<SeatOwner>& list, const players::MergeRules& rules,
                     const std::string& filename) {
@@ -369,14 +357,9 @@ bool listAndUndo(std::vector<Game>& games, std::vector<SeatOwner>& list, const p
 }  // namespace
 
 bool loadCSV(const std::string& filename, std::vector<SeatOwner>& list) {
-    std::ifstream in(filename);
-    if (!in.is_open()) return false;
-    std::string line;
-    bool first = true;
-    while (std::getline(in, line)) {
-        if (trim(line).empty()) continue;
-        if (first) { first = false; continue; }
-        std::vector<std::string> row = splitCSVLine(line);
+    std::vector<std::vector<std::string>> rows;
+    if (!readCSV(filename, rows)) return false;
+    for (const std::vector<std::string>& row : rows) {
         if (row.size() < 5) continue;
         SeatOwner s;
         s.ledgerId = trim(row[0]);
@@ -420,14 +403,34 @@ int apply(std::vector<Game>& games, const std::vector<SeatOwner>& list, const pl
     return static_cast<int>(std::count(used.begin(), used.end(), false));
 }
 
+int confirmNames(std::vector<Game>& games, std::vector<SeatOwner>& list, const players::MergeRules& rules,
+                 const std::string& account, const std::vector<std::string>& people, const std::string& filename) {
+    int added = 0;
+    for (const Game& g : games) {
+        for (const LedgerRow& r : g.rows) {
+            if (r.playerId != account || r.ownerReviewed || !r.owner.empty()) continue;
+            std::string person = nicknamePerson(rules, r);
+            if (std::find(people.begin(), people.end(), person) == people.end()) continue;
+            list.push_back({g.id, r.playerId, r.start, r.nickname, person, "checked: name was right"});
+            ++added;
+        }
+    }
+    saveCSV(filename, list);
+    apply(games, list, rules);
+    return added;
+}
+
 std::vector<Flag> findSuspicious(const std::vector<Game>& games, const players::MergeRules& rules) {
     std::map<std::string, std::string> usual = usualOwners(games, rules);
+    std::map<std::string, std::set<std::string>> accounts = players::accountsByPerson(games, rules);
     std::vector<Flag> out;
     for (const Game& g : games) {
         for (size_t i = 0; i < g.rows.size(); ++i) {
             const LedgerRow& r = g.rows[i];
             if (r.ownerReviewed) continue;
             std::string person = players::personOf(rules, r);
+            // A name never seen on any other account is menu 4's question first (a new nickname?).
+            if (r.owner.empty() && accounts[person].size() == 1) continue;
 
             Flag f;
             f.game = &g;
@@ -467,7 +470,8 @@ bool manage(std::vector<Game>& games,
                   << "plays on a friend's account, or under a friend's name, hand the seat to the person\n"
                   << "whose money it was. Totals, settlement sheets, charts and hand-log stats follow.\n"
                   << "If one seat mixed two people's money, give it to one of them here and move the\n"
-                  << "other person's share with an adjustment (menu 17).\n"
+                  << "other person's share with an adjustment (menu 17). Someone who only changed their\n"
+                  << "nickname is menu 4: merging keeps every one of their seats together.\n"
                   << divider(90, '-')
                   << "1. Review seats that look shared (" << flagged << " to check)\n"
                   << "2. Reassign any seat in a game\n"

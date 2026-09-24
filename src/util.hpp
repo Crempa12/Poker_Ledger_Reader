@@ -10,9 +10,15 @@ constexpr std::int64_t NO_TIME = -1;
 constexpr double EPSILON = 0.009;  // anything under a cent counts as zero
 
 std::vector<std::string> splitCSVLine(const std::string& line);
+// Every non-blank row of a Saved_Data CSV after its header. False if the file cannot be opened.
+bool readCSV(const std::string& filename, std::vector<std::vector<std::string>>& rows);
+// PokerNow file stem without a browser copy suffix: "ledger_pglX (1)" -> "ledger_pglX".
+std::string cleanStem(const std::string& stem);
+// Folders never searched for game files: Saved_Data, reports, build output, .git, .idea.
+bool isExcludedDir(const std::string& folderName);
 std::string trim(const std::string& s);
 std::string lower(const std::string& s);
-std::string normalizeName(const std::string& name);   // "Yaden ):" -> "yaden"
+std::string normalizeName(const std::string& name);   // "Yaden ):" -> "yaden"; no letters: digits only ("2424")
 double centsToDollars(const std::string& s);          // ledger stores 2500 for $25.00
 double toDoubleSafe(const std::string& s);
 std::string escapeCSV(const std::string& s);
@@ -23,6 +29,7 @@ std::string moneySigned(double v);                     // "+$12.34" / "-$12.34"
 std::string divider(int width = 100, char ch = '=');
 std::string padRight(const std::string& s, size_t width);
 std::string padLeft(const std::string& s, size_t width);
+std::vector<int> parseNumbers(const std::string& text);   // "3" / "2,5 7" -> {2,5,7}; anything else -> {}
 
 // Time helpers. Ledger timestamps are ISO-8601 in UTC ("2026-05-06T03:34:31.484Z").
 std::int64_t parseISO8601UTC(const std::string& s);              // epoch seconds or NO_TIME

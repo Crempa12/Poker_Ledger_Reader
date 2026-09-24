@@ -13,12 +13,6 @@ using namespace util;
 
 namespace ledger {
 
-static bool isExcludedDir(const fs::path& p) {
-    std::string name = p.filename().string();
-    return name == "Saved_Data" || name == ".git" || name == ".idea" || name == "build" ||
-           name == "reports" || name.rfind("cmake-build", 0) == 0;
-}
-
 static bool looksLikeLedger(const fs::path& file) {
     std::ifstream in(file);
     if (!in.is_open()) return false;
@@ -36,7 +30,7 @@ std::vector<fs::path> discoverLedgerFiles(const fs::path& root) {
     while (!ec && it != end) {
         const fs::directory_entry& entry = *it;
         if (entry.is_directory(ec)) {
-            if (isExcludedDir(entry.path())) it.disable_recursion_pending();
+            if (isExcludedDir(entry.path().filename().string())) it.disable_recursion_pending();
         } else if (lower(entry.path().extension().string()) == ".csv" && looksLikeLedger(entry.path())) {
             found.push_back(entry.path());
         }
@@ -97,13 +91,7 @@ bool parseLedgerFile(const fs::path& file, const fs::path& root, Game& out, std:
     };
 
     out = Game{};
-    out.id = file.stem().string();
-    // Browsers name a second download "ledger_x (1).csv"; treat it as ledger_x.
-    size_t paren = out.id.rfind(" (");
-    if (paren != std::string::npos && out.id.back() == ')' &&
-        out.id.find_first_not_of("0123456789", paren + 2) == out.id.size() - 1) {
-        out.id.erase(paren);
-    }
+    out.id = cleanStem(file.stem().string());   // a second download "ledger_x (1).csv" is still ledger_x
     out.path = fs::absolute(file).string();
 
     std::error_code ec;
@@ -123,7 +111,7 @@ bool parseLedgerFile(const fs::path& file, const fs::path& root, Game& out, std:
         r.buyOut = centsToDollars(cell(row, "buy_out"));
         r.stack = centsToDollars(cell(row, "stack"));
         r.net = centsToDollars(cell(row, "net"));
-        if (normalizeName(r.nickname).empty()) continue;
+        // Every row with money is kept, whatever its name: dropping one unbalances the books.
         // A seat with no start time and no money moved was never actually played.
         if (r.start == NO_TIME && r.net > -EPSILON && r.net < EPSILON) {
             out.skippedRows++;
@@ -239,6 +227,17 @@ LoadResult loadAllGames(const fs::path& root) {
 
     for (size_t i = 0; i < n; ++i) if (kept[i]) result.games.push_back(std::move(files[i]));
 
+    // Poker is zero-sum: every game's nets must add up to $0.00. PokerNow's own files always do,
+    // so a gap here means a damaged or hand-edited ledger, and every total built on it is off.
+    for (const Game& g : result.games) {
+        double sum = 0.0;
+        for (const LedgerRow& r : g.rows) sum += r.net;
+        if (sum > EPSILON || sum < -EPSILON) {
+            result.messages.push_back("WARNING: " + g.path + " does not balance: its nets sum to " +
+                                      moneySigned(sum) + " instead of $0.00.");
+        }
+    }
+
     std::sort(result.games.begin(), result.games.end(), [](const Game& a, const Game& b) {
         if (a.start != b.start) return a.start < b.start;
         return a.id < b.id;
@@ -254,13 +253,12 @@ std::vector<std::string> listFolders(const std::vector<Game>& games) {
 
 std::vector<const Game*> filterGames(const std::vector<Game>& games, const Scope& scope) {
     std::vector<const Game*> out;
-    for (const Game& g : games) {
-        if (!scope.folder.empty() && g.folder != scope.folder) continue;
-        if (scope.from != NO_TIME && (g.start == NO_TIME || g.start < scope.from)) continue;
-        if (scope.to != NO_TIME && (g.start == NO_TIME || g.start > scope.to)) continue;
-        out.push_back(&g);
-    }
+    for (const Game& g : games) if (scope.contains(g.folder, g.start)) out.push_back(&g);
     return out;
+}
+
+std::string logId(const Game& g) {
+    return g.id.rfind("ledger_", 0) == 0 ? g.id.substr(7) : g.id;
 }
 
 void printDuplicates(const std::vector<DuplicateNote>& duplicates) {

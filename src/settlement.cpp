@@ -9,6 +9,7 @@
 #include <map>
 
 #include "console.hpp"
+#include "players.hpp"
 
 using namespace util;
 
@@ -17,14 +18,9 @@ namespace settlement {
 // ---------------- persistence ----------------
 
 bool loadPreferencesCSV(const std::string& filename, std::vector<PaymentPreference>& prefs) {
-    std::ifstream in(filename);
-    if (!in.is_open()) return false;
-    std::string line;
-    bool first = true;
-    while (std::getline(in, line)) {
-        if (trim(line).empty()) continue;
-        if (first) { first = false; continue; }
-        std::vector<std::string> row = splitCSVLine(line);
+    std::vector<std::vector<std::string>> rows;
+    if (!readCSV(filename, rows)) return false;
+    for (const std::vector<std::string>& row : rows) {
         if (row.size() < 2) continue;
         PaymentPreference p;
         p.payerNormalized = normalizeName(row[0]);
@@ -48,11 +44,9 @@ bool savePreferencesCSV(const std::string& filename, const std::vector<PaymentPr
 }
 
 bool loadSettingsCSV(const std::string& filename, Settings& settings) {
-    std::ifstream in(filename);
-    if (!in.is_open()) return false;
-    std::string line;
-    while (std::getline(in, line)) {
-        std::vector<std::string> row = splitCSVLine(line);
+    std::vector<std::vector<std::string>> rows;
+    if (!readCSV(filename, rows)) return false;
+    for (const std::vector<std::string>& row : rows) {
         if (row.size() < 2) continue;
         std::string key = lower(trim(row[0]));
         std::string value = trim(row[1]);
@@ -252,19 +246,19 @@ std::vector<SettlementEntry> calculate(const std::vector<PlayerStats>& players,
     for (std::vector<Balance*>& group : splitIntoGroups(remaining)) settleGroup(group, pay);
 
     // Reconciliation. settleGroup gives up with `break` when no credit is left to pay a
-    // debt into, which happens whenever the balances handed to it do not sum to zero -
-    // a one-sided correction from menu 17 is enough to cause it. Without this check the
-    // abandoned money simply never appears on the sheet and nobody is told.
+    // debt into, which happens whenever the balances handed to it do not sum to zero.
+    // Payments never change that sum, so what is left unpaired is exactly the gap.
     double unpaidDebt = 0.0, unpaidCredit = 0.0;
     for (const auto& pair : balances) {
         if (pair.second.amount < -EPSILON) unpaidDebt += -pair.second.amount;
         else if (pair.second.amount > EPSILON) unpaidCredit += pair.second.amount;
     }
     if (unpaidDebt > EPSILON || unpaidCredit > EPSILON) {
-        std::cout << "\n  !! This sheet does not balance. " << util::money(unpaidDebt)
-                  << " of debt and " << util::money(unpaidCredit) << " of credit could not be paired.\n"
-                  << "     The totals in scope do not sum to zero, which normally means a one-sided\n"
-                  << "     adjustment (menu 17). Fix the adjustment or the sheet will be short.\n";
+        std::cout << "\n  !! This sheet does not balance: the totals it was built from sum to "
+                  << util::moneySigned(unpaidCredit - unpaidDebt) << " instead of $0.00, so\n     "
+                  << util::money(unpaidDebt) << " of debt and " << util::money(unpaidCredit)
+                  << " of credit could not be paired. The cause is a one-sided\n"
+                  << "     adjustment (menu 17) or a ledger that does not balance (warned at startup).\n";
     }
     return out;
 }
@@ -344,13 +338,6 @@ bool exportCSV(const std::string& filename, const std::vector<SettlementEntry>& 
 
 // ---------------- interactive editor ----------------
 
-static std::string displayFor(const std::vector<PlayerStats>& players, const std::string& normalized) {
-    for (const PlayerStats& p : players) {
-        if (p.normalizedName == normalized) return p.displayName;
-    }
-    return normalized.empty() ? "(none)" : normalized;
-}
-
 void managePreferences(std::vector<PaymentPreference>& prefs,
                        Settings& settings,
                        const std::vector<PlayerStats>& players,
@@ -362,14 +349,14 @@ void managePreferences(std::vector<PaymentPreference>& prefs,
             std::cout << "  (no pinned payer -> payee preferences)\n";
         }
         for (size_t i = 0; i < prefs.size(); ++i) {
-            std::cout << "  " << (i + 1) << ". " << displayFor(players, prefs[i].payerNormalized)
-                      << " always pays " << displayFor(players, prefs[i].payeeNormalized)
+            std::cout << "  " << (i + 1) << ". " << players::displayName(players, prefs[i].payerNormalized)
+                      << " always pays " << players::displayName(players, prefs[i].payeeNormalized)
                       << (prefs[i].note.empty() ? "" : "   [" + prefs[i].note + "]") << '\n';
         }
-        std::cout << "  Banker: " << displayFor(players, settings.banker)
+        std::cout << "  Banker: " << players::displayName(players, settings.banker)
                   << (settings.banker.empty() ? "  (off: preferences + automatic matching are used)"
                                               : "  (on: everyone settles through this person)") << '\n';
-        std::cout << "  Me:     " << displayFor(players, settings.me) << "  (used for \"my winnings\" views)\n";
+        std::cout << "  Me:     " << players::displayName(players, settings.me) << "  (used for \"my winnings\" views)\n";
         std::cout << divider(60)
                   << "1. Add a pinned preference (someone always pays someone)\n"
                   << "2. Remove a pinned preference\n"
@@ -384,7 +371,7 @@ void managePreferences(std::vector<PaymentPreference>& prefs,
         if (choice == 1) {
             std::string payer = console::pickPlayer(players, "Who is the PAYER (sends their losses)?");
             if (payer.empty()) continue;
-            std::string payee = console::pickPlayer(players, "Who should " + displayFor(players, payer) + " pay?");
+            std::string payee = console::pickPlayer(players, "Who should " + players::displayName(players, payer) + " pay?");
             if (payee.empty()) continue;
             if (payer == payee) { std::cout << "A player cannot pay themselves.\n"; continue; }
             std::string note = console::askLine("Optional note (e.g. 'Venmo only'): ");
@@ -404,7 +391,7 @@ void managePreferences(std::vector<PaymentPreference>& prefs,
             if (banker.empty()) continue;
             settings.banker = banker;
             saveSettingsCSV(settingsFile, settings);
-            std::cout << "Banker set. Every settlement now routes through " << displayFor(players, banker) << ".\n";
+            std::cout << "Banker set. Every settlement now routes through " << players::displayName(players, banker) << ".\n";
         } else if (choice == 4) {
             settings.banker.clear();
             saveSettingsCSV(settingsFile, settings);

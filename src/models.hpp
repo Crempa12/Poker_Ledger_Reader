@@ -84,7 +84,8 @@ struct PlayerStats {
     std::set<std::string> aliases;     // normalized names folded into this player
     std::set<std::string> playerIds;   // ledger account ids seen for this player
 
-    double averagePerGame() const { return games == 0 ? 0.0 : totalNet / games; }
+    // Games only: an adjustment is not a game, so a forgiven debt does not move the average.
+    double averagePerGame() const { return games == 0 ? 0.0 : (totalNet - adjustments) / games; }
 };
 
 struct SettlementEntry {
@@ -122,6 +123,13 @@ struct Scope {
     std::int64_t to = util::NO_TIME;    // inclusive, local end of day
 
     bool isEverything() const { return folder.empty() && from == util::NO_TIME && to == util::NO_TIME; }
+    // Is something from `itemFolder`, dated `date`, inside this scope? (Games and adjustments alike.)
+    bool contains(const std::string& itemFolder, std::int64_t date) const {
+        if (!folder.empty() && itemFolder != folder) return false;
+        if (from != util::NO_TIME && (date == util::NO_TIME || date < from)) return false;
+        if (to != util::NO_TIME && (date == util::NO_TIME || date > to)) return false;
+        return true;
+    }
     std::string describe() const {
         std::string s = folder.empty() ? "all folders" : "folder \"" + folder + "\"";
         if (from != util::NO_TIME || to != util::NO_TIME) {

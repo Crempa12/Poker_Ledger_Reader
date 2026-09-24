@@ -176,7 +176,8 @@ std::vector<NightSeries> nightSeries(const HandLog& log,
 std::string asciiCards(const std::string& cards);
 
 void printStyleTable(const std::vector<StyleStats>& rows);
-void printGameSummaries(const std::vector<const HandLog*>& logs);
+void printGameSummaries(const std::vector<const HandLog*>& logs, const players::MergeRules& rules,
+                        const std::map<std::string, PlayerStats>& ledgerStats);
 bool exportStyleCSV(const std::string& filename, const std::vector<StyleStats>& rows);
 
 }  // namespace handlog

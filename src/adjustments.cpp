@@ -5,20 +5,16 @@
 #include <iostream>
 
 #include "console.hpp"
+#include "players.hpp"
 
 using namespace util;
 
 namespace adjustments {
 
 bool loadCSV(const std::string& filename, std::vector<Adjustment>& list) {
-    std::ifstream in(filename);
-    if (!in.is_open()) return false;
-    std::string line;
-    bool first = true;
-    while (std::getline(in, line)) {
-        if (trim(line).empty()) continue;
-        if (first) { first = false; continue; }
-        std::vector<std::string> row = splitCSVLine(line);
+    std::vector<std::vector<std::string>> rows;
+    if (!readCSV(filename, rows)) return false;
+    for (const std::vector<std::string>& row : rows) {
         if (row.size() < 4) continue;
         Adjustment a;
         a.group = trim(row[0]);
@@ -46,20 +42,8 @@ bool saveCSV(const std::string& filename, const std::vector<Adjustment>& list) {
 
 std::vector<const Adjustment*> filter(const std::vector<Adjustment>& list, const Scope& scope) {
     std::vector<const Adjustment*> out;
-    for (const Adjustment& a : list) {
-        if (!scope.folder.empty() && a.folder != scope.folder) continue;
-        if (scope.from != NO_TIME && (a.date == NO_TIME || a.date < scope.from)) continue;
-        if (scope.to != NO_TIME && (a.date == NO_TIME || a.date > scope.to)) continue;
-        out.push_back(&a);
-    }
+    for (const Adjustment& a : list) if (scope.contains(a.folder, a.date)) out.push_back(&a);
     return out;
-}
-
-static std::string displayFor(const std::vector<PlayerStats>& players, const std::string& normalized) {
-    for (const PlayerStats& p : players) {
-        if (p.normalizedName == normalized || p.aliases.count(normalized)) return p.displayName;
-    }
-    return normalized;
 }
 
 void printList(const std::vector<Adjustment>& list, const std::vector<PlayerStats>& players) {
@@ -73,7 +57,7 @@ void printList(const std::vector<Adjustment>& list, const std::vector<PlayerStat
     for (size_t i = 0; i < list.size(); ++i) {
         const Adjustment& a = list[i];
         std::cout << padRight(std::to_string(i + 1), 4) << padRight(formatLocalDate(a.date), 12)
-                  << padRight(displayFor(players, a.playerNormalized), 20) << padLeft(moneySigned(a.amount), 12)
+                  << padRight(players::displayName(players, a.playerNormalized), 20) << padLeft(moneySigned(a.amount), 12)
                   << "  " << padRight(a.folder.empty() ? "(any)" : a.folder, 26) << a.note << '\n';
     }
     std::cout << divider(100) << '\n';
@@ -128,9 +112,9 @@ bool manage(std::vector<Adjustment>& list,
             if (note.empty()) note = "forgiven";
             std::int64_t date = askDate();
             std::string group = newGroup(list);
-            list.push_back({group, date, debtor, +amount, scope.folder, note + " (by " + displayFor(players, creditor) + ")"});
-            list.push_back({group, date, creditor, -amount, scope.folder, note + " (for " + displayFor(players, debtor) + ")"});
-            std::cout << displayFor(players, debtor) << " +" << money(amount) << ", " << displayFor(players, creditor)
+            list.push_back({group, date, debtor, +amount, scope.folder, note + " (by " + players::displayName(players, creditor) + ")"});
+            list.push_back({group, date, creditor, -amount, scope.folder, note + " (for " + players::displayName(players, debtor) + ")"});
+            std::cout << players::displayName(players, debtor) << " +" << money(amount) << ", " << players::displayName(players, creditor)
                       << " -" << money(amount) << ". Totals still sum to zero.\n";
             changed = true;
         } else if (choice == 2) {

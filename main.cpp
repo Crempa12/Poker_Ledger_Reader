@@ -12,6 +12,7 @@
 //   Poker_Ledger_Reader --from 2026-05-01 --to 2026-05-31
 //   Poker_Ledger_Reader --report [file.html] write the HTML report and exit
 
+#include <algorithm>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
@@ -64,9 +65,17 @@ struct App {
     fs::path file(const char* name) const { return savedDir / name; }
 
     void refresh() {
+        // Saved names can predate a merge (a pin to "jahan" after jahan was merged into jjj
+        // silently never applied): point them at the name each player is filed under now.
+        for (PaymentPreference& p : prefs) {
+            p.payerNormalized = players::resolveCanonical(rules, p.payerNormalized);
+            p.payeeNormalized = players::resolveCanonical(rules, p.payeeNormalized);
+        }
+        settings.me = players::resolveCanonical(rules, settings.me);
+        settings.banker = players::resolveCanonical(rules, settings.banker);
         seats::apply(games, seatOwners, rules);
         for (const Game& g : games) {
-            auto log = logs.find(g.id.rfind("ledger_", 0) == 0 ? g.id.substr(7) : g.id);
+            auto log = logs.find(ledger::logId(g));
             if (log != logs.end()) handlog::pairWithLedger(log->second, g, rules);
         }
         scoped = ledger::filterGames(games, scope);
@@ -141,51 +150,164 @@ void chooseScope(App& app) {
     }
 }
 
-// ---------------------------------------------------------------- merging
+// ---------------------------------------------------------------- player names (menu 4)
 
-void mergeNames(App& app) {
-    // 1. Automatic suggestions: nicknames that share a ledger player_id.
-    std::vector<players::MergeSuggestion> suggestions = players::suggestMergesByPlayerId(app.games, app.rules);
-    if (!suggestions.empty()) {
-        std::cout << "\nThese names share the same ledger account (player_id), so they are probably one person.\n"
-                  << "If a friend played on someone else's account, leave them separate (0) and use menu 20\n"
-                  << "instead: merging would put every one of the friend's results on the account owner.\n";
-        for (const players::MergeSuggestion& s : suggestions) {
-            std::cout << "\n  Account " << s.playerId << ":\n";
-            for (size_t i = 0; i < s.canonicals.size(); ++i) {
-                const PlayerStats* p = players::find(app.stats, s.canonicals[i]);
-                std::cout << "    " << (i + 1) << ". " << s.canonicals[i]
-                          << (p ? "  (" + p->displayName + ", " + moneySigned(p->totalNet) + ")" : "") << '\n';
-            }
-            int keep = console::askMenuChoice("  Merge all of these into which name? (0 = leave them separate): ", 0,
-                                              static_cast<int>(s.canonicals.size()));
-            if (keep == 0) continue;
-            for (size_t i = 0; i < s.canonicals.size(); ++i) {
-                if (static_cast<int>(i) + 1 != keep) players::addMergeRule(app.rules, s.canonicals[i], s.canonicals[keep - 1]);
-            }
-            app.refresh();
-        }
-    }
-
-    // 2. Manual merges.
-    while (true) {
-        std::vector<PlayerStats> list = players::sortedByName(app.stats);
-        std::cout << "\nPlayers in scope:\n";
-        players::printCompactList(list);
-        if (console::askYesNo("Merge two names by hand? (y/n): ") == 'n') break;
-
-        int keep = console::askMenuChoice("Number of the name to KEEP: ", 1, static_cast<int>(list.size()));
-        int drop = console::askMenuChoice("Number of the name to MERGE INTO it: ", 1, static_cast<int>(list.size()));
-        if (keep == drop) {
-            std::cout << "Those are the same player.\n";
-            continue;
-        }
-        players::addMergeRule(app.rules, list[drop - 1].normalizedName, list[keep - 1].normalizedName);
-        app.refresh();
-        std::cout << "Merged \"" << list[drop - 1].displayName << "\" into \"" << list[keep - 1].displayName << "\".\n";
+// Merges `others` into `keep` for good, saves, and recounts.
+void mergeInto(App& app, const std::string& keep, const std::vector<std::string>& others) {
+    std::vector<PlayerStats> byName = players::sortedByName(app.stats);
+    std::string names;
+    for (const std::string& o : others) {
+        if (o == keep) continue;
+        players::addMergeRule(app.rules, o, keep);
+        names += (names.empty() ? "\"" : ", \"") + players::displayName(byName, o) + "\"";
     }
     players::saveMergeRulesCSV(app.file("merge_rules.csv").string(), app.rules);
-    std::cout << "Merge rules saved.\n";
+    app.refresh();
+    std::cout << "Merged " << names << " into \"" << players::displayName(byName, keep) << "\". Saved.\n";
+}
+
+// One question per name never seen anywhere else that turned up on an account someone else
+// uses ("24242424242424" on Kobe's account). Each answer is saved, so it is asked once, and
+// it only ever changes that one name: everyone else on the account is who they say.
+void reviewNewNames(App& app) {
+    std::set<std::string> later;   // "account|name" skipped for now
+    while (true) {
+        struct Question { players::MergeSuggestion account; std::string name; };
+        std::vector<Question> pending;
+        for (const auto& s : players::suggestMergesByPlayerId(app.games, app.rules))
+            for (const std::string& n : s.newNames)
+                if (!later.count(s.playerId + "|" + n)) pending.push_back({s, n});
+        if (pending.empty()) return;
+
+        const Question& q = pending.front();
+        const std::vector<std::string>& newNames = q.account.newNames;
+        std::vector<std::string> others;   // the possible answers: everyone else on the account
+        for (const std::string& c : q.account.canonicals) if (c != q.name) others.push_back(c);
+        std::vector<PlayerStats> byName = players::sortedByName(app.stats);
+        auto line = [&](const std::string& name) {
+            const PlayerStats* p = players::find(app.stats, name);
+            return padRight(players::displayName(byName, name), 22) + padLeft(p ? moneySigned(p->totalNet) : "", 12);
+        };
+
+        std::cout << "\nNew name to check (" << pending.size() << " left)\n"
+                  << "    " << line(q.name) << "   never seen before\n"
+                  << "  has only ever played on account " << q.account.playerId << ", which is also used by:\n";
+        for (size_t i = 0; i < others.size(); ++i) {
+            bool alsoNew = std::find(newNames.begin(), newNames.end(), others[i]) != newNames.end();
+            std::cout << "    " << (i + 1) << ". " << line(others[i]) << (alsoNew ? "   (also new)" : "") << '\n';
+        }
+        std::cout << "  The same person under a new nickname?  Type their number.\n"
+                  << "  A different person (the name is right)?  Type d.\n"
+                  << "  Not sure yet?  Press Enter.\n";
+        while (true) {
+            std::string answer = lower(console::askLine("  Answer: "));
+            std::vector<int> pick = parseNumbers(answer);
+            if (answer.empty()) { later.insert(q.account.playerId + "|" + q.name); break; }
+            if (answer == "d") {
+                seats::confirmNames(app.games, app.seatOwners, app.rules, q.account.playerId, {q.name},
+                                    app.file("seat_owners.csv").string());
+                app.refresh();
+                std::cout << "Saved: a different person. This will not be asked again.\n";
+                break;
+            }
+            if (pick.size() == 1 && pick[0] >= 1 && pick[0] <= static_cast<int>(others.size())) {
+                mergeInto(app, others[pick[0] - 1], {q.name});
+                break;
+            }
+            std::cout << "  Type a number from the list, d, or press Enter.\n";
+        }
+    }
+}
+
+// Any names at all, the one to keep first. Warns when nothing but the name links them.
+void mergeByHand(App& app) {
+    std::vector<PlayerStats> list = players::sortedByName(app.stats);
+    std::cout << '\n';
+    for (size_t i = 0; i < list.size(); ++i) {
+        std::cout << "  " << padRight(std::to_string(i + 1), 5) << padRight(list[i].displayName, 24)
+                  << padLeft(moneySigned(list[i].totalNet), 12) << '\n';
+    }
+    std::string typed = console::askLine(
+        "Numbers of the names that are ONE person, the name to keep first (e.g. 12,5), Enter = back: ");
+    std::vector<int> pick = parseNumbers(typed);
+    if (!typed.empty() && pick.empty()) { std::cout << "Type numbers from the list, like 12,5.\n"; return; }
+    std::vector<std::string> names;
+    for (int n : pick) {
+        if (n < 1 || n > static_cast<int>(list.size())) { std::cout << "No player number " << n << ".\n"; return; }
+        if (std::find(names.begin(), names.end(), list[n - 1].normalizedName) == names.end())
+            names.push_back(list[n - 1].normalizedName);
+    }
+    if (names.size() < 2) { if (!pick.empty()) std::cout << "Pick at least two different names.\n"; return; }
+
+    // A shared account is real evidence; a matching name alone is not ("last", "fish" ...).
+    std::map<std::string, std::set<std::string>> accounts = players::accountsByPerson(app.games, app.rules);
+    std::string unlinked;
+    for (size_t i = 1; i < names.size(); ++i) {
+        bool shared = false;
+        for (const std::string& a : accounts[names[i]]) if (accounts[names[0]].count(a)) shared = true;
+        if (!shared) unlinked += (unlinked.empty() ? "" : ", ") + players::displayName(list, names[i]);
+    }
+    if (!unlinked.empty()) {
+        std::cout << "Heads-up: " << unlinked << " never played on the same PokerNow account as "
+                  << players::displayName(list, names[0]) << ",\nso only you know they are one person. "
+                  << "Anyone who uses that name later will count for them too.\n";
+        if (console::askYesNo("Merge anyway? (y/n): ") == 'n') return;
+    }
+    mergeInto(app, names[0], names);
+}
+
+// Every merge group, with a way to split one name back out.
+void splitName(App& app) {
+    std::map<std::string, std::vector<std::string>> groups;   // canonical -> aliases (sorted by the map below)
+    for (const auto& [alias, canonical] : app.rules) groups[canonical].push_back(alias);
+    std::vector<PlayerStats> byName = players::sortedByName(app.stats);
+    std::vector<std::string> keys;
+    std::cout << "\nMerged names (each line counts as one person)\n" << divider(90, '-');
+    for (auto& [canonical, aliases] : groups) {
+        std::sort(aliases.begin(), aliases.end());
+        keys.push_back(canonical);
+        // Every name in the group except the one it is shown as ("sack" is filed under "isaac").
+        std::string display = players::displayName(byName, canonical), list;
+        std::set<std::string> names(aliases.begin(), aliases.end());
+        names.insert(canonical);
+        names.erase(normalizeName(display));
+        size_t shown = 0;
+        for (const std::string& n : names) if (++shown <= 8) list += (shown > 1 ? ", " : "") + n;
+        if (shown > 8) list += ", +" + std::to_string(shown - 8) + " more";
+        std::cout << "  " << padRight(std::to_string(keys.size()) + ".", 5) << padRight(display, 20)
+                  << (list.empty() ? "" : "also: " + list) << '\n';
+    }
+    std::cout << divider(90, '-');
+    if (keys.empty()) { std::cout << "  none yet\n"; return; }
+    int g = console::askMenuChoice("Split a name out of which person? (0 = back): ", 0, static_cast<int>(keys.size()));
+    if (g == 0) return;
+    const std::vector<std::string>& aliases = groups[keys[g - 1]];
+    for (size_t i = 0; i < aliases.size(); ++i) std::cout << "    " << (i + 1) << ". " << aliases[i] << '\n';
+    int a = console::askMenuChoice("Which name is really someone else? (0 = cancel): ", 0, static_cast<int>(aliases.size()));
+    if (a == 0) return;
+    std::string alias = aliases[a - 1];
+    players::removeMergeRule(app.rules, alias);
+    players::saveMergeRulesCSV(app.file("merge_rules.csv").string(), app.rules);
+    app.refresh();
+    std::cout << "\"" << alias << "\" counts as its own player again. Saved.\n";
+}
+
+void playerNames(App& app) {
+    std::cout << "\nPlayer names\n" << divider(90)
+              << "Same person under different nicknames (\"Kobe\", \"Kober\", \"Mamba\")? Merge them here.\n"
+              << "A seat played by someone other than the name on it? That is menu 20: it moves that\n"
+              << "one seat's money and leaves both names alone.\n";
+    reviewNewNames(app);
+    while (true) {
+        std::cout << divider(90, '-')
+                  << "1. Merge names by hand\n"
+                  << "2. See merged names / split one back out\n"
+                  << "0. Back\n";
+        int choice = console::askMenuChoice("Choose: ", 0, 2);
+        if (choice == 0) return;
+        if (choice == 1) mergeByHand(app);
+        else splitName(app);
+    }
 }
 
 // ---------------------------------------------------------------- data loading
@@ -217,27 +339,29 @@ bool loadData(App& app) {
     return !app.games.empty();
 }
 
-std::string logIdOf(const Game& g) {
-    return g.id.rfind("ledger_", 0) == 0 ? g.id.substr(7) : g.id;
-}
-
 // Hand logs for the games in scope, oldest first.
 std::vector<const handlog::HandLog*> logsInScope(const App& app) {
     std::vector<const handlog::HandLog*> out;
     for (const Game* g : app.scoped) {
-        auto it = app.logs.find(logIdOf(*g));
+        auto it = app.logs.find(ledger::logId(*g));
         if (it != app.logs.end()) out.push_back(&it->second);
     }
     return out;
 }
 
-// Reminds the user about seats that look like they were bought by someone other than the name on them.
-void warnSharedSeats(const App& app) {
+// Reminds the user about new nicknames (menu 4) and seats that look like someone else's (menu 20).
+void warnUnchecked(const App& app) {
+    size_t names = players::suggestMergesByPlayerId(app.games, app.rules).size();
+    if (names > 0) {
+        std::cout << "WARNING: " << names << " account" << (names == 1 ? " has" : "s have")
+                  << " a name never seen before. Menu 4 asks whether it is someone's new nickname.\n";
+    }
     size_t flagged = seats::findSuspicious(app.games, app.rules).size();
-    if (flagged == 0) return;
-    std::cout << "WARNING: " << flagged << " buy-in" << (flagged == 1 ? "" : "s")
-              << " look like they were made on someone else's account or under someone else's name.\n"
-              << "         They count for the name on the seat until you check them in menu 20.\n";
+    if (flagged > 0) {
+        std::cout << "WARNING: " << flagged << " buy-in" << (flagged == 1 ? "" : "s")
+                  << " look like they were made on someone else's account or under someone else's name.\n"
+                  << "         They count for the name on the seat until you check them in menu 20.\n";
+    }
 }
 
 // ---------------------------------------------------------------- hand logs
@@ -250,7 +374,7 @@ void handLogStats(App& app) {
         std::cout << "Games without a log (download \"poker_now_log_<id>.csv\" from PokerNow and drop it next to the ledger):\n";
         int shown = 0;
         for (auto it = app.scoped.rbegin(); it != app.scoped.rend() && shown < 5; ++it) {
-            if (app.logs.count(logIdOf(**it))) continue;
+            if (app.logs.count(ledger::logId(**it))) continue;
             std::cout << "  " << formatLocalDate((*it)->start) << "  " << (*it)->folder << "  " << (*it)->id << '\n';
             ++shown;
         }
@@ -258,7 +382,7 @@ void handLogStats(App& app) {
     }
     if (logs.empty()) return;
     std::cout << '\n';
-    handlog::printGameSummaries(logs);
+    handlog::printGameSummaries(logs, app.rules, app.stats);
     std::vector<handlog::StyleStats> style = handlog::computeStyle(logs, app.rules, app.stats);
     handlog::printStyleTable(style);
     if (console::askYesNo("Export this table to Saved_Data/style_stats.csv? (y/n): ") == 'y') {
@@ -317,12 +441,6 @@ fs::path downloadsDir() {
     return home ? fs::path(home) / "Downloads" : fs::path();
 }
 
-// Strips browser copy suffixes: "ledger_pglX (1)" -> "ledger_pglX".
-std::string cleanStem(const std::string& stem) {
-    size_t sp = stem.find(' ');
-    return trim(sp == std::string::npos ? stem : stem.substr(0, sp));
-}
-
 void importDownloads(App& app) {
     fs::path dl = downloadsDir();
     std::error_code ec;
@@ -342,7 +460,7 @@ void importDownloads(App& app) {
     }
 
     std::set<std::string> knownLedgers;
-    for (const Game& g : app.games) knownLedgers.insert(logIdOf(g));
+    for (const Game& g : app.games) knownLedgers.insert(ledger::logId(g));
 
     std::cout << "\nPokerNow files in " << dl.string() << ":\n" << divider(90, '-');
     int newFiles = 0;
@@ -411,7 +529,7 @@ void importDownloads(App& app) {
     if (!loadData(app)) { std::cout << "No ledgers found after the import.\n"; return; }
     app.refresh();
     std::cout << "Now " << app.games.size() << " games and " << app.logs.size() << " hand logs loaded.\n";
-    warnSharedSeats(app);
+    warnUnchecked(app);
 }
 
 // ---------------------------------------------------------------- reports
@@ -426,13 +544,6 @@ std::string defaultSessionId(const App& app) {
 }
 
 // ---------------------------------------------------------------- settlement
-
-std::string nameOf(const std::vector<PlayerStats>& players, const std::string& normalized) {
-    for (const PlayerStats& p : players) {
-        if (p.normalizedName == normalized) return p.displayName;
-    }
-    return normalized.empty() ? "(none)" : normalized;
-}
 
 // One line per game so the user can pick which night to settle.
 void printGameList(const App& app, const std::vector<const Game*>& games) {
@@ -511,7 +622,7 @@ void calculateSettlement(App& app) {
     std::vector<PaymentPreference> prefs = app.prefs;
 
     if (!app.settings.banker.empty()) {
-        std::cout << "\nBanker mode is on: everyone settles through " << nameOf(byNet, app.settings.banker)
+        std::cout << "\nBanker mode is on: everyone settles through " << players::displayName(byNet, app.settings.banker)
                   << ", so payer -> payee requests are skipped. Turn the banker off in option 6 to use them.\n";
     } else {
         std::vector<PlayerStats> losers, winners;
@@ -533,7 +644,7 @@ void calculateSettlement(App& app) {
             if (!owes(pref.payerNormalized) || !owed(pref.payeeNormalized)) continue;
             if (!anyPinned) std::cout << "\nSaved preferences that apply here:\n";
             anyPinned = true;
-            std::cout << "  " << nameOf(byNet, pref.payerNormalized) << " always pays " << nameOf(byNet, pref.payeeNormalized) << '\n';
+            std::cout << "  " << players::displayName(byNet, pref.payerNormalized) << " always pays " << players::displayName(byNet, pref.payeeNormalized) << '\n';
         }
 
         if (losers.empty() || winners.empty()) {
@@ -542,7 +653,7 @@ void calculateSettlement(App& app) {
             while (true) {
                 std::string payer = console::pickPlayer(losers, "Who is sending? (players who owe)");
                 if (payer.empty()) break;
-                std::string payee = console::pickPlayer(winners, "Who should " + nameOf(byNet, payer) + " send to? (players who are owed)");
+                std::string payee = console::pickPlayer(winners, "Who should " + players::displayName(byNet, payer) + " send to? (players who are owed)");
                 if (payee.empty()) break;
 
                 bool already = false;
@@ -554,7 +665,7 @@ void calculateSettlement(App& app) {
                 } else {
                     PaymentPreference pref{payer, payee, "", true};
                     prefs.push_back(pref);
-                    std::cout << nameOf(byNet, payer) << " will send to " << nameOf(byNet, payee) << " first.\n";
+                    std::cout << players::displayName(byNet, payer) << " will send to " << players::displayName(byNet, payee) << " first.\n";
                     if (console::askYesNo("Remember this for future settlements too? (y/n): ") == 'y') {
                         pref.oneOff = false;
                         app.prefs.push_back(pref);
@@ -627,8 +738,9 @@ void openInBrowser(const fs::path& file) {
 void printMenu(const App& app) {
     std::int64_t first = app.scoped.empty() ? NO_TIME : app.scoped.front()->start;
     std::int64_t last = app.scoped.empty() ? NO_TIME : app.scoped.back()->start;
-    std::string meName = app.settings.me.empty() ? "(not set)" : app.settings.me;
-    std::string banker = app.settings.banker.empty() ? "off" : app.settings.banker;
+    std::vector<PlayerStats> byName = players::sortedByName(app.stats);
+    std::string meName = app.settings.me.empty() ? "(not set)" : players::displayName(byName, app.settings.me);
+    std::string banker = app.settings.banker.empty() ? "off" : players::displayName(byName, app.settings.banker);
 
     std::cout << '\n' << divider(72) << "POKER LEDGER\n" << divider(72)
               << "Scope: " << app.scope.describe() << "  |  " << app.scoped.size() << " games, " << app.stats.size()
@@ -640,9 +752,11 @@ void printMenu(const App& app) {
               << "  1. Change scope (folder / date range)\n"
               << "  2. Leaderboard: everyone's net wins and losses\n"
               << "  3. Player detail: game-by-game history and running total\n"
-              << "  4. Merge duplicate player names\n"
-              << " 20. Shared accounts: fix buy-ins made under someone else's name ("
+              << "  4. Player names: one person, several nicknames ("
+              << players::suggestMergesByPlayerId(app.games, app.rules).size() << " new to check)\n"
+              << " 20. Shared accounts: a seat played by someone other than its name ("
               << seats::findSuspicious(app.games, app.rules).size() << " to check)\n"
+              << " 17. Adjustments: forgive a debt or correct a total (" << app.adjustmentList.size() << " saved)\n"
               << "SETTLEMENT\n"
               << "  5. Calculate settlement sheet (pick a game or folder, then who sends to whom)\n"
               << "  6. Payment preferences (pinned payer -> payee, banker, me)\n"
@@ -657,7 +771,6 @@ void printMenu(const App& app) {
               << " 14. Generate HTML report with charts\n"
               << " 15. Terminal charts\n"
               << " 16. Check for duplicate ledgers" << (app.duplicates.empty() ? "" : "  (!)") << "\n"
-              << " 17. Adjustments: forgive a debt or correct a total (" << app.adjustmentList.size() << " saved)\n"
               << "HAND LOGS\n"
               << " 18. Playing style stats from hand logs (VPIP, aggression, showdowns)\n"
               << " 21. Deep playstyle profiles (position, 3-bet, c-bet, sizing, archetypes)\n"
@@ -690,7 +803,7 @@ void runMenu(App& app) {
                 break;
             }
 
-            case 4: mergeNames(app); break;
+            case 4: playerNames(app); break;
 
             case 5: calculateSettlement(app); break;
 
@@ -870,7 +983,7 @@ int main(int argc, char** argv) {
     std::cout << "Loaded " << app.games.size() << " games from " << ledger::listFolders(app.games).size()
               << " folders under " << app.dataDir.string() << ", " << app.logs.size() << " hand log" << (app.logs.size() == 1 ? "" : "s") << '\n';
 
-    warnSharedSeats(app);
+    warnUnchecked(app);
 
     if (reportOnly) {
         players::printLeaderboard(players::sortedByNet(app.stats));

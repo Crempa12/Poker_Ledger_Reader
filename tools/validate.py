@@ -15,7 +15,10 @@ if len(sys.argv) != 3:
 ROOT = sys.argv[1]
 BIN = sys.argv[2]
 
-def norm(s): return re.sub(r'[^a-z]', '', s.lower())
+def norm(s):   # letters only, lower-cased; a name with no letters keeps its digits (same as the app)
+    return re.sub(r'[^a-z]', '', s.lower()) or re.sub(r'[^0-9]', '', s)
+def filed_as(nick, pid):   # the name a seat is filed under before merges; an emoji-only nickname goes by its account
+    return norm(nick) or re.sub(r'[^a-z]', '', ("unnamed " + pid).lower())
 def cents(s): return int(round(float(s) * 100))
 
 def parse_iso(s):
@@ -29,7 +32,7 @@ def local_date(epoch):
 
 # ---- merge rules
 rules = {}
-with open(os.path.join(ROOT, "Saved_Data", "merge_rules.csv")) as f:
+with open(os.path.join(ROOT, "Saved_Data", "merge_rules.csv"), encoding="utf-8") as f:
     r = csv.reader(f); next(r)
     for row in r:
         if len(row) >= 2: rules[norm(row[0])] = norm(row[1])
@@ -38,12 +41,17 @@ def canon(n):
     while n in rules and rules[n] != n and seen < 64: n = rules[n]; seen += 1
     return n
 
-# ---- adjustments (optional file)
+# ---- adjustments (optional file). The checks below add and remove their own, so the copy starts with none.
+_adj = os.path.join(ROOT, "Saved_Data", "adjustments.csv")
+if os.path.exists(_adj) and len(open(_adj, encoding="utf-8").read().strip().splitlines()) > 1:
+    print("note: clearing the adjustments in this copy so the adjustment checks start from none")
+    open(_adj, "w", encoding="utf-8").write("group,date,player_normalized,amount,folder,note\n")
+
 def load_adjustments():
     path = os.path.join(ROOT, "Saved_Data", "adjustments.csv")
     if not os.path.exists(path): return []
     out = []
-    for r in csv.DictReader(open(path)):
+    for r in csv.DictReader(open(path, encoding="utf-8")):
         out.append({"date": r["date"], "player": norm(r["player_normalized"]), "amount": cents(r["amount"]), "folder": r["folder"], "note": r["note"]})
     return out
 
@@ -57,27 +65,31 @@ if os.path.exists(_seats):
 # ---- games (under Games/ when that folder exists, matching the app)
 DATA = os.path.join(ROOT, "Games") if os.path.isdir(os.path.join(ROOT, "Games")) else ROOT
 games = {}
+unbalanced = []   # reported as failures once check() exists; the app only warns and keeps going
 for path in sorted(glob.glob(os.path.join(DATA, "**", "*.csv"), recursive=True)):
     if "Saved_Data" in path or os.path.basename(path).startswith("poker_now_log_"): continue
     with open(path, encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     if not rows or "player_nickname" not in rows[0]: continue
-    gid = os.path.splitext(os.path.basename(path))[0]
-    ledger_id = re.sub(r" \(\d+\)$", "", gid)   # the app's id: browser copy suffix removed
-    if gid in games: continue
+    gid = os.path.splitext(os.path.basename(path))[0].split(" ", 1)[0].strip()   # the app's id: cut at the first space ("ledger_x (1)")
     folder = os.path.relpath(os.path.dirname(path), DATA)
-    g = {"id": gid, "folder": folder, "rows": [], "start": None, "buyin": 0}
-    for row in rows:
-        if not norm(row["player_nickname"]): continue
+    g = {"id": gid, "folder": folder, "rows": [], "start": None, "end": None, "buyin": 0}
+    for row in rows:   # every row with money counts, whatever its name
         st = parse_iso(row["session_start_at"])
         net = int(row["net"]); bi = int(row["buy_in"])
         if st is None and net == 0: continue   # never-played seat, same rule as the app
-        owner = owners.get((ledger_id, row["player_id"], st, norm(row["player_nickname"])))
-        if owner is not None and canon(owner) == canon(norm(row["player_nickname"])): owner = None
+        owner = owners.get((gid, row["player_id"], st, norm(row["player_nickname"])))
+        if owner is not None and canon(owner) == canon(filed_as(row["player_nickname"], row["player_id"])): owner = None
         g["rows"].append((row["player_nickname"], row["player_id"], st, bi, net, owner))
         g["buyin"] += bi
         if st is not None and (g["start"] is None or st < g["start"]): g["start"] = st
-    if g["rows"]: games[gid] = g
+        last = parse_iso(row["session_end_at"]) or st
+        if last is not None and (g["end"] is None or last > g["end"]): g["end"] = last
+    if sum(r[4] for r in g["rows"]) != 0: unbalanced.append((path, sum(r[4] for r in g["rows"])))
+    # Two exports of one game: keep the fuller one (more seats, then the later cash-out), like the app.
+    old = games.get(gid)
+    if g["rows"] and (old is None or (len(g["rows"]), g["end"] or 0) > (len(old["rows"]), old["end"] or 0)):
+        games[gid] = g
 print(f"python: {len(games)} games")
 
 # Pick scopes from whatever data is present: the busiest folder, another folder if any,
@@ -94,7 +106,7 @@ def aggregate(scope_games, adjs=()):
     for g in scope_games:
         per = collections.defaultdict(lambda: [0, 0])
         for nick, pid, st, bi, net, owner in g["rows"]:
-            c = canon(owner or norm(nick))
+            c = canon(owner or filed_as(nick, pid))
             p = P.setdefault(c, {"net": 0, "buyins": 0, "games": 0, "won": 0, "lost": 0, "best": None, "worst": None, "nicks": collections.Counter(), "hist": []})
             p["net"] += net; p["buyins"] += 1
             if owner is None: p["nicks"][nick] += 1
@@ -116,19 +128,23 @@ def aggregate(scope_games, adjs=()):
         # No nickname of their own in scope (only reassigned seats): the app capitalizes the normalized name.
         p["display"] = min(p["nicks"].items(), key=lambda kv: (-kv[1], len(kv[0]), kv[0]))[0] if p["nicks"] else c[:1].upper() + c[1:]
         p["hist"].sort(key=lambda h: (-1 if h[0] is None else h[0], h[1]))
-    assert sum(p["net"] for p in P.values()) == sum(a["amount"] for a in adjs), "scope does not sum to adjustments"
+    if not unbalanced:   # an unbalanced ledger is already its own failure; this would only repeat it
+        check(sum(p["net"] for p in P.values()) == sum(a["amount"] for a in adjs), "scope does not sum to its adjustments")
     return P
 
 def run_app(args, stdin):
-    out = subprocess.run([BIN, "--root", ROOT] + args, input=stdin, capture_output=True, text=True)
+    out = subprocess.run([BIN, "--root", ROOT] + args, input=stdin, capture_output=True, text=True, encoding="utf-8", errors="replace")
     return out.stdout
 
 failures = []
 def check(cond, msg):
     if not cond: failures.append(msg); print("FAIL:", msg)
 
+for path, off in unbalanced:
+    check(False, f"{path} does not balance: its nets sum to {off / 100:+.2f} (the app warns about it at startup)")
+
 def compare_summary(P, label):
-    with open(os.path.join(ROOT, "Saved_Data", "player_summary.csv")) as f:
+    with open(os.path.join(ROOT, "Saved_Data", "player_summary.csv"), encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     check(len(rows) == len(P), f"{label}: player count app={len(rows)} py={len(P)}")
     prev = None
@@ -143,14 +159,15 @@ def compare_summary(P, label):
         check(int(r["games"]) == p["games"], f"{label}: {c} games app={r['games']} py={p['games']}")
         check(int(r["buy_ins"]) == p["buyins"], f"{label}: {c} buy_ins app={r['buy_ins']} py={p['buyins']}")
         if p["games"]:
-            check(abs(float(r["avg_per_game"]) - p["net"] / 100 / p["games"]) < 0.006, f"{label}: {c} avg")
+            # games only: an adjustment is not a game, so it does not move the average
+            check(abs(float(r["avg_per_game"]) - (p["net"] - p["adj"]) / 100 / p["games"]) < 0.006, f"{label}: {c} avg")
             check(r["display_name"] == p["display"], f"{label}: {c} display app={r['display_name']} py={p['display']}")
         if prev is not None: check(cents(prev) >= cents(r["total_net"]), f"{label}: leaderboard not sorted at {c}")
         prev = r["total_net"]
     print(f"{label}: summary compared ({len(rows)} players)")
 
 def compare_settlement(P, label, prefs=(), banker=None):
-    with open(os.path.join(ROOT, "Saved_Data", "settlements.csv")) as f:
+    with open(os.path.join(ROOT, "Saved_Data", "settlements.csv"), encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     sends = collections.Counter(); recv = collections.Counter()
     for r in rows:
@@ -193,20 +210,25 @@ def scope_filter(folder=None, frm=None, to=None):
         out.append(g)
     return out
 
+# Menu 5 is a guided flow: 3 = everything in the current scope, n = no specific sends,
+# then Enter past the sheet. Banker mode skips the "specific sends" question.
+SETTLE = "5\n3\nn\n\n"
+SETTLE_BANKER = "5\n3\n\n"
+
 # ---------- 1. everything
 P = aggregate(scope_filter())
-out = run_app([], "12\n5\n13\n0\n")
+out = run_app([], "12\n" + SETTLE + "13\n0\n")
 compare_summary(P, "all"); compare_settlement(P, "all")
 m = re.search(r"Loaded (\d+) games", out); check(int(m.group(1)) == len(games), f"game count app={m.group(1)} py={len(games)}")
 
 # ---------- 2. one folder
 P = aggregate(scope_filter(folder=FOLDER))
-run_app(["--folder", FOLDER], "12\n5\n13\n0\n")
+run_app(["--folder", FOLDER], "12\n" + SETTLE + "13\n0\n")
 compare_summary(P, "folder"); compare_settlement(P, "folder")
 
 # ---------- 3. date range
 P = aggregate(scope_filter(frm=FROM, to=TO))
-out = run_app(["--from", FROM, "--to", TO], "12\n5\n13\n0\n")
+out = run_app(["--from", FROM, "--to", TO], "12\n" + SETTLE + "13\n0\n")
 m = re.search(r"\|  (\d+) games", out); check(int(m.group(1)) == len(scope_filter(frm=FROM, to=TO)), f"date scope game count app={m.group(1)}")
 compare_summary(P, "dates"); compare_settlement(P, "dates")
 
@@ -218,34 +240,34 @@ winners = [c for c,_ in byname if P[c]["net"] > 0]; losers = [c for c,_ in rever
 L1, W1 = losers[0], winners[0]
 L2, W2 = (losers[1] if len(losers) > 1 else losers[0]), (winners[1] if len(winners) > 1 else winners[0])
 print("prefs:", L1, "->", W1, ",", L2, "->", W2)
-stdin = f"6\n1\n{idx[L1]}\n{idx[W1]}\n\n1\n{idx[L2]}\n{idx[W2]}\n\n0\n5\n13\n0\n"
+stdin = f"6\n1\n{idx[L1]}\n{idx[W1]}\n\n1\n{idx[L2]}\n{idx[W2]}\n\n0\n" + SETTLE + "13\n0\n"
 run_app(["--folder", FOLDER], stdin)
 compare_settlement(P, "prefs", prefs=[(L1, W1), (L2, W2)])
 # a preference whose payer is a winner must have no effect
-stdin = f"6\n1\n{idx[W2]}\n{idx[W1]}\n\n0\n5\n13\n6\n2\n3\n0\n0\n"
+stdin = f"6\n1\n{idx[W2]}\n{idx[W1]}\n\n0\n" + SETTLE + "13\n6\n2\n3\n0\n0\n"
 run_app(["--folder", FOLDER], stdin)
 compare_settlement(P, "prefs-noop", prefs=[(L1, W1), (L2, W2), (W2, W1)])
 
 # ---------- 5. banker = cam
 B = W1
-stdin = f"6\n3\n{idx[B]}\n0\n5\n13\n6\n4\n0\n0\n"
+stdin = f"6\n3\n{idx[B]}\n0\n" + SETTLE_BANKER + "13\n6\n4\n0\n0\n"
 run_app(["--folder", FOLDER], stdin)
 compare_settlement(P, "banker", banker=B)
 # banker who is a loser
 B = L2
-stdin = f"6\n3\n{idx[B]}\n0\n5\n13\n6\n4\n0\n0\n"
+stdin = f"6\n3\n{idx[B]}\n0\n" + SETTLE_BANKER + "13\n6\n4\n0\n0\n"
 run_app(["--folder", FOLDER], stdin)
 compare_settlement(P, "banker-loser", banker=B)
 
 SID = "VALIDATE_" + str(int(time.time()))
 # ---------- 6. sessions: save sheet (prefs still active), pay $5 on line 1
-out = run_app(["--folder", FOLDER], f"5\n7\n{SID}\n9\n0\n")
+out = run_app(["--folder", FOLDER], SETTLE + f"7\n{SID}\n9\n\n0\n")
 row = re.search(rf"^(\d+)\s+{SID}", out, re.M).group(1)
 run_app(["--folder", FOLDER], f"10\n{row}\n5\n0\n")
-with open(os.path.join(ROOT, "Saved_Data", "session_balances.csv")) as f:
+with open(os.path.join(ROOT, "Saved_Data", "session_balances.csv"), encoding="utf-8") as f:
     bal = [r for r in csv.DictReader(f) if r["session_id"] == SID]
-run_app(["--folder", FOLDER], "5\n13\n0\n")
-with open(os.path.join(ROOT, "Saved_Data", "settlements.csv")) as f:
+run_app(["--folder", FOLDER], SETTLE + "13\n0\n")
+with open(os.path.join(ROOT, "Saved_Data", "settlements.csv"), encoding="utf-8") as f:
     sheet = list(csv.DictReader(f))
 check(len(bal) == len(sheet), f"session rows {len(bal)} vs sheet {len(sheet)}")
 tot_orig = sum(cents(b["original_amount"]) for b in bal); tot_sheet = sum(cents(s["amount"]) for s in sheet)
@@ -259,7 +281,7 @@ print("sessions compared")
 P = aggregate(scope_filter())
 order = sorted(P.items(), key=lambda kv:(-kv[1]['net'],kv[0]))
 cam_idx = [i for i,(c,_) in enumerate(order,1) if c=='cam'][0]
-out = run_app([], f"3\n{cam_idx}\n0\n")
+out = run_app([], f"3\n{cam_idx}\n\n0\n")
 hist = re.findall(r"^\d+\s+(\d{4}-\d{2}-\d{2}|unknown)\s+.*?\s+(ledger_\S+|adjustment)\S*.*?\s+(\d+|-)\s+([+-]?\$[\d.]+)\s+([+-]?\$[\d.]+)\s*$", out, re.M)
 py = P["cam"]["hist"]
 check(len(hist) == len(py), f"cam history length app={len(hist)} py={len(py)}")
@@ -279,7 +301,7 @@ order_f = sorted(Pf.items(), key=lambda kv: (-kv[1]["net"], kv[0])); idx_f = {c:
 cred = [c for c, _ in order_f if Pf[c]["net"] > 0][0]; debt = [c for c, _ in reversed(order_f) if Pf[c]["net"] < 0][0]
 FDATE = min(local_date(g["start"]) for g in scope_filter(folder=FOLDER) if g["start"] is not None)
 AFTER = (datetime.date.fromisoformat(FDATE) + datetime.timedelta(days=1)).isoformat()
-out = run_app(["--folder", FOLDER], f"17\n1\n{idx_f[cred]}\n{idx_f[debt]}\n12.34\nlet it go\n{FDATE}\n0\n12\n5\n13\n0\n")
+out = run_app(["--folder", FOLDER], f"17\n1\n{idx_f[cred]}\n{idx_f[debt]}\n12.34\nlet it go\n{FDATE}\n0\n12\n" + SETTLE + "13\n0\n")
 adjs = load_adjustments()
 check(len(adjs) == 2 and sum(a["amount"] for a in adjs) == 0, f"forgive rows wrong: {adjs}")
 check({a["player"] for a in adjs} == {cred, debt} and all(a["folder"] == FOLDER for a in adjs), "forgive rows players/folder")
@@ -293,8 +315,8 @@ run_app(["--from", AFTER], "12\n0\n"); compare_summary(aggregate(scope_filter(fr
 # one-sided correction of -7.00 in all scope, then check the leaderboard warns and history shows it
 order_a = [c for c, _ in sorted(aggregate(scope_filter(), adj_filter()).items(), key=lambda kv: (-kv[1]["net"], kv[0]))]
 who_i = next(i for i, c in enumerate(order_a, 1) if c not in (cred, debt)); who = order_a[who_i - 1]
-out = run_app([], f"17\n2\n{who_i}\n-7\ntypo fix\n\n0\n2\n12\n0\n")
-check("includes -$7.00 of one-sided adjustments" in out, "one-sided warning missing")
+out = run_app([], f"17\n2\n{who_i}\n-7\ntypo fix\n\n0\n2\n\n12\n0\n")
+check("-$7.00 of it is one-sided adjustments" in out, "one-sided warning missing")
 Pa = aggregate(scope_filter(), adj_filter()); compare_summary(Pa, "onesided-all")
 check(Pa[who]["adj"] == -700, f"one-sided amount {Pa[who]['adj']}")
 # removing the forgive (row 1) removes both halves
@@ -307,23 +329,23 @@ print("adjustments checked")
 # ---------- 8. duplicates: identical copy in same folder, partial re-export, cross-folder copy
 import shutil
 base = run_app([], "0\n"); m0 = re.search(r"WARNING: (\d+) duplicate", base); base_dups = int(m0.group(1)) if m0 else 0
-src = sorted(glob.glob(os.path.join(ROOT, FOLDER, "ledger_*.csv")))[0]
-dup_same = os.path.join(ROOT, FOLDER, "ledger_COPY_same_folder.csv"); shutil.copy(src, dup_same)
-os.makedirs(os.path.join(ROOT, "zz_dup_test"), exist_ok=True)
-dup_cross = os.path.join(ROOT, "zz_dup_test", os.path.basename(src)); shutil.copy(src, dup_cross)
-partial = os.path.join(ROOT, FOLDER, "ledger_PARTIAL_export.csv")
-lines = open(src).read().splitlines(); open(partial, "w").write("\n".join(lines[:-1]) + "\n")
-out = run_app([], "16\n12\n0\n")
+src = sorted(glob.glob(os.path.join(DATA, FOLDER, "ledger_*.csv")))[0]
+dup_same = os.path.join(DATA, FOLDER, "ledger_COPY_same_folder.csv"); shutil.copy(src, dup_same)
+os.makedirs(os.path.join(DATA, "zz_dup_test"), exist_ok=True)
+dup_cross = os.path.join(DATA, "zz_dup_test", os.path.basename(src)); shutil.copy(src, dup_cross)
+partial = os.path.join(DATA, FOLDER, "ledger_PARTIAL_export.csv")
+lines = open(src, encoding="utf-8").read().splitlines(); open(partial, "w", encoding="utf-8").write("\n".join(lines[:-1]) + "\n")
+out = run_app([], "16\n\n12\n0\n")
 check(f"WARNING: {base_dups + 3} duplicate" in out, "startup warning missing: " + out[:300])
 check("IDENTICAL CONTENT in the same folder" in out and "IDENTICAL CONTENT across folders" in out, "identical detection")
 check("OVERLAP" in out and "in the same folder" in out, "overlap detection")
 P2 = aggregate(scope_filter())
-with open(os.path.join(ROOT, "Saved_Data", "player_summary.csv")) as f:
+with open(os.path.join(ROOT, "Saved_Data", "player_summary.csv"), encoding="utf-8") as f:
     rows = list(csv.DictReader(f))
 # with the partial export kept, totals differ from P2 for players in that game; identical copies must not change totals
 m = re.search(r"Loaded (\d+) games", out); check(int(m.group(1)) == len(games) + 1, f"dup: game count app={m.group(1)} py={len(games)+1}")
 for f_ in (dup_same, dup_cross, partial): os.remove(f_)
-os.rmdir(os.path.join(ROOT, "zz_dup_test"))
+os.rmdir(os.path.join(DATA, "zz_dup_test"))
 out = run_app([], "12\n0\n"); compare_summary(P2, "after-dup-cleanup")
 print("duplicates checked")
 

@@ -115,8 +115,9 @@ DATA
   1. Change scope (folder / date range)
   2. Leaderboard: everyone's net wins and losses
   3. Player detail: game-by-game history and running total
-  4. Merge duplicate player names
- 20. Shared accounts: fix buy-ins made under someone else's name
+  4. Player names: one person, several nicknames (N new to check)
+ 20. Shared accounts: a seat played by someone other than its name (N to check)
+ 17. Adjustments: forgive a debt or correct a total
 SETTLEMENT
   5. Calculate settlement sheet (pick a game or folder, then who sends to whom)
   6. Payment preferences (pinned payer -> payee, banker, me)
@@ -131,9 +132,9 @@ EXPORT & CHARTS
  14. Generate HTML report with charts
  15. Terminal charts
  16. Check for duplicate ledgers
- 17. Adjustments: forgive a debt or correct a total
 HAND LOGS
  18. Playing style stats from hand logs (VPIP, aggression, showdowns)
+ 21. Deep playstyle profiles (position, 3-bet, c-bet, sizing, archetypes)
  19. Import new PokerNow files from Downloads
   0. Save and exit
 ```
@@ -213,6 +214,10 @@ The app flags seats that look shared, and warns at startup until they are checke
   more than half of all seats on it), or
 - the same person is sitting on two different accounts at the same time.
 
+A name never seen on any other account is left to menu 4 first, because it is
+more often a new nickname than a borrowed phone. Whatever you answer in either
+menu is saved in the same place, so neither menu asks about that seat again.
+
 For each flagged seat (seats with the same name on the same account in the same
 game are asked about together) choose: the name on the seat is right, the
 account's usual owner, someone else, or skip. "The name is right" is remembered
@@ -286,6 +291,15 @@ from the app straight after it is written.
 
 ## Checking the math
 
+Poker is zero-sum, so the app checks itself every time it starts: each game's
+nets must add up to $0.00 (a ledger that does not gets a startup warning), and
+the leaderboard's last line shows the sum of every net. It reads "(balanced)"
+when the books close; anything else is either a one-sided adjustment (the line
+says how much) or a ledger that does not balance.
+
+Adjustments count toward a player's Net but not toward Avg/game, since they are
+not games.
+
 `tools/validate.py` recomputes every number the app produces from the raw
 CSVs using exact integer cents and compares them to the app's own exports:
 player totals per scope, settlement sheets (plain, pinned preferences, banker),
@@ -299,13 +313,47 @@ cp -RX . /tmp/plr_check && python3 tools/validate.py /tmp/plr_check ./cmake-buil
 
 It ends with `ALL CHECKS PASSED` or a list of every mismatch.
 
-## Name merging
+## Name merging (menu 4)
 
 Names are matched on letters only, lower-cased, so "Yaden ):" and "yaden" are
-the same person automatically. Menu 4 first shows nicknames that share the same
-ledger account ID (the `player_id` column) and lets you merge them with one
-keypress, then lets you merge any two names by hand. Only merge names that
-really are one person: if a friend played on someone's account, leave the names
-separate and use menu 20. Rules are saved to
-`merge_rules.csv` and applied every time the app starts, to ledgers and hand
-logs alike.
+the same person automatically. A name with no letters at all ("24242424242424")
+is matched on its digits instead; every seat with money on it is always counted.
+
+Two different situations, two menus:
+
+| Situation | Menu | What it changes |
+|---|---|---|
+| One person, several nicknames ("Kobe", "Kober", "Mamba") | 4 | Merges the names for good: every seat under any of them counts for one person |
+| A seat played by someone other than the name on it (a friend on your phone) | 20 | Moves that one seat's money; both names stay as they are |
+
+When a name that has never appeared on any other account shows up on an account
+someone else already uses, the app warns at startup and menu 4 asks once:
+
+```
+New name to check (1 left)
+    24242424242424            +$536.89   never seen before
+  has only ever played on account DRSv3IR7B7, which is also used by:
+    1. Kobe                        -$6.80
+  The same person under a new nickname?  Type their number.
+  A different person (the name is right)?  Type d.
+  Not sure yet?  Press Enter.
+```
+
+A number merges only the new name into that person (anyone else who played
+on the account is left alone), `d` saves "the name is right" (the same record
+menu 20 keeps, so neither menu asks again), and Enter leaves it for next time.
+Two regular players who both have accounts of their own and happened to share
+one are never asked here; that is a borrowed phone, and menu 20 handles the seat.
+
+Menu 4 also has:
+
+1. **Merge names by hand**: type the numbers of names that are one person, the
+   name to keep first (`12,5`). If they have never played on the same PokerNow
+   account, it warns first, because a name alone is weak evidence: anyone who
+   later calls themselves "fish" would count for whoever "fish" is merged into.
+2. **See merged names / split one back out**: every group, and a way to undo a
+   merge by splitting one name out again.
+
+Rules are saved to `merge_rules.csv` and applied every time the app starts, to
+ledgers and hand logs alike. Saved payment pins and the "me"/banker settings
+follow merges automatically.
