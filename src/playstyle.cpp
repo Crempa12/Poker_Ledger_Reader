@@ -8,6 +8,7 @@
 #include <set>
 #include <sstream>
 
+#include "ui.hpp"
 #include "util.hpp"
 
 namespace playstyle {
@@ -439,43 +440,42 @@ void printProfiles(const std::vector<Profile>& rows) {
     int counted;
     poolAverages(rows, poolV, poolP, counted);
 
-    std::cout << "\nPool average over " << counted << " players with 200+ hands: VPIP "
-              << num(poolV, 0) << "%, PFR " << num(poolP, 0) << "%\n";
-    std::cout << std::string(130, '=') << "\n";
-    std::cout << util::padRight("Player", 14) << util::padRight("Hands", 7)
-              << util::padRight("VPIP", 6) << util::padRight("PFR", 6) << util::padRight("Limp", 6)
-              << util::padRight("3Bet", 6) << util::padRight("Steal", 7) << util::padRight("Def", 6)
-              << util::padRight("CBet", 6) << util::padRight("F>CB", 6) << util::padRight("ChkR", 6)
-              << util::padRight("AFf", 5) << util::padRight("AFt", 5) << util::padRight("AFr", 5)
-              << util::padRight("WTSD", 6) << util::padRight("W$SD", 6) << "Archetype\n";
-    std::cout << std::string(130, '=') << "\n";
+    // Two tables (before and after the flop) so each fits a normal terminal.
+    const int W = 98;
+    using util::padLeft;
+    using util::padRight;
+    std::cout << '\n' << ui::dim("Pool average over " + std::to_string(counted) + " players with 200+ hands: VPIP " +
+                                 num(poolV, 0) + "%, PFR " + num(poolP, 0) + "%")
+              << "\n\n" << ui::heading("Before the flop", W) << '\n'
+              << ui::bold(padRight("Player", 16) + padLeft("Hands", 7) + padLeft("VPIP", 7) + padLeft("PFR", 7) +
+                          padLeft("Limp", 7) + padLeft("3Bet", 7) + padLeft("Steal", 7) + padLeft("Def", 7) + "   Archetype")
+              << '\n' << ui::rule(W) << '\n';
     for (const Profile& p : rows) {
         if (p.hands < 50) continue;
-        std::cout << util::padRight(p.displayName, 14)
-                  << util::padRight(std::to_string(p.hands), 7)
-                  << util::padRight(rateCell(p.vpip), 6)
-                  << util::padRight(rateCell(p.pfr), 6)
-                  << util::padRight(rateCell(p.limp), 6)
-                  << util::padRight(rateCell(p.threeBet), 6)
-                  << util::padRight(rateCell(p.steal), 7)
-                  << util::padRight(rateCell(p.blindDefend), 6)
-                  << util::padRight(rateCell(p.cbet), 6)
-                  << util::padRight(rateCell(p.foldToCbet), 6)
-                  << util::padRight(rateCell(p.checkRaise), 6)
-                  << util::padRight(num(p.afFlop(), 1), 5)
-                  << util::padRight(num(p.afTurn(), 1), 5)
-                  << util::padRight(num(p.afRiver(), 1), 5)
-                  << util::padRight(rateCell(p.wtsd), 6)
-                  << util::padRight(rateCell(p.wsd), 6)
-                  << p.archetype(poolV, poolP) << "\n";
+        std::cout << padRight(p.displayName, 16) << padLeft(std::to_string(p.hands), 7) << padLeft(rateCell(p.vpip), 7)
+                  << padLeft(rateCell(p.pfr), 7) << padLeft(rateCell(p.limp), 7) << padLeft(rateCell(p.threeBet), 7)
+                  << padLeft(rateCell(p.steal), 7) << padLeft(rateCell(p.blindDefend), 7) << "   "
+                  << ui::cyan(padRight(p.archetype(poolV, poolP), W - 68)) << '\n';
     }
-    std::cout << std::string(130, '=') << "\n";
-    std::cout << "A rate in (brackets) has fewer than " << kMinOpportunities
-              << " opportunities behind it and is not a tendency.\n"
-              << "Limp = called the big blind with the pot unopened.   3Bet = re-raised a single raise.\n"
-              << "Steal = first-in raise from CO/BTN/SB.   Def = did not fold a blind to a steal.\n"
-              << "CBet = bet the flop having raised preflop.   F>CB = folded facing a flop c-bet.\n"
-              << "AFf/t/r = (bets+raises)/calls on flop/turn/river.   WTSD = flops that reached showdown.\n";
+    std::cout << ui::rule(W) << "\n\n" << ui::heading("After the flop", W) << '\n'
+              << ui::bold(padRight("Player", 16) + padLeft("CBet", 7) + padLeft("F>CB", 7) + padLeft("ChkR", 7) +
+                          padLeft("AF flop", 9) + padLeft("AF turn", 9) + padLeft("AF river", 10) + padLeft("WTSD", 7) +
+                          padLeft("W$SD", 7))
+              << '\n' << ui::rule(W) << '\n';
+    for (const Profile& p : rows) {
+        if (p.hands < 50) continue;
+        std::cout << padRight(p.displayName, 16) << padLeft(rateCell(p.cbet), 7) << padLeft(rateCell(p.foldToCbet), 7)
+                  << padLeft(rateCell(p.checkRaise), 7) << padLeft(num(p.afFlop(), 1), 9) << padLeft(num(p.afTurn(), 1), 9)
+                  << padLeft(num(p.afRiver(), 1), 10) << padLeft(rateCell(p.wtsd), 7) << padLeft(rateCell(p.wsd), 7) << '\n';
+    }
+    std::cout << ui::rule(W) << '\n'
+              << ui::dim("A rate in (brackets) has fewer than " + std::to_string(kMinOpportunities) +
+                         " opportunities behind it and is not a tendency.\n"
+                         "Limp = called the big blind with the pot unopened.   3Bet = re-raised a single raise.\n"
+                         "Steal = first-in raise from CO/BTN/SB.   Def = did not fold a blind to a steal.\n"
+                         "CBet = bet the flop having raised preflop.   F>CB = folded facing a flop c-bet.\n"
+                         "ChkR = check-raised.   AF = (bets + raises) / calls.   WTSD = flops that reached showdown.\n")
+              << '\n';
 }
 
 void printOnePlayer(const Profile& p, const std::vector<Profile>& all) {

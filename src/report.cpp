@@ -8,6 +8,8 @@
 #include <sstream>
 #include <iomanip>
 
+#include "ui.hpp"
+
 using namespace util;
 
 namespace report {
@@ -25,57 +27,59 @@ void printNetBarChart(const std::vector<PlayerStats>& byNet) {
     for (const PlayerStats& p : byNet) maxAbs = std::max(maxAbs, std::fabs(p.totalNet));
     if (maxAbs < EPSILON) maxAbs = 1.0;
 
-    const int half = 28;
-    std::cout << "\nNet result by player (" << money(maxAbs) << " = full bar)\n";
-    std::cout << padRight("", 16) << padLeft("losses ", half) << "|" << " wins\n";
+    const int half = 26, W = 18 + 2 * half + 13;
+    std::cout << '\n' << ui::heading("Net result by player (poker only)", W) << '\n'
+              << ui::dim(padLeft("lost", 18 + half - 1) + "   won") << '\n';
     for (const PlayerStats& p : byNet) {
-        int len = static_cast<int>(std::lround(std::fabs(p.totalNet) / maxAbs * half));
-        std::string neg, pos;
-        if (p.totalNet < 0) neg = std::string(len, '#');
-        else pos = std::string(len, '#');
-        std::cout << padRight(p.displayName, 16) << padLeft(neg, half) << "|" << padRight(pos, half)
-                  << ' ' << moneySigned(p.totalNet) << '\n';
+        if (p.games == 0) continue;
+        std::string bar = ui::bar(std::fabs(p.totalNet) / maxAbs, half);
+        std::cout << padRight(p.displayName, 18) << padLeft(p.totalNet < 0 ? ui::red(bar) : "", half) << ui::dim(ui::sym("│", "|"))
+                  << padRight(p.totalNet > 0 ? ui::green(bar) : "", half) << padLeft(ui::net(p.totalNet), 12) << '\n';
     }
-    std::cout << '\n';
+    std::cout << ui::dim(padLeft("a full bar = " + money(maxAbs), W)) << "\n\n";
 }
 
 void printCumulativeChart(const PlayerStats& p) {
-    if (p.history.empty()) return;
-
-    const size_t maxCols = 70;
-    size_t startIdx = p.history.size() > maxCols ? p.history.size() - maxCols : 0;
+    // Poker nights only: payments and corrections are not results.
     std::vector<double> cum;
+    std::vector<std::int64_t> dates;
     double running = 0.0;
-    for (size_t i = 0; i < p.history.size(); ++i) {
-        running += p.history[i].net;
-        if (i >= startIdx) cum.push_back(running);
+    for (const GameResult& r : p.history) {
+        if (r.adjustment) continue;
+        running += r.net;
+        cum.push_back(running);
+        dates.push_back(r.date);
     }
+    if (cum.empty()) return;
+    const size_t maxCols = 70;
+    size_t skipped = cum.size() > maxCols ? cum.size() - maxCols : 0;
+    cum.erase(cum.begin(), cum.begin() + static_cast<std::ptrdiff_t>(skipped));
+    dates.erase(dates.begin(), dates.begin() + static_cast<std::ptrdiff_t>(skipped));
 
     double lo = 0.0, hi = 0.0;
     for (double v : cum) { lo = std::min(lo, v); hi = std::max(hi, v); }
     if (hi - lo < 1.0) hi = lo + 1.0;
 
     const int rows = 12;
-    std::cout << "\nRunning total for " << p.displayName << " (one column per game"
-              << (startIdx > 0 ? ", last 70 games" : "") << ")\n";
+    std::cout << '\n' << ui::heading("Running total: " + p.displayName + (skipped ? " (last 70 nights)" : ""), 84) << '\n';
+    const std::string point = ui::sym("●", "*"), axis = ui::dim(ui::sym("│", "|"));
     for (int r = rows; r >= 0; --r) {
         double yTop = lo + (hi - lo) * (r + 0.5) / rows;
         double yBot = lo + (hi - lo) * (r - 0.5) / rows;
-        double yMid = lo + (hi - lo) * r / rows;
         bool zeroRow = (0.0 >= yBot && 0.0 < yTop);
-        std::string line = padLeft(moneySigned(yMid), 11) + " ";
+        bool labelled = r == rows || r == 0 || zeroRow;   // top, bottom and $0 only: easier to read
+        std::string label = zeroRow ? "$0" : moneySigned(lo + (hi - lo) * r / rows);
+        std::string line = padLeft(labelled ? label : "", 11) + " " + axis;
         for (double v : cum) {
-            if (v >= yBot && v < yTop) line += '*';
-            else line += zeroRow ? '-' : ' ';
+            if (v >= yBot && v < yTop) line += v >= 0 ? ui::green(point) : ui::red(point);
+            else line += zeroRow ? ui::dim(ui::sym("─", "-")) : " ";
         }
         std::cout << line << '\n';
     }
-    std::string first = formatLocalDate(p.history[startIdx].date);
-    std::string last = formatLocalDate(p.history.back().date);
-    std::string axis = first;
-    if (cum.size() > first.size() + last.size() + 1) axis = padRight(first, cum.size() - last.size());
-    else axis += " .. ";
-    std::cout << padLeft("", 12) << axis << last << "\n\n";
+    std::string first = formatShortDate(dates.front()), last = formatShortDate(dates.back());
+    std::string span = cum.size() > first.size() + last.size() + 1 ? padRight(first, cum.size() - last.size()) + last
+                                                                   : first + " .. " + last;
+    std::cout << padLeft("", 13) << ui::dim(span) << "\n\n";
 }
 
 // ======================================================================
@@ -221,16 +225,10 @@ void writeCumulativeLines(std::ostream& o, const ReportInput& in) {
     std::vector<std::vector<double>> vals(chosen.size(), std::vector<double>(n, std::nan("")));
     double lo = 0, hi = 0;
     for (size_t s = 0; s < chosen.size(); ++s) {
-        std::map<size_t, double> perIdx;
+        std::map<size_t, double> perIdx;   // poker only, like the leaderboard: payments are not results
         for (const GameResult& r : chosen[s]->history) {
             auto it = gameIndex.find(r.gameId);
-            if (it != gameIndex.end()) {
-                perIdx[it->second] += r.net;
-            } else if (r.adjustment) {
-                size_t slot = 0;   // latest game on or before the adjustment date
-                for (size_t i = 0; i < n; ++i) if (in.games[i]->start <= r.date) slot = i;
-                perIdx[slot] += r.net;
-            }
+            if (it != gameIndex.end()) perIdx[it->second] += r.net;
         }
         if (perIdx.empty()) continue;
         double running = 0;

@@ -10,6 +10,7 @@
 
 #include "console.hpp"
 #include "players.hpp"
+#include "ui.hpp"
 
 using namespace util;
 
@@ -52,6 +53,7 @@ bool loadSettingsCSV(const std::string& filename, Settings& settings) {
         std::string value = trim(row[1]);
         if (key == "me") settings.me = normalizeName(value);
         else if (key == "banker") settings.banker = normalizeName(value);
+        else if (key == "display") settings.simpleDisplay = lower(value) == "simple";
     }
     return true;
 }
@@ -62,6 +64,7 @@ bool saveSettingsCSV(const std::string& filename, const Settings& settings) {
     out << "key,value\n";
     out << "me," << escapeCSV(settings.me) << '\n';
     out << "banker," << escapeCSV(settings.banker) << '\n';
+    out << "display," << (settings.simpleDisplay ? "simple" : "fancy") << '\n';
     return true;
 }
 
@@ -190,10 +193,11 @@ std::vector<std::vector<Balance*>> splitIntoGroups(std::vector<Balance*> people)
 std::vector<SettlementEntry> calculate(const std::vector<PlayerStats>& players,
                                        const std::vector<PaymentPreference>& prefs,
                                        const std::string& bankerNormalized) {
+    // Settle the balance: the poker result plus payments and corrections from menu 17.
     std::map<std::string, Balance> balances;
     for (const PlayerStats& p : players) {
-        if (p.totalNet > EPSILON || p.totalNet < -EPSILON) {
-            balances[p.normalizedName] = Balance{p.displayName, p.normalizedName, p.totalNet};
+        if (p.balance() > EPSILON || p.balance() < -EPSILON) {
+            balances[p.normalizedName] = Balance{p.displayName, p.normalizedName, p.balance()};
         }
     }
 
@@ -203,6 +207,18 @@ std::vector<SettlementEntry> calculate(const std::vector<PlayerStats>& players,
         out.push_back({from.display, from.normalized, to.display, to.normalized, amount, reason});
         from.amount += amount;   // debtor's negative balance moves toward zero
         to.amount -= amount;     // creditor's positive balance moves toward zero
+    };
+
+    // Poker is zero-sum and every payment has two sides, so the balances should add up to $0.00.
+    // A one-sided correction (menu 17) or an unbalanced ledger breaks that: say so in both modes.
+    double gap = 0.0;
+    for (const auto& pair : balances) gap += pair.second.amount;
+    auto warnGap = [&](const std::string& effect) {
+        if (gap > -EPSILON && gap < EPSILON) return;
+        std::cout << ui::red("\n  " + std::string(ui::sym("✗ ", "!! ")) + "This sheet does not balance: its totals add up to " +
+                             util::moneySigned(gap) + " instead of $0.00.")
+                  << ui::red("\n    " + effect + ".")
+                  << ui::red("\n    The cause is a one-sided correction (menu 17) or a ledger that does not balance.") << '\n';
     };
 
     // 1. Banker: everyone settles through one person.
@@ -224,6 +240,9 @@ std::vector<SettlementEntry> calculate(const std::vector<PlayerStats>& players,
             if (b.normalized == bankerNormalized) continue;
             if (b.amount > EPSILON) pay(banker, b, b.amount, "banker");
         }
+        // The banker's own result is settled by paying out more (or less) than comes in; any gap lands on them too.
+        warnGap(gap > 0 ? "The banker pays out " + util::money(gap) + " more than their own result covers"
+                        : "The banker is left holding " + util::money(-gap) + " that nobody is owed");
         return out;
     }
 
@@ -253,13 +272,8 @@ std::vector<SettlementEntry> calculate(const std::vector<PlayerStats>& players,
         if (pair.second.amount < -EPSILON) unpaidDebt += -pair.second.amount;
         else if (pair.second.amount > EPSILON) unpaidCredit += pair.second.amount;
     }
-    if (unpaidDebt > EPSILON || unpaidCredit > EPSILON) {
-        std::cout << "\n  !! This sheet does not balance: the totals it was built from sum to "
-                  << util::moneySigned(unpaidCredit - unpaidDebt) << " instead of $0.00, so\n     "
-                  << util::money(unpaidDebt) << " of debt and " << util::money(unpaidCredit)
-                  << " of credit could not be paired. The cause is a one-sided\n"
-                  << "     adjustment (menu 17) or a ledger that does not balance (warned at startup).\n";
-    }
+    warnGap(unpaidCredit > EPSILON ? "Some winners get " + util::money(unpaidCredit) + " less than the table above shows"
+                                   : util::money(unpaidDebt) + " of debt has nobody to be paid to");
     return out;
 }
 
@@ -267,18 +281,17 @@ std::vector<SettlementEntry> calculate(const std::vector<PlayerStats>& players,
 
 namespace {
 std::string tagFor(const std::string& reason) {
-    if (reason == "preference") return "[pinned]";
-    if (reason == "requested") return "[requested]";
-    if (reason == "banker") return "[banker]";
+    if (reason == "preference") return ui::cyan("pinned");
+    if (reason == "requested") return ui::cyan("requested");
+    if (reason == "banker") return ui::cyan("banker");
     return "";
 }
 }  // namespace
 
 void print(const std::vector<SettlementEntry>& entries) {
-    const int W = 84;
+    const int W = 76;
     if (entries.empty()) {
-        std::cout << "\nSettlement sheet\n" << divider(W)
-                  << "No payments needed. Everyone is already settled.\n" << divider(W) << '\n';
+        std::cout << '\n' << ui::heading("Settlement sheet", W) << "\n  No payments needed. Everyone is already settled.\n\n";
         return;
     }
 
@@ -297,32 +310,45 @@ void print(const std::vector<SettlementEntry>& entries) {
     }
     std::stable_sort(payers.begin(), payers.end(), [](const Payer& a, const Payer& b) { return a.total > b.total; });
 
-    std::cout << "\nSettlement sheet: " << entries.size() << " payment" << (entries.size() == 1 ? "" : "s")
-              << ", " << payers.size() << " sender" << (payers.size() == 1 ? "" : "s")
-              << ", " << received.size() << " receiver" << (received.size() == 1 ? "" : "s") << '\n'
-              << divider(W);
+    std::cout << '\n' << ui::heading("Settlement sheet", W) << '\n'
+              << ui::dim("  " + std::to_string(entries.size()) + " payment" + (entries.size() == 1 ? "" : "s") + ", " +
+                         std::to_string(payers.size()) + " sender" + (payers.size() == 1 ? "" : "s") + ", " +
+                         std::to_string(received.size()) + " receiver" + (received.size() == 1 ? "" : "s"))
+              << "\n\n";
 
+    const std::string arrow = ui::dim(ui::sym("  ──▶  ", "  --->  "));
     for (const Payer& p : payers) {
         for (size_t i = 0; i < p.lines.size(); ++i) {
             const SettlementEntry& e = *p.lines[i];
-            std::cout << "  " << padRight(i == 0 ? e.fromDisplay : "", 22) << " ---> "
-                      << padRight(e.toDisplay, 22) << padLeft(money(e.amount), 12)
-                      << "   " << tagFor(e.reason) << '\n';
+            std::cout << "  " << padRight(i == 0 ? ui::bold(e.fromDisplay) : "", 20) << arrow << padRight(e.toDisplay, 20)
+                      << padLeft(ui::bold(money(e.amount)), 11) << "   " << tagFor(e.reason) << '\n';
         }
         if (p.lines.size() > 1) {
-            std::cout << "  " << padRight("", 22) << "       sends " << money(p.total) << " total to "
-                      << p.lines.size() << " people\n";
+            std::cout << ui::dim("  " + padRight("", 28) + "sends " + money(p.total) + " in all, to " +
+                                 std::to_string(p.lines.size()) + " people") << '\n';
         }
-        std::cout << '\n';
     }
-    std::cout << divider(W) << "Who receives what:\n";
+    std::cout << '\n' << ui::heading("Who receives what", W) << '\n';
+    // Every sender is listed: long lists wrap under each other instead of being cut off.
+    const size_t indent = 41, room = W - indent;   // "  " + name 20 + amount 11 + "   from "
     for (const auto& r : received) {
-        std::cout << "  " << padRight(r.first, 22) << " <--- " << padLeft(money(r.second), 12) << "   from ";
-        const std::vector<std::string>& from = receivedFrom[r.first];
-        for (size_t i = 0; i < from.size(); ++i) std::cout << (i ? ", " : "") << from[i];
-        std::cout << '\n';
+        std::vector<std::string> lines(1);
+        for (const std::string& f : receivedFrom[r.first]) {
+            std::string piece = lines.back().empty() ? f : ", " + f;
+            if (!lines.back().empty() && displayWidth(lines.back() + piece) > room) {
+                lines.back() += ",";
+                lines.push_back(f);
+            } else {
+                lines.back() += piece;
+            }
+        }
+        std::cout << "  " << padRight(r.first, 20) << padLeft(ui::green(money(r.second)), 11) << ui::dim("   from ");
+        for (size_t i = 0; i < lines.size(); ++i) {
+            std::string text = displayWidth(lines[i]) > room ? padRight(lines[i], room) : lines[i];
+            std::cout << (i ? std::string(indent, ' ') : "") << text << '\n';
+        }
     }
-    std::cout << divider(W) << '\n';
+    std::cout << '\n';
 }
 
 bool exportCSV(const std::string& filename, const std::vector<SettlementEntry>& entries) {
@@ -343,28 +369,30 @@ void managePreferences(std::vector<PaymentPreference>& prefs,
                        const std::vector<PlayerStats>& players,
                        const std::string& prefsFile,
                        const std::string& settingsFile) {
+    const int W = 76;
     while (true) {
-        std::cout << "\nPayment preferences\n" << divider(60);
-        if (prefs.empty()) {
-            std::cout << "  (no pinned payer -> payee preferences)\n";
-        }
+        std::cout << '\n' << ui::heading("Pins, banker, me & display", W) << '\n';
+        if (prefs.empty()) std::cout << ui::dim("  No pinned payments (\"Cam always pays Jahan\").") << '\n';
         for (size_t i = 0; i < prefs.size(); ++i) {
             std::cout << "  " << (i + 1) << ". " << players::displayName(players, prefs[i].payerNormalized)
                       << " always pays " << players::displayName(players, prefs[i].payeeNormalized)
-                      << (prefs[i].note.empty() ? "" : "   [" + prefs[i].note + "]") << '\n';
+                      << (prefs[i].note.empty() ? "" : ui::dim("   " + prefs[i].note)) << '\n';
         }
-        std::cout << "  Banker: " << players::displayName(players, settings.banker)
-                  << (settings.banker.empty() ? "  (off: preferences + automatic matching are used)"
-                                              : "  (on: everyone settles through this person)") << '\n';
-        std::cout << "  Me:     " << players::displayName(players, settings.me) << "  (used for \"my winnings\" views)\n";
-        std::cout << divider(60)
-                  << "1. Add a pinned preference (someone always pays someone)\n"
-                  << "2. Remove a pinned preference\n"
-                  << "3. Set the banker\n"
-                  << "4. Turn banker mode off\n"
-                  << "5. Set who \"me\" is\n"
-                  << "0. Back\n";
-        int choice = console::askMenuChoice("Choose: ", 0, 5);
+        std::cout << "\n  Banker   " << padRight(settings.banker.empty() ? "off" : players::displayName(players, settings.banker), 20)
+                  << ui::dim(settings.banker.empty() ? "pins first, then automatic matching" : "everyone settles through them")
+                  << "\n  Me       " << padRight(settings.me.empty() ? "not set" : players::displayName(players, settings.me), 20)
+                  << ui::dim("highlighted in charts and the report")
+                  << "\n  Display  " << padRight(settings.simpleDisplay ? "simple" : "fancy", 20)
+                  << ui::dim(settings.simpleDisplay ? "plain text, no colors or symbols" : "colors, boxes and charts") << "\n"
+                  << ui::rule(W) << '\n'
+                  << "  1. Pin a payment (someone always pays someone)\n"
+                  << "  2. Remove a pin\n"
+                  << "  3. Set the banker\n"
+                  << "  4. Turn banker mode off\n"
+                  << "  5. Set who \"me\" is\n"
+                  << "  6. Switch display to " << (settings.simpleDisplay ? "fancy (colors and symbols)" : "simple (use this if you see odd characters)") << '\n'
+                  << "  0. Back\n";
+        int choice = console::askMenuChoice("Choose: ", 0, 6);
 
         if (choice == 0) return;
 
@@ -402,6 +430,11 @@ void managePreferences(std::vector<PaymentPreference>& prefs,
             settings.me = me;
             saveSettingsCSV(settingsFile, settings);
             std::cout << "Saved.\n";
+        } else if (choice == 6) {
+            settings.simpleDisplay = !settings.simpleDisplay;
+            ui::init(!settings.simpleDisplay);
+            saveSettingsCSV(settingsFile, settings);
+            std::cout << "Display is now " << (settings.simpleDisplay ? "simple" : ui::green("fancy")) << ". Saved.\n";
         }
     }
 }

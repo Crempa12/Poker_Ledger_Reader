@@ -23,12 +23,16 @@ double centsToDollars(const std::string& s);          // ledger stores 2500 for 
 double toDoubleSafe(const std::string& s);
 std::string escapeCSV(const std::string& s);
 std::string escapeHTML(const std::string& s);
-std::string fixed2(double v);                          // "12.34"
-std::string money(double v);                           // "$12.34" / "-$12.34"
-std::string moneySigned(double v);                     // "+$12.34" / "-$12.34"
+std::string fixed2(double v);                          // "1234.56" (files)
+std::string money(double v);                           // "$1,234.56" / "-$1,234.56" (screen)
+std::string moneySigned(double v);                     // "+$1,234.56" / "-$1,234.56" (screen)
 std::string divider(int width = 100, char ch = '=');
+// Columns a string takes on screen: UTF-8 aware, color codes take none, emoji take two.
+size_t displayWidth(const std::string& s);
+// Pad (or cut, ending in an ellipsis) to exactly `width` screen columns. Color-safe.
 std::string padRight(const std::string& s, size_t width);
 std::string padLeft(const std::string& s, size_t width);
+extern bool asciiOnly;                                 // set by ui::init: no Unicode symbols
 std::vector<int> parseNumbers(const std::string& text);   // "3" / "2,5 7" -> {2,5,7}; anything else -> {}
 
 // Time helpers. Ledger timestamps are ISO-8601 in UTC ("2026-05-06T03:34:31.484Z").

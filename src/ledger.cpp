@@ -8,6 +8,8 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "ui.hpp"
+
 namespace fs = std::filesystem;
 using namespace util;
 
@@ -64,13 +66,13 @@ static std::string fingerprint(const Game& g) {
 bool parseLedgerFile(const fs::path& file, const fs::path& root, Game& out, std::string& error) {
     std::ifstream in(file);
     if (!in.is_open()) {
-        error = "could not open " + file.string();
+        error = "could not open " + file.filename().string();
         return false;
     }
 
     std::string line;
     if (!std::getline(in, line)) {
-        error = "empty file " + file.string();
+        error = "empty file " + file.filename().string();
         return false;
     }
 
@@ -80,7 +82,7 @@ bool parseLedgerFile(const fs::path& file, const fs::path& root, Game& out, std:
 
     auto has = [&](const char* name) { return col.count(name) > 0; };
     if (!has("player_nickname") || !has("net")) {
-        error = "missing player_nickname/net columns in " + file.string();
+        error = "missing player_nickname/net columns in " + file.filename().string();
         return false;
     }
 
@@ -127,7 +129,7 @@ bool parseLedgerFile(const fs::path& file, const fs::path& root, Game& out, std:
 
     if (out.rows.empty()) {
         error = (out.skippedRows > 0 ? "only never-played seats (no start time, $0 net) in "
-                                     : "no player rows in ") + file.string();
+                                     : "no player rows in ") + file.filename().string();
         return false;
     }
     return true;
@@ -233,7 +235,7 @@ LoadResult loadAllGames(const fs::path& root) {
         double sum = 0.0;
         for (const LedgerRow& r : g.rows) sum += r.net;
         if (sum > EPSILON || sum < -EPSILON) {
-            result.messages.push_back("WARNING: " + g.path + " does not balance: its nets sum to " +
+            result.messages.push_back("WARNING: " + fs::path(g.path).filename().string() + " does not balance: its nets sum to " +
                                       moneySigned(sum) + " instead of $0.00.");
         }
     }
@@ -262,7 +264,7 @@ std::string logId(const Game& g) {
 }
 
 void printDuplicates(const std::vector<DuplicateNote>& duplicates) {
-    std::cout << "\nDuplicate ledger check\n" << divider(90);
+    std::cout << '\n' << ui::heading("Duplicate ledger check", 90) << '\n';
     if (duplicates.empty()) {
         std::cout << "No duplicate or overlapping ledgers found.\n" << divider(90) << '\n';
         return;

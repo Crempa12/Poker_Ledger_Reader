@@ -4,6 +4,7 @@
 #include <iostream>
 #include <limits>
 
+#include "ui.hpp"
 #include "util.hpp"
 
 namespace console {
@@ -69,12 +70,15 @@ double askSignedAmount(const std::string& prompt) {
 }
 
 std::string pickPlayer(const std::vector<PlayerStats>& players, const std::string& prompt) {
-    std::cout << '\n' << util::divider(50);
+    std::cout << '\n' << ui::rule(64) << '\n';
     for (size_t i = 0; i < players.size(); ++i) {
-        std::cout << util::padRight(std::to_string(i + 1), 5) << util::padRight(players[i].displayName, 24)
-                  << util::padLeft(util::moneySigned(players[i].totalNet), 12) << '\n';
+        const PlayerStats& p = players[i];
+        bool paid = p.adjustments > util::EPSILON || p.adjustments < -util::EPSILON;
+        std::cout << util::padLeft(std::to_string(i + 1), 4) << "  " << util::padRight(p.displayName, 22)
+                  << util::padLeft(ui::net(p.totalNet), 12)
+                  << (paid ? ui::dim("   balance " + util::moneySigned(p.balance())) : "") << '\n';
     }
-    std::cout << util::divider(50);
+    std::cout << ui::rule(64) << '\n';
     int choice = askMenuChoice(prompt + " (0 to cancel): ", 0, static_cast<int>(players.size()));
     if (choice == 0) return "";
     return players[choice - 1].normalizedName;

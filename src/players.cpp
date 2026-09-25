@@ -6,6 +6,8 @@
 #include <iostream>
 #include <set>
 
+#include "ui.hpp"
+
 using namespace util;
 
 namespace players {
@@ -139,11 +141,10 @@ std::map<std::string, PlayerStats> aggregate(const std::vector<const Game*>& gam
         PlayerStats& p = stats[canonical];
         p.normalizedName = canonical;
         p.aliases.insert(a->playerNormalized);
-        p.totalNet += a->amount;
-        p.adjustments += a->amount;
+        p.adjustments += a->amount;   // counts on settlement sheets, not in the poker result
         GameResult r;
         r.gameId = "adjustment";
-        r.folder = a->folder.empty() ? "(any folder)" : a->folder;
+        r.folder = a->folder.empty() ? "(all folders)" : a->folder;
         r.date = a->date;
         r.net = a->amount;
         r.adjustment = true;
@@ -240,117 +241,106 @@ std::vector<MergeSuggestion> suggestMergesByPlayerId(const std::vector<Game>& ga
 
 // ---------------- printing / export ----------------
 
-namespace {
-// Prints comma-separated items, wrapping so no line exceeds `width`, with every
-// continuation line indented to `indent` columns.
-void printWrapped(const std::vector<std::string>& items, size_t indent, size_t width) {
-    size_t col = indent;
-    for (size_t i = 0; i < items.size(); ++i) {
-        std::string piece = items[i] + (i + 1 < items.size() ? "," : "");
-        if (col > indent && col + 1 + piece.size() > width) {
-            std::cout << '\n' << std::string(indent, ' ');
-            col = indent;
-        } else if (col > indent) {
-            std::cout << ' ';
-            ++col;
-        }
-        std::cout << piece;
-        col += piece.size();
-    }
-    std::cout << '\n';
-}
-}  // namespace
-
 void printLeaderboard(const std::vector<PlayerStats>& list) {
-    bool anyAdjust = false;
+    const int W = 100;   // the header's "Last 10 nights" is the widest part
+    std::cout << ui::bold(" " + padLeft("#", 3) + "  " + padRight("Player", 18) + padLeft("Nights", 7) + padLeft("Up-Dn", 8) +
+                          padLeft("Net", 12) + padLeft("Avg/night", 11) + padLeft("Best", 11) + padLeft("Worst", 11) +
+                          "  Last 10 nights") << '\n' << ui::rule(W) << '\n';
+
+    double pokerSum = 0.0;
+    int rank = 0;
     for (const PlayerStats& p : list) {
-        if (p.adjustments > EPSILON || p.adjustments < -EPSILON) anyAdjust = true;
+        pokerSum += p.totalNet;
+        if (p.games == 0) continue;   // only payments or corrections in scope: listed below the table
+        std::vector<double> nights;
+        int up = 0, down = 0;
+        for (const GameResult& r : p.history) {
+            if (r.adjustment) continue;
+            nights.push_back(r.net);
+            if (r.net > EPSILON) ++up;
+            else if (r.net < -EPSILON) ++down;
+        }
+        if (nights.size() > 10) nights.erase(nights.begin(), nights.end() - 10);
+        std::string place = padLeft(std::to_string(++rank), 3);
+        std::cout << " " << (rank <= 3 ? ui::yellow(ui::bold(place)) : ui::dim(place)) << "  " << padRight(p.displayName, 18)
+                  << padLeft(std::to_string(p.games), 7) << padLeft(std::to_string(up) + "-" + std::to_string(down), 8)
+                  << padLeft(ui::bold(ui::net(p.totalNet)), 12) << padLeft(ui::net(p.averagePerGame()), 11)
+                  << padLeft(ui::net(p.biggestWin), 11) << padLeft(ui::net(p.biggestLoss), 11)
+                  << "  " << ui::sparkline(nights) << '\n';
     }
-    const size_t NAME = 22;
-    const int W = anyAdjust ? 122 : 112;
-    double grandTotal = 0.0;
-    double adjustmentTotal = 0.0;
+    std::cout << ui::rule(W) << '\n';
+    if (pokerSum > -EPSILON && pokerSum < EPSILON) {
+        std::cout << " Poker nets add up to $0.00  " << ui::green(ui::sym("✓ balanced", "(balanced)")) << '\n';
+    } else {
+        std::cout << ui::red(" " + std::string(ui::sym("✗ ", "!! ")) + "The games are off by " + moneySigned(pokerSum) +
+                             ": a ledger does not balance (see the warning at startup).") << '\n';
+    }
 
-    std::cout << divider(W)
-              << padRight("#", 4) << padRight("Player", NAME) << padLeft("Games", 6) << padLeft("Buy-ins", 8)
-              << padLeft("Won", 12) << padLeft("Lost", 12) << (anyAdjust ? padLeft("Adjust", 10) : "")
-              << padLeft("Net", 12) << padLeft("Avg/game", 12) << padLeft("Best", 12) << padLeft("Worst", 12) << '\n'
-              << divider(W);
-
-    for (size_t i = 0; i < list.size(); ++i) {
-        const PlayerStats& p = list[i];
-        grandTotal += p.totalNet;
-        adjustmentTotal += p.adjustments;
-        bool hasAdjust = p.adjustments > EPSILON || p.adjustments < -EPSILON;
-        std::cout << padRight(std::to_string(i + 1), 4) << padRight(p.displayName, NAME)
-                  << padLeft(std::to_string(p.games), 6) << padLeft(std::to_string(p.buyIns), 8)
-                  << padLeft(money(p.totalWon), 12) << padLeft(money(p.totalLost), 12)
-                  << (anyAdjust ? padLeft(hasAdjust ? moneySigned(p.adjustments) : "-", 10) : "")
-                  << padLeft(moneySigned(p.totalNet), 12) << padLeft(moneySigned(p.averagePerGame()), 12)
-                  << padLeft(moneySigned(p.biggestWin), 12) << padLeft(moneySigned(p.biggestLoss), 12) << '\n';
-    }
-    // Forgiven debts cancel out, so adjustmentTotal is exactly the one-sided corrections.
-    // Whatever is left over is money the games themselves do not account for.
-    double gap = grandTotal - adjustmentTotal;
-    std::cout << divider(W) << "Sum of all nets: " << moneySigned(grandTotal);
-    if (adjustmentTotal > EPSILON || adjustmentTotal < -EPSILON) {
-        std::cout << "  (" << moneySigned(adjustmentTotal) << " of it is one-sided adjustments, menu 17)";
-    } else if (gap > -EPSILON && gap < EPSILON) {
-        std::cout << "  (balanced)";
-    }
-    if (gap > EPSILON || gap < -EPSILON) {
-        std::cout << "\n!! The games themselves are off by " << moneySigned(gap)
-                  << ": a ledger does not balance (see the warning printed at startup).";
-    }
-    std::cout << "\n\n";
-
-    // Aliases live in their own section so long lists never break the table.
-    bool anyAlias = false;
+    // Payments and corrections change who owes whom, not who won at the table.
+    struct Entry { std::int64_t date; std::string name; double amount; std::string note; };
+    std::vector<Entry> entries;
+    double entrySum = 0.0;
     for (const PlayerStats& p : list) {
-        std::vector<std::string> aliases;
-        for (const std::string& a : p.aliases) {
-            if (a == p.normalizedName || a == normalizeName(p.displayName)) continue;
-            aliases.push_back(a);
+        for (const GameResult& r : p.history) {
+            if (!r.adjustment) continue;
+            entries.push_back({r.date, p.displayName, r.net, r.note});
+            entrySum += r.net;
         }
-        if (aliases.empty()) continue;
-        if (!anyAlias) {
-            std::cout << "Merged names (menu 4 to change)\n" << divider(W, '-');
-            anyAlias = true;
-        }
-        std::cout << "  " << padRight(p.displayName, NAME) << "  also: ";
-        printWrapped(aliases, 2 + NAME + 8, static_cast<size_t>(W));
     }
-    if (anyAlias) std::cout << divider(W, '-') << '\n';
+    if (!entries.empty()) {
+        std::sort(entries.begin(), entries.end(), [](const Entry& a, const Entry& b) {
+            return a.date != b.date ? a.date < b.date : a.name < b.name;
+        });
+        std::cout << "\n " << ui::bold("Payments & corrections") << ui::dim("  (menu 17) not in the table; settlement sheets count them")
+                  << '\n';
+        for (const Entry& e : entries) {
+            std::cout << "   " << padRight(formatLocalDate(e.date), 12) << padRight(e.name, 18) << padLeft(ui::net(e.amount), 12)
+                      << "   " << padRight(e.note, W - 48) << '\n';
+        }
+        if (entrySum > -EPSILON && entrySum < EPSILON) {
+            std::cout << ui::dim("   They cancel out: every payment is on both sides.") << '\n';
+        } else {
+            std::cout << ui::yellow("   One-sided: they add up to " + moneySigned(entrySum) +
+                                    ", so a settlement sheet will be short by that much.") << '\n';
+        }
+    }
+    std::cout << ui::dim("\n Nights = games played   Up-Dn = nights won-lost   Last 10: oldest to newest   Nicknames: menu 4")
+              << "\n\n";
 }
 
 void printCompactList(const std::vector<PlayerStats>& list) {
-    std::cout << divider(70)
-              << padRight("#", 5) << padRight("Player", 24) << padRight("Normalized", 20) << padLeft("Net", 12) << '\n'
-              << divider(70);
+    std::cout << ui::bold(" " + padLeft("#", 3) + "  " + padRight("Player", 22) + padLeft("Nights", 7) + padLeft("Net", 13)) << '\n'
+              << ui::rule(47) << '\n';
     for (size_t i = 0; i < list.size(); ++i) {
-        std::cout << padRight(std::to_string(i + 1), 5) << padRight(list[i].displayName, 24)
-                  << padRight(list[i].normalizedName, 20) << padLeft(moneySigned(list[i].totalNet), 12) << '\n';
+        std::cout << " " << padLeft(std::to_string(i + 1), 3) << "  " << padRight(list[i].displayName, 22)
+                  << padLeft(std::to_string(list[i].games), 7) << padLeft(ui::net(list[i].totalNet), 13) << '\n';
     }
-    std::cout << divider(70);
+    std::cout << ui::rule(47) << '\n';
 }
 
 void printPlayerHistory(const PlayerStats& p) {
-    std::cout << "\nGame history for " << p.displayName << " (" << p.games << " games, "
-              << p.buyIns << " buy-ins, net " << moneySigned(p.totalNet) << ")\n";
-    std::cout << divider(100)
-              << padRight("#", 4) << padRight("Date", 12) << padRight("Folder", 28) << padRight("Ledger", 34)
-              << padLeft("Buy-ins", 8) << padLeft("Net", 12) << padLeft("Running", 12) << '\n'
-              << divider(100);
-    double running = 0.0;
+    const int W = 97;
+    std::cout << '\n' << ui::heading(p.displayName + ", night by night", W) << "\n  " << p.games << " nights, " << p.buyIns
+              << " buy-ins, poker net " << ui::bold(ui::net(p.totalNet));
+    if (p.adjustments > EPSILON || p.adjustments < -EPSILON) {
+        std::cout << "   payments & corrections " << ui::net(p.adjustments) << "   balance " << ui::net(p.balance());
+    }
+    std::cout << "\n\n"
+              << ui::bold(padLeft("#", 4) + "  " + padRight("Date", 12) + padRight("Folder", 20) + padLeft("Buy-ins", 8) +
+                          padLeft("Net", 12) + padLeft("Running", 12) + "  Game")
+              << '\n' << ui::rule(W) << '\n';
+    double running = 0.0;   // poker only, like the leaderboard
     for (size_t i = 0; i < p.history.size(); ++i) {
         const GameResult& r = p.history[i];
-        running += r.net;
-        std::cout << padRight(std::to_string(i + 1), 4) << padRight(formatLocalDate(r.date), 12)
-                  << padRight(r.folder, 28) << padRight(r.adjustment ? "adjustment: " + r.note : r.gameId, 34)
-                  << padLeft(r.adjustment ? "-" : std::to_string(r.buyIns), 8)
-                  << padLeft(moneySigned(r.net), 12) << padLeft(moneySigned(running), 12) << '\n';
+        if (!r.adjustment) running += r.net;
+        std::string game = r.adjustment ? "adjustment" : (r.gameId.rfind("ledger_", 0) == 0 ? r.gameId.substr(7) : r.gameId);
+        std::string where = r.adjustment ? r.note : r.folder;   // a payment shows its note, dimmed
+        std::cout << padLeft(std::to_string(i + 1), 4) << "  " << padRight(formatLocalDate(r.date), 12)
+                  << (r.adjustment ? ui::dim(padRight(where, 20)) : padRight(where, 20))
+                  << padLeft(r.adjustment ? "-" : std::to_string(r.buyIns), 8) << padLeft(ui::net(r.net), 12)
+                  << padLeft(ui::net(running), 12) << "  " << ui::dim(game) << '\n';
     }
-    std::cout << divider(100) << '\n';
+    std::cout << ui::rule(W) << '\n';
 }
 
 bool exportPlayerSummaryCSV(const std::string& filename, const std::vector<PlayerStats>& list) {

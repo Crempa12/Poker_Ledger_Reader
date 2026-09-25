@@ -20,6 +20,7 @@ def norm(s):   # letters only, lower-cased; a name with no letters keeps its dig
 def filed_as(nick, pid):   # the name a seat is filed under before merges; an emoji-only nickname goes by its account
     return norm(nick) or re.sub(r'[^a-z]', '', ("unnamed " + pid).lower())
 def cents(s): return int(round(float(s) * 100))
+def poker(p): return p["net"] - p.get("adj", 0)   # the leaderboard ranks by poker result only
 
 def parse_iso(s):
     s = s.strip()
@@ -133,7 +134,7 @@ def aggregate(scope_games, adjs=()):
     return P
 
 def run_app(args, stdin):
-    out = subprocess.run([BIN, "--root", ROOT] + args, input=stdin, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    out = subprocess.run([BIN, "--root", ROOT, "--plain"] + args, input=stdin, capture_output=True, text=True, encoding="utf-8", errors="replace")
     return out.stdout
 
 failures = []
@@ -151,7 +152,7 @@ def compare_summary(P, label):
     for r in rows:
         c = r["normalized_name"]; p = P.get(c)
         if p is None: check(False, f"{label}: unknown player {c}"); continue
-        for key, val in [("total_net", p["net"]), ("total_won", p["won"]), ("total_lost", p["lost"]), ("adjustments", p["adj"])]:
+        for key, val in [("total_net", p["net"] - p["adj"]), ("total_won", p["won"]), ("total_lost", p["lost"]), ("adjustments", p["adj"])]:
             check(cents(r[key]) == val, f"{label}: {c} {key} app={r[key]} py={val/100:.2f}")
         if p["games"]:
             for key, val in [("biggest_win", p["best"]), ("biggest_loss", p["worst"])]:
@@ -229,12 +230,12 @@ compare_summary(P, "folder"); compare_settlement(P, "folder")
 # ---------- 3. date range
 P = aggregate(scope_filter(frm=FROM, to=TO))
 out = run_app(["--from", FROM, "--to", TO], "12\n" + SETTLE + "13\n0\n")
-m = re.search(r"\|  (\d+) games", out); check(int(m.group(1)) == len(scope_filter(frm=FROM, to=TO)), f"date scope game count app={m.group(1)}")
+m = re.search(r"POKER LEDGER\s+(\d+) games", out); check(int(m.group(1)) == len(scope_filter(frm=FROM, to=TO)), f"date scope game count app={m.group(1)}")
 compare_summary(P, "dates"); compare_settlement(P, "dates")
 
 # ---------- 4. preferences: heech pays tom, rayan pays kobe (folder scope)
 P = aggregate(scope_filter(folder=FOLDER))
-byname = sorted(P.items(), key=lambda kv: (-kv[1]["net"], kv[0]))
+byname = sorted(P.items(), key=lambda kv: (-poker(kv[1]), kv[0]))
 idx = {c: i + 1 for i, (c, _) in enumerate(byname)}
 winners = [c for c,_ in byname if P[c]["net"] > 0]; losers = [c for c,_ in reversed(byname) if P[c]["net"] < 0]
 L1, W1 = losers[0], winners[0]
@@ -262,7 +263,7 @@ compare_settlement(P, "banker-loser", banker=B)
 SID = "VALIDATE_" + str(int(time.time()))
 # ---------- 6. sessions: save sheet (prefs still active), pay $5 on line 1
 out = run_app(["--folder", FOLDER], SETTLE + f"7\n{SID}\n9\n\n0\n")
-row = re.search(rf"^(\d+)\s+{SID}", out, re.M).group(1)
+row = re.search(rf"^\s*(\d+)\s+{SID}", out, re.M).group(1)
 run_app(["--folder", FOLDER], f"10\n{row}\n5\n0\n")
 with open(os.path.join(ROOT, "Saved_Data", "session_balances.csv"), encoding="utf-8") as f:
     bal = [r for r in csv.DictReader(f) if r["session_id"] == SID]
@@ -279,25 +280,25 @@ print("sessions compared")
 
 # ---------- 7. dates: app history dates vs python
 P = aggregate(scope_filter())
-order = sorted(P.items(), key=lambda kv:(-kv[1]['net'],kv[0]))
+order = sorted(P.items(), key=lambda kv: (-poker(kv[1]), kv[0]))
 cam_idx = [i for i,(c,_) in enumerate(order,1) if c=='cam'][0]
 out = run_app([], f"3\n{cam_idx}\n\n0\n")
-hist = re.findall(r"^\d+\s+(\d{4}-\d{2}-\d{2}|unknown)\s+.*?\s+(ledger_\S+|adjustment)\S*.*?\s+(\d+|-)\s+([+-]?\$[\d.]+)\s+([+-]?\$[\d.]+)\s*$", out, re.M)
+hist = [(d, g, b, n, r) for d, b, n, r, g in re.findall(r"^\s*\d+\s+(\d{4}-\d{2}-\d{2}|unknown)\s+.*?\s+(\d+|-)\s+([+-]?\$[\d.,]+)\s+([+-]?\$[\d.,]+)\s+(\S+)\s*$", out, re.M)]
 py = P["cam"]["hist"]
 check(len(hist) == len(py), f"cam history length app={len(hist)} py={len(py)}")
 run = 0
 for (d, gid, b, net, running), (st, pid, pnet, pb) in zip(hist, py):
-    run += pnet
+    if pid != "adjustment": run += pnet   # the running total is poker only
     check(d == ("unknown" if st is None else local_date(st)), f"date {d} vs {st} for {gid}")
-    check(pid == gid or pid.startswith(gid + " ("), f"game order {gid} vs {pid}")
-    check(cents(net.replace('$','')) == pnet and (0 if b == "-" else int(b)) == pb, f"history net {net}/{b} vs {pnet}/{pb}")
-    check(cents(running.replace('$','')) == run, f"running {running} vs {run}")
+    check(pid == gid or pid == "ledger_" + gid, f"game order {gid} vs {pid}")
+    check(cents(net.replace('$','').replace(',','')) == pnet and (0 if b == "-" else int(b)) == pb, f"history net {net}/{b} vs {pnet}/{pb}")
+    check(cents(running.replace('$','').replace(',','')) == run, f"running {running} vs {run}")
 print("history compared")
 
 
 # ---------- 7b. adjustments: forgive a debt in folder scope, then a one-sided correction in all scope
 Pf = aggregate(scope_filter(folder=FOLDER))
-order_f = sorted(Pf.items(), key=lambda kv: (-kv[1]["net"], kv[0])); idx_f = {c: i + 1 for i, (c, _) in enumerate(order_f)}
+order_f = sorted(Pf.items(), key=lambda kv: (-poker(kv[1]), kv[0])); idx_f = {c: i + 1 for i, (c, _) in enumerate(order_f)}
 cred = [c for c, _ in order_f if Pf[c]["net"] > 0][0]; debt = [c for c, _ in reversed(order_f) if Pf[c]["net"] < 0][0]
 FDATE = min(local_date(g["start"]) for g in scope_filter(folder=FOLDER) if g["start"] is not None)
 AFTER = (datetime.date.fromisoformat(FDATE) + datetime.timedelta(days=1)).isoformat()
@@ -313,10 +314,10 @@ if OTHER:
 run_app([], "12\n0\n"); compare_summary(aggregate(scope_filter(), adj_filter()), "forgive-all")
 run_app(["--from", AFTER], "12\n0\n"); compare_summary(aggregate(scope_filter(frm=AFTER), adj_filter(frm=AFTER)), "forgive-dated")
 # one-sided correction of -7.00 in all scope, then check the leaderboard warns and history shows it
-order_a = [c for c, _ in sorted(aggregate(scope_filter(), adj_filter()).items(), key=lambda kv: (-kv[1]["net"], kv[0]))]
+order_a = [c for c, _ in sorted(aggregate(scope_filter(), adj_filter()).items(), key=lambda kv: (-poker(kv[1]), kv[0]))]
 who_i = next(i for i, c in enumerate(order_a, 1) if c not in (cred, debt)); who = order_a[who_i - 1]
 out = run_app([], f"17\n2\n{who_i}\n-7\ntypo fix\n\n0\n2\n\n12\n0\n")
-check("-$7.00 of it is one-sided adjustments" in out, "one-sided warning missing")
+check("they add up to -$7.00" in out, "one-sided warning missing")
 Pa = aggregate(scope_filter(), adj_filter()); compare_summary(Pa, "onesided-all")
 check(Pa[who]["adj"] == -700, f"one-sided amount {Pa[who]['adj']}")
 # removing the forgive (row 1) removes both halves

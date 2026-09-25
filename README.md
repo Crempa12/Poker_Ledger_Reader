@@ -88,6 +88,7 @@ Command-line options:
 | `--folder NAME` | Start scoped to one sub-folder of `Games/` |
 | `--from YYYY-MM-DD` / `--to YYYY-MM-DD` | Start scoped to a date range |
 | `--report [file.html]` | Print the leaderboard, write the HTML report, and exit |
+| `--plain` | Plain text for this run: no colors or symbols (menu 6 makes it permanent) |
 | `--help` | Show usage |
 
 If there is no `Games/` folder, the root itself is searched, so an older layout
@@ -111,33 +112,50 @@ game. Two logs for the same game keep the one with more hands.
 ## The menu
 
 ```
-DATA
-  1. Change scope (folder / date range)
-  2. Leaderboard: everyone's net wins and losses
-  3. Player detail: game-by-game history and running total
-  4. Player names: one person, several nicknames (N new to check)
- 20. Shared accounts: a seat played by someone other than its name (N to check)
- 17. Adjustments: forgive a debt or correct a total
-SETTLEMENT
-  5. Calculate settlement sheet (pick a game or folder, then who sends to whom)
-  6. Payment preferences (pinned payer -> payee, banker, me)
-  7. Save settlement sheet as a session
-  8. View all session balances
-  9. View open session balances
- 10. Record a payment
- 11. Combined unpaid summary
-EXPORT & CHARTS
- 12. Export player summary CSV
- 13. Export settlement sheet CSV
- 14. Generate HTML report with charts
- 15. Terminal charts
- 16. Check for duplicate ledgers
-HAND LOGS
- 18. Playing style stats from hand logs (VPIP, aggression, showdowns)
- 21. Deep playstyle profiles (position, 3-bet, c-bet, sizing, archetypes)
- 19. Import new PokerNow files from Downloads
-  0. Save and exit
+╭────────────────────────────────────────────────────────────────────────────╮
+│ ♠ POKER LEDGER   39 games · Aug 22 – Sep 23 · all folders                  │
+│ 31 players · hand logs 20/39 · ✓ books balanced                            │
+│ me not set · banker off · pinned payments 3                                │
+╰────────────────────────────────────────────────────────────────────────────╯
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  ● 1 new                8  Saved sheets: all
+  20  Shared accounts                      9  Saved sheets: unpaid
+  17  Payments & corrections  (2)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         19  Import from Downloads
+  15  Charts
+  16  Duplicate check                      0  Save and exit
 ```
+
+The box at the top says what you are looking at and whether the books balance.
+A yellow dot next to a menu means it has something for you to check.
+
+Every screen fits in 100 columns, uses green for money won and red for money
+lost, and draws charts with block characters. If your console shows odd
+characters instead of lines and blocks (some IDE consoles do), switch the
+display to **simple** in menu 6 (option 6), or run with `--plain` once. Simple
+is plain text with no colors or symbols; the numbers are the same.
+
+### Leaderboard (menu 2)
+
+```
+   #  Player             Nights   Up-Dn         Net  Avg/night       Best      Worst  Last 10 nights
+   1  Heech                  25    19-5    +$832.22    +$33.29   +$309.13   -$403.65  ▂·▁▁▁▁▁▂▂█
+```
+
+- **Net** is what the player won or lost at the table, and the table is ranked
+  by it. Payments and corrections from menu 17 are listed under the table
+  instead: they change who owes whom, not who won.
+- **Up-Dn** counts the nights they finished up and down.
+- **Last 10 nights** is one bar per night, oldest first: taller means a bigger
+  night, green up, red down.
+- The last line checks that every player's net adds up to $0.00.
 
 **Scope** is the key idea. Every view (leaderboard, settlement, charts, exports,
 style stats) is computed for the current scope, which is a folder choice plus
@@ -151,7 +169,9 @@ hand log.
 Menu 5 is a short guided flow:
 
 1. **Pick what to settle**: one game (listed newest first), one folder, or
-   everything in the current scope. The results for that selection are shown.
+   everything in the current scope. Each player is shown with their poker net,
+   any payments or corrections (menu 17), and what that means for this sheet:
+   "owes $X" or "is owed $X".
 2. **Specific sends**: the app asks whether anyone wants to send their money
    to a specific person. Pick the payer from those who owe and the payee from
    those who are owed; repeat for as many pairs as you like, or answer "n" to
@@ -173,27 +193,35 @@ Under the hood the sheet is built in three passes:
    and inside each group every debt goes to the smallest credit that covers it
    in full, so most people send to just one person.
 
-The "Why" column on the sheet shows which pass produced each line: "banker",
-"preference" (a saved pin), "requested" (asked for on this sheet) or "auto".
+Each line on the sheet is tagged with the pass that produced it: "banker",
+"pinned" (a saved pin), "requested" (asked for on this sheet), or nothing for
+the automatic fill.
 
-### Adjustments (menu 17)
+### Payments & corrections (menu 17)
 
-When someone lets a payment go, or a total is simply wrong, add an adjustment.
-Two kinds:
+Use this for money that changed hands outside PokerNow. Two kinds:
 
-- **Forgive a debt.** Pick who is letting the money go and who owed it. The
-  debtor's total goes up by the amount and the creditor's goes down by the same
-  amount, so everything still sums to zero and the next settlement sheet no
-  longer asks for that money.
-- **One-sided correction.** Add or subtract any amount from one player. The
-  leaderboard then says how much the books are off by, so you cannot forget it.
+- **Money that changed hands outside the ledger** (a payment, or a debt let
+  go). Pick who got the money (or let the debt go) and who paid it (or was let
+  off). The one who owed now owes that much less and the one who was owed is
+  owed that much less, so everything still sums to zero and the next
+  settlement sheet asks only for what is left. Example: Ryan paid Kobe $190
+  during the game.
+- **Correct one player's balance by hand** (one-sided). Add or subtract any
+  amount from one player. The leaderboard lists it and says how much it leaves
+  the books short, so you cannot forget it.
 
-Each adjustment has a date and is tagged with the folder you were scoped to
-when you added it. It is counted in the "all folders" view and in that folder's
-view, and only inside date ranges that include its date. Adjustments show up in
-a player's history and running total, in an "Adjust" column on the leaderboard
-and report, and are saved in `Saved_Data/adjustments.csv`. Removing one half of
-a forgiven debt removes the other half too.
+Neither kind changes the leaderboard, which is poker results only. Both change
+settlement sheets. Each entry has a date and is tagged with the folder you were
+scoped to when you added it. It counts in the "all folders" view and in that
+folder's view, and only inside date ranges that include its date. An entry
+added while viewing all folders is tagged "(all folders)" and counts only when
+you settle everything; a folder or single-game sheet says so when it leaves one
+out. This way a payment is never counted twice when you settle folders one at
+a time. Entries show
+in a player's history (dimmed), under the leaderboard, and in the report's
+"Adjust" column. They are saved in `Saved_Data/adjustments.csv`. Removing one
+side of a payment removes the other side too.
 
 ### Shared accounts (menu 20)
 
@@ -227,15 +255,15 @@ flagged or not; option 3 lists every saved choice and undoes one.
 Choices live in `Saved_Data/seat_owners.csv`, keyed by ledger id, account,
 sit-down time and nickname. If one seat mixed two people's money (a "first 20 /
 last 30" seat), give it to one of them here, then move the other person's share
-across with "forgive a debt" in menu 17 (it adds an amount to one player's
-total and takes the same amount off another's).
+across with menu 17, option 1 (it moves an amount from one player's balance to
+another's).
 
 ### Sessions and payments
 
-Menu 7 freezes the current sheet under a session ID (it suggests the game or
-folder name). Menus 8 to 11 then show what is still owed, let you record
-partial or full payments, and roll unpaid amounts up per pair of people across
-every session.
+Menu 7 saves the current sheet under a name (it suggests the game or folder
+name) so you can track who has paid. Menus 8 and 9 show saved sheets (all, or
+only what is unpaid), menu 10 records a full or partial payment, and menu 11
+adds up everything still owed between each pair of people across every sheet.
 
 ### Hand logs (menus 18 and 19)
 
@@ -253,7 +281,6 @@ who collected the pot. Menu 18 turns the logs in scope into one row per player:
 | W$SD | % of showdowns they won |
 | FoldR | % of the time they folded when facing a preflop raise |
 | AF | postflop aggression: (bets + raises) / calls |
-| Won | hands where they collected the pot |
 | Big pot | the biggest pot they collected |
 | Style | a label from VPIP and AF: tight/loose, aggressive/passive (needs 30+ hands) |
 
@@ -267,13 +294,18 @@ to download. Menu 19 files new downloads for you (see the routine at the top).
 
 The app checks its own reading of every log: each hand must sum to zero and
 every player's stack at the next hand must equal the previous stack plus the
-result of the hand (top-ups excepted). A log that fails this check is marked
-"did not reconcile" in the summary line so you know the numbers are suspect.
+result of the hand (top-ups excepted). A night that fails this check gets a
+yellow `*N` (N hands) in the summary table so you know its numbers are slightly off.
+
+Menu 21 shows deeper profiles in two tables, before the flop and after it.
 
 ### Charts
 
-Menu 15 prints a net-result bar chart for everyone and a running-total chart
-for "me" in the terminal. Menu 14 writes a self-contained HTML file with:
+Menu 15 draws two charts in the terminal: every player's net as green (won)
+and red (lost) bars, and a running-total chart for "me" (or the top earner),
+one dot per night, with the $0 line marked. Both count poker only. Menu 3
+shows the same running-total chart under a player's night-by-night history.
+Menu 14 writes a self-contained HTML file with:
 
 - summary tiles (games, players, buy-in volume, your net and average)
 - net result by player (bar chart, hover for details)
@@ -291,14 +323,16 @@ from the app straight after it is written.
 
 ## Checking the math
 
-Poker is zero-sum, so the app checks itself every time it starts: each game's
-nets must add up to $0.00 (a ledger that does not gets a startup warning), and
-the leaderboard's last line shows the sum of every net. It reads "(balanced)"
-when the books close; anything else is either a one-sided adjustment (the line
-says how much) or a ledger that does not balance.
+Poker is zero-sum, so the app checks itself every time it starts. Each game's
+nets must add up to $0.00, and a ledger that does not gets a startup warning.
+The menu header and the leaderboard's last line both say "✓ books balanced"
+when every player's net adds up to $0.00. Payments and corrections are listed
+under the leaderboard with their own total, so a one-sided entry is never
+hidden.
 
-Adjustments count toward a player's Net but not toward Avg/game, since they are
-not games.
+In `player_summary.csv` (menu 12), `total_net` is the poker result and
+`adjustments` is the menu 17 total; a settlement sheet uses the two added
+together.
 
 `tools/validate.py` recomputes every number the app produces from the raw
 CSVs using exact integer cents and compares them to the app's own exports:

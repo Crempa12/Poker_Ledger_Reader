@@ -6,6 +6,7 @@
 #include <map>
 
 #include "console.hpp"
+#include "ui.hpp"
 
 using namespace util;
 
@@ -102,23 +103,26 @@ static std::vector<std::pair<std::string, SessionBalance>> sortedRows(const Bala
     return rows;
 }
 
+static const int W = 92;
+
 static void printRows(const std::vector<std::pair<std::string, SessionBalance>>& rows) {
-    const int W = 118;
-    std::cout << divider(W)
-              << padRight("#", 4) << padRight("Session", 26) << padRight("From", 20) << padRight("To", 20)
-              << padLeft("Original", 12) << padLeft("Remaining", 12) << "   Status\n" << divider(W);
+    std::cout << ui::bold(padLeft("#", 4) + "  " + padRight("Sheet", 22) + padRight("From", 16) + padRight("To", 16) +
+                          padLeft("Owed", 11) + padLeft("Still owed", 12) + "  Status")
+              << '\n' << ui::rule(W) << '\n';
     for (size_t i = 0; i < rows.size(); ++i) {
         const SessionBalance& b = rows[i].second;
-        std::cout << padRight(std::to_string(i + 1), 4) << padRight(b.sessionId, 26) << padRight(b.fromDisplay, 20)
-                  << padRight(b.toDisplay, 20) << padLeft(money(b.originalAmount), 12)
-                  << padLeft(money(b.remainingAmount), 12) << "   " << b.status << '\n';
+        std::string status = b.status == "paid" ? ui::green(b.status) : b.status == "partial" ? ui::yellow(b.status) : b.status;
+        std::cout << padLeft(std::to_string(i + 1), 4) << "  " << padRight(b.sessionId, 22) << padRight(b.fromDisplay, 16)
+                  << padRight(b.toDisplay, 16) << padLeft(money(b.originalAmount), 11)
+                  << padLeft(b.remainingAmount > EPSILON ? ui::bold(money(b.remainingAmount)) : ui::dim(money(0)), 12)
+                  << "  " << status << '\n';
     }
-    std::cout << divider(W);
+    std::cout << ui::rule(W) << '\n';
 }
 
 void printBalances(const Balances& balances, bool openOnly) {
     std::vector<std::pair<std::string, SessionBalance>> rows = sortedRows(balances, openOnly);
-    std::cout << (openOnly ? "\nOpen session balances:\n" : "\nAll session balances:\n");
+    std::cout << '\n' << ui::heading(openOnly ? "Saved sheets: unpaid" : "Saved sheets: all", W) << '\n';
     if (rows.empty()) {
         std::cout << "  none\n\n";
         return;
@@ -133,7 +137,7 @@ void recordPayment(Balances& balances) {
         std::cout << "There are no unpaid session balances.\n";
         return;
     }
-    std::cout << "\nOpen session balances:\n";
+    std::cout << '\n' << ui::heading("Record a payment", W) << '\n';
     printRows(rows);
 
     int choice = console::askMenuChoice("Choose a balance to update (0 to cancel): ", 0, static_cast<int>(rows.size()));
@@ -166,18 +170,17 @@ void printCombinedUnpaid(const Balances& balances) {
     for (const auto& pair : combined) rows.push_back(pair.second);
     std::sort(rows.begin(), rows.end(), [](const Debt& a, const Debt& b) { return a.total > b.total; });
 
-    std::cout << "\nCombined unpaid summary across all sessions:\n" << divider(70);
+    std::cout << '\n' << ui::heading("Who still owes whom (every saved sheet)", 70) << '\n';
     if (rows.empty()) {
-        std::cout << "No unpaid balances.\n" << divider(70) << '\n';
+        std::cout << "  Nobody. Every saved sheet is paid.\n\n";
         return;
     }
-    std::cout << padRight("#", 4) << padRight("From", 24) << padRight("To", 24) << padLeft("Still owed", 14) << '\n'
-              << divider(70);
+    const std::string arrow = ui::dim(ui::sym("  ──▶  ", "  --->  "));
     for (size_t i = 0; i < rows.size(); ++i) {
-        std::cout << padRight(std::to_string(i + 1), 4) << padRight(rows[i].from, 24) << padRight(rows[i].to, 24)
-                  << padLeft(money(rows[i].total), 14) << '\n';
+        std::cout << padLeft(std::to_string(i + 1), 4) << "  " << padRight(rows[i].from, 20) << arrow << padRight(rows[i].to, 20)
+                  << padLeft(ui::bold(money(rows[i].total)), 12) << '\n';
     }
-    std::cout << divider(70) << '\n';
+    std::cout << '\n';
 }
 
 }  // namespace sessions

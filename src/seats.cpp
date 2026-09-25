@@ -8,6 +8,7 @@
 #include <sstream>
 
 #include "console.hpp"
+#include "ui.hpp"
 
 using namespace util;
 
@@ -326,10 +327,12 @@ bool reassignInGame(std::vector<Game>& games, std::vector<SeatOwner>& list, cons
 bool listAndUndo(std::vector<Game>& games, std::vector<SeatOwner>& list, const players::MergeRules& rules,
                  const std::string& filename) {
     People people(games, rules);
-    std::cout << "\nSaved seat owners\n" << divider(100);
-    if (list.empty()) { std::cout << "  none\n" << divider(100); return false; }
-    std::cout << padRight("#", 4) << padRight("Game", 12) << padRight("Nickname", 20) << padRight("Account", 12)
-              << padLeft("Net", 11) << "  " << padRight("Counted for", 16) << "Note\n" << divider(100);
+    const int W = 98;
+    std::cout << '\n' << ui::heading("Saved seat owners", W) << '\n';
+    if (list.empty()) { std::cout << "  none\n"; return false; }
+    std::cout << ui::bold(padRight("#", 4) + padRight("Game", 12) + padRight("Nickname", 16) + padRight("Account", 12) +
+                          padLeft("Net", 11) + "  " + padRight("Counted for", 14) + "Note")
+              << '\n' << ui::rule(W) << '\n';
     for (size_t i = 0; i < list.size(); ++i) {
         const SeatOwner& s = list[i];
         std::string date = "(not loaded)";
@@ -339,11 +342,12 @@ bool listAndUndo(std::vector<Game>& games, std::vector<SeatOwner>& list, const p
             date = formatLocalDate(g.start);
             for (const LedgerRow& r : g.rows) if (matches(s, g, r)) net = moneySigned(r.net);
         }
-        std::cout << padRight(std::to_string(i + 1), 4) << padRight(date, 12) << padRight(s.nickname, 20)
+        std::cout << padRight(std::to_string(i + 1), 4) << padRight(date, 12) << padRight(s.nickname, 16)
                   << padRight(s.playerId, 12) << padLeft(net, 11) << "  "
-                  << padRight(people.display(players::resolveCanonical(rules, s.owner)), 16) << s.note << '\n';
+                  << padRight(people.display(players::resolveCanonical(rules, s.owner)), 14)
+                  << ui::dim(padRight(s.note, W - 71)) << '\n';
     }
-    std::cout << divider(100);
+    std::cout << ui::rule(W) << '\n';
     int idx = console::askMenuChoice("Number to undo, so the seat counts for its nickname again (0 = back): ", 0,
                                      static_cast<int>(list.size()));
     if (idx == 0) return false;
@@ -465,19 +469,21 @@ bool manage(std::vector<Game>& games,
         size_t reassigned = 0;
         for (const Game& g : games) for (const LedgerRow& r : g.rows) if (!r.owner.empty()) ++reassigned;
 
-        std::cout << "\nBuy-ins under someone else's name or account\n" << divider(90)
-                  << "PokerNow credits a seat to the name and account it was bought on. When someone\n"
-                  << "plays on a friend's account, or under a friend's name, hand the seat to the person\n"
-                  << "whose money it was. Totals, settlement sheets, charts and hand-log stats follow.\n"
-                  << "If one seat mixed two people's money, give it to one of them here and move the\n"
-                  << "other person's share with an adjustment (menu 17). Someone who only changed their\n"
-                  << "nickname is menu 4: merging keeps every one of their seats together.\n"
-                  << divider(90, '-')
-                  << "1. Review seats that look shared (" << flagged << " to check)\n"
-                  << "2. Reassign any seat in a game\n"
-                  << "3. List saved seat owners / undo one (" << list.size() << " saved, " << reassigned
-                  << " seat" << (reassigned == 1 ? "" : "s") << " reassigned)\n"
-                  << "0. Back\n";
+        std::cout << '\n' << ui::heading("Shared accounts: a seat played by someone other than its name", 90) << '\n'
+                  << ui::dim("  PokerNow credits a seat to the name and account it was bought on. When someone\n"
+                             "  plays on a friend's account, or under a friend's name, hand the seat to the person\n"
+                             "  whose money it was. Totals, settlement sheets, charts and hand-log stats follow.\n"
+                             "  If one seat mixed two people's money, give it to one of them here and move the other\n"
+                             "  person's share with menu 17 (payments & corrections). Someone who only changed their\n"
+                             "  nickname is menu 4: merging keeps every one of their seats together.")
+                  << "\n\n"
+                  << "  1. Review seats that look shared " << (flagged ? ui::yellow("(" + std::to_string(flagged) + " to check)")
+                                                                        : ui::dim("(none to check)")) << '\n'
+                  << "  2. Reassign any seat in a game\n"
+                  << "  3. List saved seat owners / undo one " << ui::dim("(" + std::to_string(list.size()) + " saved, " +
+                                                                          std::to_string(reassigned) + " seat" +
+                                                                          (reassigned == 1 ? "" : "s") + " reassigned)") << '\n'
+                  << "  0. Back\n";
         int choice = console::askMenuChoice("Choose: ", 0, 3);
         if (choice == 0) return changed;
         if (choice == 1 && review(games, list, rules, filename)) changed = true;

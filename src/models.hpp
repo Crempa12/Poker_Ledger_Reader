@@ -72,20 +72,21 @@ struct Adjustment {
 struct PlayerStats {
     std::string displayName;
     std::string normalizedName;
-    double totalNet = 0.0;
+    double totalNet = 0.0;    // poker result: the games only (what the leaderboard ranks)
     double totalWon = 0.0;    // sum of winning games
     double totalLost = 0.0;   // sum of losing games (negative)
     double biggestWin = 0.0;
     double biggestLoss = 0.0;
-    double adjustments = 0.0; // sum of manual corrections included in totalNet
+    double adjustments = 0.0; // payments and corrections from menu 17 (not in totalNet)
     int games = 0;
     int buyIns = 0;
     std::vector<GameResult> history;   // sorted by date
     std::set<std::string> aliases;     // normalized names folded into this player
     std::set<std::string> playerIds;   // ledger account ids seen for this player
 
-    // Games only: an adjustment is not a game, so a forgiven debt does not move the average.
-    double averagePerGame() const { return games == 0 ? 0.0 : (totalNet - adjustments) / games; }
+    double averagePerGame() const { return games == 0 ? 0.0 : totalNet / games; }
+    // What settlement sheets use: the poker result plus payments and corrections.
+    double balance() const { return totalNet + adjustments; }
 };
 
 struct SettlementEntry {
@@ -146,4 +147,5 @@ struct Scope {
 struct Settings {
     std::string me;       // normalized name of the person running the app
     std::string banker;   // normalized name; empty = no banker mode
+    bool simpleDisplay = false;   // plain text, no colors or symbols (menu 6)
 };

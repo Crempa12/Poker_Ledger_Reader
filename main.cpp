@@ -32,6 +32,7 @@
 #include "seats.hpp"
 #include "sessions.hpp"
 #include "settlement.hpp"
+#include "ui.hpp"
 #include "util.hpp"
 
 namespace fs = std::filesystem;
@@ -105,14 +106,16 @@ struct App {
 void chooseScope(App& app) {
     while (true) {
         std::vector<std::string> folders = ledger::listFolders(app.games);
-        std::cout << "\nCurrent scope: " << app.scope.describe() << " (" << app.scoped.size() << " of "
-                  << app.games.size() << " games)\n" << divider(60)
-                  << "1. Use every folder\n"
-                  << "2. Pick one folder\n"
-                  << "3. Set a date range\n"
-                  << "4. Last N days\n"
-                  << "5. Clear the date range\n"
-                  << "0. Back\n";
+        std::cout << '\n' << ui::heading("Scope: which games every screen looks at", 60) << '\n'
+                  << "  Now: " << ui::bold(app.scope.describe()) << ui::dim(" (" + std::to_string(app.scoped.size()) + " of " +
+                                                                        std::to_string(app.games.size()) + " games)")
+                  << "\n\n"
+                  << "  1. Use every folder\n"
+                  << "  2. Pick one folder\n"
+                  << "  3. Set a date range\n"
+                  << "  4. Last N days\n"
+                  << "  5. Clear the date range\n"
+                  << "  0. Back\n";
         int choice = console::askMenuChoice("Choose: ", 0, 5);
         if (choice == 0) return;
 
@@ -262,7 +265,7 @@ void splitName(App& app) {
     for (const auto& [alias, canonical] : app.rules) groups[canonical].push_back(alias);
     std::vector<PlayerStats> byName = players::sortedByName(app.stats);
     std::vector<std::string> keys;
-    std::cout << "\nMerged names (each line counts as one person)\n" << divider(90, '-');
+    std::cout << '\n' << ui::heading("Merged names (each line counts as one person)", 90) << '\n';
     for (auto& [canonical, aliases] : groups) {
         std::sort(aliases.begin(), aliases.end());
         keys.push_back(canonical);
@@ -271,9 +274,15 @@ void splitName(App& app) {
         std::set<std::string> names(aliases.begin(), aliases.end());
         names.insert(canonical);
         names.erase(normalizeName(display));
+        const size_t room = 90 - 33 - 10;   // after "  N.   Name   also: ", leaving space for "+N more"
         size_t shown = 0;
-        for (const std::string& n : names) if (++shown <= 8) list += (shown > 1 ? ", " : "") + n;
-        if (shown > 8) list += ", +" + std::to_string(shown - 8) + " more";
+        for (const std::string& n : names) {
+            std::string next = list + (list.empty() ? "" : ", ") + n;
+            if (displayWidth(next) > room) break;
+            list = next;
+            ++shown;
+        }
+        if (shown < names.size()) list += (list.empty() ? "+" : ", +") + std::to_string(names.size() - shown) + " more";
         std::cout << "  " << padRight(std::to_string(keys.size()) + ".", 5) << padRight(display, 20)
                   << (list.empty() ? "" : "also: " + list) << '\n';
     }
@@ -293,16 +302,16 @@ void splitName(App& app) {
 }
 
 void playerNames(App& app) {
-    std::cout << "\nPlayer names\n" << divider(90)
-              << "Same person under different nicknames (\"Kobe\", \"Kober\", \"Mamba\")? Merge them here.\n"
-              << "A seat played by someone other than the name on it? That is menu 20: it moves that\n"
-              << "one seat's money and leaves both names alone.\n";
+    std::cout << '\n' << ui::heading("Player names", 90) << '\n'
+              << "  Same person under different nicknames (\"Kobe\", \"Kober\", \"Mamba\")? Merge them here.\n"
+              << ui::dim("  A seat played by someone other than the name on it? That is menu 20: it moves that\n"
+                         "  one seat's money and leaves both names alone.") << '\n';
     reviewNewNames(app);
     while (true) {
-        std::cout << divider(90, '-')
-                  << "1. Merge names by hand\n"
-                  << "2. See merged names / split one back out\n"
-                  << "0. Back\n";
+        std::cout << '\n'
+                  << "  1. Merge names by hand\n"
+                  << "  2. See merged names / split one back out\n"
+                  << "  0. Back\n";
         int choice = console::askMenuChoice("Choose: ", 0, 2);
         if (choice == 0) return;
         if (choice == 1) mergeByHand(app);
@@ -325,17 +334,19 @@ bool loadData(App& app) {
     ledger::LoadResult loaded = ledger::loadAllGames(app.dataDir);
     app.games = std::move(loaded.games);
     app.duplicates = std::move(loaded.duplicates);
-    for (const std::string& m : loaded.messages) std::cout << m << '\n';
+    // Warnings stand out; routine notes (a never-played seat skipped) stay quiet.
+    auto note = [](const std::string& m) { std::cout << (m.rfind("WARNING", 0) == 0 ? ui::yellow(m) : ui::dim(m)) << '\n'; };
+    for (const std::string& m : loaded.messages) note(m);
     if (!app.duplicates.empty()) {
         size_t skipped = 0;
         for (const ledger::DuplicateNote& d : app.duplicates) if (d.skipped) ++skipped;
-        std::cout << "WARNING: " << app.duplicates.size() << " duplicate/overlapping ledger"
-                  << (app.duplicates.size() == 1 ? "" : "s") << " found (" << skipped
-                  << " skipped so nothing is counted twice). Menu 16 shows the details.\n";
+        note("WARNING: " + std::to_string(app.duplicates.size()) + " duplicate/overlapping ledger" +
+             (app.duplicates.size() == 1 ? "" : "s") + " found (" + std::to_string(skipped) +
+             " skipped so nothing is counted twice). Menu 16 shows the details.");
     }
     std::vector<std::string> logMessages;
     app.logs = handlog::loadAllLogs(app.dataDir, logMessages);
-    for (const std::string& m : logMessages) std::cout << m << '\n';
+    for (const std::string& m : logMessages) note(m);
     return !app.games.empty();
 }
 
@@ -353,14 +364,14 @@ std::vector<const handlog::HandLog*> logsInScope(const App& app) {
 void warnUnchecked(const App& app) {
     size_t names = players::suggestMergesByPlayerId(app.games, app.rules).size();
     if (names > 0) {
-        std::cout << "WARNING: " << names << " account" << (names == 1 ? " has" : "s have")
-                  << " a name never seen before. Menu 4 asks whether it is someone's new nickname.\n";
+        std::cout << ui::yellow("WARNING: " + std::to_string(names) + " account" + (names == 1 ? " has" : "s have") +
+                                " a name never seen before. Menu 4 asks whether it is someone's new nickname.") << '\n';
     }
     size_t flagged = seats::findSuspicious(app.games, app.rules).size();
     if (flagged > 0) {
-        std::cout << "WARNING: " << flagged << " buy-in" << (flagged == 1 ? "" : "s")
-                  << " look like they were made on someone else's account or under someone else's name.\n"
-                  << "         They count for the name on the seat until you check them in menu 20.\n";
+        std::cout << ui::yellow("WARNING: " + std::to_string(flagged) + " buy-in" + (flagged == 1 ? "" : "s") +
+                                " look like they were made on someone else's account or under someone else's name.") << '\n'
+                  << ui::yellow("         They count for the name on the seat until you check them in menu 20.") << '\n';
     }
 }
 
@@ -371,7 +382,7 @@ void handLogStats(App& app) {
     std::cout << "\nHand-log statistics for " << app.scope.describe() << ": " << logs.size() << " of " << app.scoped.size()
               << " games have a log.\n";
     if (logs.size() < app.scoped.size()) {
-        std::cout << "Games without a log (download \"poker_now_log_<id>.csv\" from PokerNow and drop it next to the ledger):\n";
+        std::cout << "Games without a log (download \"poker_now_log_<id>.csv\" from PokerNow; menu 19 files it):\n";
         int shown = 0;
         for (auto it = app.scoped.rbegin(); it != app.scoped.rend() && shown < 5; ++it) {
             if (app.logs.count(ledger::logId(**it))) continue;
@@ -547,27 +558,31 @@ std::string defaultSessionId(const App& app) {
 
 // One line per game so the user can pick which night to settle.
 void printGameList(const App& app, const std::vector<const Game*>& games) {
-    std::cout << '\n' << padRight("#", 5) << padRight("Date", 18) << padRight("Folder", 28)
-              << padRight("Players", 9) << padLeft("Buy-ins", 12) << "  Ledger\n" << divider(96, '-');
+    const int W = 92;
+    std::cout << '\n' << ui::bold(padLeft("#", 4) + "  " + padRight("Date", 18) + padRight("Folder", 18) + padLeft("Players", 8) +
+                                  padLeft("Buy-ins", 12) + "  Game")
+              << '\n' << ui::rule(W) << '\n';
     for (size_t i = 0; i < games.size(); ++i) {
         const Game& g = *games[i];
         std::set<std::string> names;
         for (const LedgerRow& r : g.rows) names.insert(players::personOf(app.rules, r));
-        std::cout << padRight(std::to_string(i + 1), 5) << padRight(formatLocalDateTime(g.start), 18)
-                  << padRight(g.folder.empty() ? "(root)" : g.folder, 28) << padRight(std::to_string(names.size()), 9)
-                  << padLeft(money(g.totalBuyIn), 12) << "  " << g.id << '\n';
+        std::cout << padLeft(std::to_string(i + 1), 4) << "  " << padRight(formatLocalDateTime(g.start), 18)
+                  << padRight(g.folder.empty() ? "(root)" : g.folder, 18) << padLeft(std::to_string(names.size()), 8)
+                  << padLeft(money(g.totalBuyIn), 12) << "  " << ui::dim(padRight(ledger::logId(g), 26)) << '\n';
     }
-    std::cout << divider(96, '-');
+    std::cout << ui::rule(W) << '\n';
 }
 
 // Guided flow behind menu 5: pick a game or folder, ask whether anyone wants to
 // send to a specific person, then fill in the rest automatically.
 void calculateSettlement(App& app) {
-    std::cout << "\nWhat would you like to settle?\n" << divider(60)
-              << "1. One game (a single ledger)\n"
-              << "2. One folder (every game in it)\n"
-              << "3. Everything in the current scope (" << app.scope.describe() << ")\n"
-              << "0. Cancel\n";
+    std::string scopeText = app.scope.describe();
+    if (displayWidth(scopeText) > 40) scopeText = padRight(scopeText, 40);   // a long folder name must not wrap the menu
+    std::cout << '\n' << ui::heading("What would you like to settle?", 76) << '\n'
+              << "  1. One game (a single ledger)\n"
+              << "  2. One folder (every game in it)\n"
+              << "  3. Everything in the current scope " << ui::dim("(" + scopeText + ")") << '\n'
+              << "  0. Cancel\n";
     int what = console::askMenuChoice("Choose: ", 0, 3);
     if (what == 0) return;
 
@@ -615,20 +630,47 @@ void calculateSettlement(App& app) {
     std::vector<PlayerStats> byNet = players::sortedByNet(stats);
     if (byNet.empty()) { std::cout << "No players found in that selection.\n"; return; }
 
-    std::cout << "\nResults for " << label << " (" << games.size() << " game" << (games.size() == 1 ? "" : "s") << "):\n";
-    players::printCompactList(byNet);
+    // Who owes and who is owed: the poker result plus any payments or corrections (menu 17).
+    std::vector<PlayerStats> byBalance = byNet;
+    std::stable_sort(byBalance.begin(), byBalance.end(),
+                     [](const PlayerStats& a, const PlayerStats& b) { return a.balance() > b.balance(); });
+    std::string title = what == 1 ? "Game of " + formatLocalDate(games.front()->start)
+                      : what == 2 ? "Folder " + target.folder : "Everything in " + app.scope.describe();
+    std::cout << '\n' << ui::heading(title + ", " + std::to_string(games.size()) + " game" + (games.size() == 1 ? "" : "s"), 76)
+              << '\n' << ui::bold("  " + padRight("Player", 22) + padLeft("Poker net", 12) + padLeft("Payments", 12) + "   Settles as")
+              << '\n';
+    for (const PlayerStats& p : byBalance) {
+        bool paid = p.adjustments > EPSILON || p.adjustments < -EPSILON;
+        double b = p.balance();
+        std::string settles = b > EPSILON ? ui::green("is owed " + money(b)) : b < -EPSILON ? ui::red("owes " + money(-b)) : ui::dim("even");
+        std::cout << "  " << padRight(p.displayName, 22) << padLeft(ui::net(p.totalNet), 12)
+                  << padLeft(paid ? ui::net(p.adjustments) : ui::dim("-"), 12) << "   " << settles << '\n';
+    }
+    // Entries saved while viewing all folders count only on all-folder sheets, so settling folders one
+    // at a time never counts a payment twice. Say so when that leaves some off this sheet.
+    if (!target.folder.empty()) {
+        Scope anyFolder = target;
+        anyFolder.folder.clear();
+        size_t left = 0;
+        for (const Adjustment& a : app.adjustmentList) if (a.folder.empty() && anyFolder.contains(a.folder, a.date)) ++left;
+        if (left > 0) {
+            std::cout << ui::yellow("  Not on this sheet: " + std::to_string(left) + " payment" + (left == 1 ? "" : "s") +
+                                    "/correction" + (left == 1 ? "" : "s") + " saved under \"all folders\" (settle option 3).")
+                      << '\n';
+        }
+    }
 
     // Saved pins always apply; one-off requests are added on top for this sheet only.
     std::vector<PaymentPreference> prefs = app.prefs;
 
     if (!app.settings.banker.empty()) {
-        std::cout << "\nBanker mode is on: everyone settles through " << players::displayName(byNet, app.settings.banker)
-                  << ", so payer -> payee requests are skipped. Turn the banker off in option 6 to use them.\n";
+        std::cout << "\nBanker mode is on: everyone settles through " << players::displayName(byNet, app.settings.banker) << ".\n"
+                  << ui::dim("Pins and one-off requests are skipped. Turn the banker off in menu 6 to use them.") << '\n';
     } else {
         std::vector<PlayerStats> losers, winners;
-        for (const PlayerStats& p : byNet) {
-            if (p.totalNet < -EPSILON) losers.push_back(p);
-            else if (p.totalNet > EPSILON) winners.push_back(p);
+        for (const PlayerStats& p : byBalance) {
+            if (p.balance() < -EPSILON) losers.push_back(p);
+            else if (p.balance() > EPSILON) winners.push_back(p);
         }
         auto owes = [&](const std::string& n) {
             for (const PlayerStats& p : losers) if (p.normalizedName == n) return true;
@@ -642,7 +684,7 @@ void calculateSettlement(App& app) {
         bool anyPinned = false;
         for (const PaymentPreference& pref : app.prefs) {
             if (!owes(pref.payerNormalized) || !owed(pref.payeeNormalized)) continue;
-            if (!anyPinned) std::cout << "\nSaved preferences that apply here:\n";
+            if (!anyPinned) std::cout << "\nPinned payments that apply here:\n";
             anyPinned = true;
             std::cout << "  " << players::displayName(byNet, pref.payerNormalized) << " always pays " << players::displayName(byNet, pref.payeeNormalized) << '\n';
         }
@@ -681,9 +723,9 @@ void calculateSettlement(App& app) {
     app.currentSettlements = settlement::calculate(byNet, prefs, app.settings.banker);
     app.settledScope = target;
     app.settledLabel = label;
-    std::cout << "\nSettlement for " << label << (app.settings.banker.empty() ? "" : " (banker mode)") << '\n';
+    if (!app.settings.banker.empty()) std::cout << ui::dim("\n(banker mode)");
     settlement::print(app.currentSettlements);
-    std::cout << "Option 7 saves this sheet as a session; option 13 exports it as CSV.\n";
+    std::cout << ui::dim("  Next: 7 saves this sheet as a session, 13 exports it as CSV.") << '\n';
 }
 
 fs::path writeReport(App& app, fs::path outPath) {
@@ -736,65 +778,88 @@ void openInBrowser(const fs::path& file) {
 // ---------------------------------------------------------------- menu
 
 void printMenu(const App& app) {
-    std::int64_t first = app.scoped.empty() ? NO_TIME : app.scoped.front()->start;
-    std::int64_t last = app.scoped.empty() ? NO_TIME : app.scoped.back()->start;
+    const int W = 78;
     std::vector<PlayerStats> byName = players::sortedByName(app.stats);
-    std::string meName = app.settings.me.empty() ? "(not set)" : players::displayName(byName, app.settings.me);
-    std::string banker = app.settings.banker.empty() ? "off" : players::displayName(byName, app.settings.banker);
+    double books = 0.0;
+    for (const auto& entry : app.stats) books += entry.second.totalNet;
+    const std::string dot = ui::dim(ui::sym(" · ", " | "));
+    std::string dates = app.scoped.empty() ? "no games" : formatShortDate(app.scoped.front()->start) + ui::sym(" – ", " - ") +
+                                                              formatShortDate(app.scoped.back()->start);
+    std::string balance = books > -EPSILON && books < EPSILON ? ui::green(ui::sym("✓ books balanced", "books balanced"))
+                                                              : ui::red("books off by " + moneySigned(books));
+    std::string me = app.settings.me.empty() ? ui::dim("not set") : players::displayName(byName, app.settings.me);
+    std::string banker = app.settings.banker.empty() ? ui::dim("off") : players::displayName(byName, app.settings.banker);
+    std::cout << '\n' << ui::box({
+        ui::bold(ui::sym("♠ ", "") + std::string("POKER LEDGER")) + "   " + std::to_string(app.scoped.size()) + " games" + dot +
+            dates + dot + app.scope.describe(),
+        std::to_string(app.stats.size()) + " players" + dot + "hand logs " + std::to_string(logsInScope(app).size()) + "/" +
+            std::to_string(app.scoped.size()) + dot + balance,
+        ui::dim("me ") + me + dot + ui::dim("banker ") + banker + dot + ui::dim("pinned payments ") + std::to_string(app.prefs.size())},
+        W);
 
-    std::cout << '\n' << divider(72) << "POKER LEDGER\n" << divider(72)
-              << "Scope: " << app.scope.describe() << "  |  " << app.scoped.size() << " games, " << app.stats.size()
-              << " players, " << formatLocalDate(first) << " to " << formatLocalDate(last) << '\n'
-              << "Me: " << meName << "  |  Banker: " << banker << "  |  Pinned preferences: " << app.prefs.size()
-              << "  |  Hand logs: " << logsInScope(app).size() << "/" << app.scoped.size() << '\n'
-              << divider(72, '-')
-              << "DATA\n"
-              << "  1. Change scope (folder / date range)\n"
-              << "  2. Leaderboard: everyone's net wins and losses\n"
-              << "  3. Player detail: game-by-game history and running total\n"
-              << "  4. Player names: one person, several nicknames ("
-              << players::suggestMergesByPlayerId(app.games, app.rules).size() << " new to check)\n"
-              << " 20. Shared accounts: a seat played by someone other than its name ("
-              << seats::findSuspicious(app.games, app.rules).size() << " to check)\n"
-              << " 17. Adjustments: forgive a debt or correct a total (" << app.adjustmentList.size() << " saved)\n"
-              << "SETTLEMENT\n"
-              << "  5. Calculate settlement sheet (pick a game or folder, then who sends to whom)\n"
-              << "  6. Payment preferences (pinned payer -> payee, banker, me)\n"
-              << "  7. Save settlement sheet as a session\n"
-              << "  8. View all session balances\n"
-              << "  9. View open session balances\n"
-              << " 10. Record a payment\n"
-              << " 11. Combined unpaid summary\n"
-              << "EXPORT & CHARTS\n"
-              << " 12. Export player summary CSV\n"
-              << " 13. Export settlement sheet CSV\n"
-              << " 14. Generate HTML report with charts\n"
-              << " 15. Terminal charts\n"
-              << " 16. Check for duplicate ledgers" << (app.duplicates.empty() ? "" : "  (!)") << "\n"
-              << "HAND LOGS\n"
-              << " 18. Playing style stats from hand logs (VPIP, aggression, showdowns)\n"
-              << " 21. Deep playstyle profiles (position, 3-bet, c-bet, sizing, archetypes)\n"
-              << " 19. Import new PokerNow files from Downloads\n"
-              << "  0. Save and exit\n" << divider(72);
+    // Two columns, so the whole menu fits on one screen. A yellow dot means something needs you.
+    auto item = [](int n, const std::string& label, const std::string& note = "") {
+        return ui::cyan(padLeft(std::to_string(n), 3)) + "  " + label + (note.empty() ? "" : "  " + note);
+    };
+    auto alert = [](size_t n, const std::string& what) {
+        return n == 0 ? std::string() : ui::yellow(ui::sym("● ", "* ") + std::to_string(n) + " " + what);
+    };
+    const std::vector<std::string> left = {
+        ui::bold("RESULTS"),
+        item(1, "Change scope"),
+        item(2, "Leaderboard"),
+        item(3, "Player history"),
+        item(4, "Player names", alert(players::suggestMergesByPlayerId(app.games, app.rules).size(), "new")),
+        item(20, "Shared accounts", alert(seats::findSuspicious(app.games, app.rules).size(), "to check")),
+        item(17, "Payments & corrections", app.adjustmentList.empty() ? "" : ui::dim("(" + std::to_string(app.adjustmentList.size()) + ")")),
+        "",
+        ui::bold("REPORTS"),
+        item(12, "Export players CSV"),
+        item(13, "Export sheet CSV"),
+        item(14, "HTML report"),
+        item(15, "Charts"),
+        item(16, "Duplicate check", alert(app.duplicates.size(), "found")),
+    };
+    const std::vector<std::string> right = {
+        ui::bold("SETTLE UP"),
+        item(5, "Build settlement sheet"),
+        item(6, "Pins, banker, me & display"),
+        item(7, "Save sheet to track payments"),
+        item(8, "Saved sheets: all"),
+        item(9, "Saved sheets: unpaid"),
+        item(10, "Record a payment"),
+        item(11, "Who still owes whom"),
+        ui::bold("HAND LOGS"),
+        item(18, "Playing style"),
+        item(21, "Deep profiles"),
+        item(19, "Import from Downloads"),
+        "",
+        item(0, "Save and exit"),
+    };
+    for (size_t i = 0; i < std::max(left.size(), right.size()); ++i) {
+        std::cout << ' ' << padRight(i < left.size() ? left[i] : "", 40) << (i < right.size() ? right[i] : "") << '\n';
+    }
 }
 
 void runMenu(App& app) {
     bool running = true;
     while (running) {
         printMenu(app);
-        int choice = console::askMenuChoice("Choose an option: ", 0, 21);
+        int choice = console::askMenuChoice("\n Choose a number: ", 0, 21);
         std::vector<PlayerStats> byNet = players::sortedByNet(app.stats);
 
         switch (choice) {
             case 1: chooseScope(app); break;
 
             case 2:
-                std::cout << "\nLeaderboard for " << app.scope.describe() << ":\n";
+                std::cout << '\n' << ui::heading("Leaderboard" + std::string(ui::sym(" · ", " - ")) + app.scope.describe(), 100)
+                          << "\n\n";
                 players::printLeaderboard(byNet);
                 break;
 
             case 3: {
                 if (byNet.empty()) { std::cout << "No players in scope.\n"; break; }
+                std::cout << '\n' << ui::heading("Player history", 47) << '\n';
                 players::printCompactList(byNet);
                 int idx = console::askMenuChoice("Player number (0 to cancel): ", 0, static_cast<int>(byNet.size()));
                 if (idx == 0) break;
@@ -924,7 +989,8 @@ void runMenu(App& app) {
 
 void printUsage() {
     std::cout << "Usage: Poker_Ledger_Reader [--root PATH] [--folder NAME] [--from YYYY-MM-DD] [--to YYYY-MM-DD]\n"
-              << "                           [--report [FILE.html]] [--help]\n";
+              << "                           [--report [FILE.html]] [--plain] [--help]\n"
+              << "  --plain   plain text for this run: no colors or symbols (menu 6 makes it permanent)\n";
 }
 
 }  // namespace
@@ -936,7 +1002,7 @@ int main(int argc, char** argv) {
 #else
     app.root = fs::current_path();
 #endif
-    bool reportOnly = false;
+    bool reportOnly = false, plain = false;
     fs::path reportPath;
 
     for (int i = 1; i < argc; ++i) {
@@ -952,36 +1018,35 @@ int main(int argc, char** argv) {
         else if (arg == "--report") {
             reportOnly = true;
             if (i + 1 < argc && argv[i + 1][0] != '-') reportPath = argv[++i];
-        } else if (arg == "--help" || arg == "-h") { printUsage(); return 0; }
+        } else if (arg == "--plain") plain = true;
+        else if (arg == "--help" || arg == "-h") { printUsage(); return 0; }
         else { std::cerr << "Unknown option " << arg << "\n"; printUsage(); return 1; }
     }
 
     locateData(app);
     std::error_code ec;
     fs::create_directories(app.savedDir, ec);
+    // The display setting applies from the very first line printed.
+    settlement::loadSettingsCSV(app.file("settings.csv").string(), app.settings);
+    ui::init(!(plain || app.settings.simpleDisplay));
     if (!loadData(app)) {
         std::cerr << "No ledger CSV files found under " << app.dataDir.string() << '\n';
         return 1;
     }
 
-    if (players::loadMergeRulesCSV(app.file("merge_rules.csv").string(), app.rules)) {
-        std::cout << "Loaded " << app.rules.size() << " merge rules.\n";
-    }
+    players::loadMergeRulesCSV(app.file("merge_rules.csv").string(), app.rules);
     settlement::loadPreferencesCSV(app.file("payment_preferences.csv").string(), app.prefs);
-    settlement::loadSettingsCSV(app.file("settings.csv").string(), app.settings);
-    if (adjustments::loadCSV(app.file("adjustments.csv").string(), app.adjustmentList)) {
-        std::cout << "Loaded " << app.adjustmentList.size() << " adjustment rows.\n";
-    }
-    if (seats::loadCSV(app.file("seat_owners.csv").string(), app.seatOwners)) {
-        std::cout << "Loaded " << app.seatOwners.size() << " seat owners.\n";
-    }
-    if (sessions::load(app.file("session_balances.csv").string(), app.balances)) {
-        std::cout << "Loaded " << app.balances.size() << " session balances.\n";
-    }
+    adjustments::loadCSV(app.file("adjustments.csv").string(), app.adjustmentList);
+    seats::loadCSV(app.file("seat_owners.csv").string(), app.seatOwners);
+    sessions::load(app.file("session_balances.csv").string(), app.balances);
 
     app.refresh();
-    std::cout << "Loaded " << app.games.size() << " games from " << ledger::listFolders(app.games).size()
-              << " folders under " << app.dataDir.string() << ", " << app.logs.size() << " hand log" << (app.logs.size() == 1 ? "" : "s") << '\n';
+    size_t folders = ledger::listFolders(app.games).size();
+    std::cout << ui::dim("Loaded " + std::to_string(app.games.size()) + " games (" + std::to_string(folders) + " folder" +
+                         (folders == 1 ? "" : "s") + "), " + std::to_string(app.logs.size()) + " hand logs, " +
+                         std::to_string(app.rules.size()) + " merged names, " + std::to_string(app.seatOwners.size()) +
+                         " seat checks, " + std::to_string(app.adjustmentList.size()) + " payments & corrections.")
+              << '\n';
 
     warnUnchecked(app);
 

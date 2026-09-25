@@ -131,26 +131,105 @@ std::string fixed2(double v) {
     return oss.str();
 }
 
+// "1234.5" -> "1,234.50" (always positive).
+static std::string grouped(double v) {
+    std::string digits = fixed2(v);
+    size_t dot = digits.find('.');
+    for (int i = static_cast<int>(dot) - 3; i > 0; i -= 3) digits.insert(static_cast<size_t>(i), ",");
+    return digits;
+}
+
 std::string money(double v) {
     if (v < 0 && v > -0.005) v = 0.0;  // avoid "-$0.00"
-    return (v < 0 ? "-$" : "$") + fixed2(v < 0 ? -v : v);
+    return (v < 0 ? "-$" : "$") + grouped(v < 0 ? -v : v);
 }
 
 std::string moneySigned(double v) {
     if (v > -0.005 && v < 0.005) return "$0.00";
-    return (v < 0 ? "-$" : "+$") + fixed2(v < 0 ? -v : v);
+    return (v < 0 ? "-$" : "+$") + grouped(v < 0 ? -v : v);
 }
 
-std::string divider(int width, char ch) { return std::string(width, ch) + "\n"; }
+bool asciiOnly = false;
+
+std::string divider(int width, char ch) {
+    if (asciiOnly) return std::string(width, ch) + "\n";
+    std::string line;   // the fancy display draws a faint box line instead: ═ for '=', ─ for anything else
+    for (int i = 0; i < width; ++i) line += ch == '=' ? "\xE2\x95\x90" : "\xE2\x94\x80";
+    return "\x1b[2m" + line + "\x1b[0m\n";
+}
+
+namespace {
+// Reads one UTF-8 code point starting at s[i]; returns its byte length (1 for anything malformed).
+size_t decode(const std::string& s, size_t i, std::uint32_t& cp) {
+    unsigned char c = static_cast<unsigned char>(s[i]);
+    size_t len = c < 0x80 ? 1 : (c >> 5) == 6 ? 2 : (c >> 4) == 14 ? 3 : (c >> 3) == 30 ? 4 : 1;
+    if (i + len > s.size()) len = 1;
+    cp = len == 1 ? c : c & (0x7F >> len);
+    for (size_t k = 1; k < len; ++k) cp = (cp << 6) | (static_cast<unsigned char>(s[i + k]) & 0x3F);
+    return len;
+}
+
+// Length of an ANSI color sequence ("\x1b[32m") at s[i], or 0 if there is none.
+size_t escapeAt(const std::string& s, size_t i) {
+    if (s[i] != '\x1b' || i + 1 >= s.size() || s[i + 1] != '[') return 0;
+    size_t j = i + 2;
+    while (j < s.size() && (s[j] < 0x40 || s[j] > 0x7E)) ++j;
+    return j < s.size() ? j - i + 1 : 0;
+}
+
+int columnsOf(std::uint32_t cp) {
+    if ((cp >= 0x300 && cp <= 0x36F) || (cp >= 0x200B && cp <= 0x200F) || (cp >= 0xFE00 && cp <= 0xFE0F) ||
+        (cp >= 0x20D0 && cp <= 0x20FF)) return 0;   // combining marks, zero-width, emoji variation selectors
+    if ((cp >= 0x1100 && cp <= 0x115F) || (cp >= 0x2E80 && cp <= 0xA4CF) || (cp >= 0xAC00 && cp <= 0xD7A3) ||
+        (cp >= 0xF900 && cp <= 0xFAFF) || (cp >= 0xFE30 && cp <= 0xFE4F) || (cp >= 0xFF00 && cp <= 0xFF60) ||
+        (cp >= 0xFFE0 && cp <= 0xFFE6) || (cp >= 0x1F300 && cp <= 0x1FAFF) || (cp >= 0x20000 && cp <= 0x3FFFD))
+        return 2;                                   // East Asian wide and emoji
+    return 1;
+}
+
+// The first `width` columns of s, ending in an ellipsis because something was cut.
+std::string cut(const std::string& s, size_t width) {
+    std::string out;
+    size_t used = 0;
+    bool colored = false;
+    const size_t room = width == 0 ? 0 : width - 1;   // one column for the ellipsis
+    for (size_t i = 0; i < s.size();) {
+        if (size_t esc = escapeAt(s, i)) { out += s.substr(i, esc); colored = true; i += esc; continue; }
+        std::uint32_t cp;
+        size_t len = decode(s, i, cp);
+        size_t w = static_cast<size_t>(columnsOf(cp));
+        if (used + w > room) break;
+        out += s.substr(i, len);
+        used += w;
+        i += len;
+    }
+    if (width > 0) out += asciiOnly ? "." : "\xE2\x80\xA6";   // "…"
+    if (colored) out += "\x1b[0m";
+    return out + std::string(width > used + 1 ? width - used - 1 : 0, ' ');
+}
+}  // namespace
+
+size_t displayWidth(const std::string& s) {
+    size_t w = 0;
+    for (size_t i = 0; i < s.size();) {
+        if (size_t esc = escapeAt(s, i)) { i += esc; continue; }
+        std::uint32_t cp;
+        i += decode(s, i, cp);
+        w += static_cast<size_t>(columnsOf(cp));
+    }
+    return w;
+}
 
 std::string padRight(const std::string& s, size_t width) {
-    if (s.size() >= width) return s.substr(0, width);
-    return s + std::string(width - s.size(), ' ');
+    size_t w = displayWidth(s);
+    if (w > width) return cut(s, width);
+    return s + std::string(width - w, ' ');
 }
 
 std::string padLeft(const std::string& s, size_t width) {
-    if (s.size() >= width) return s;
-    return std::string(width - s.size(), ' ') + s;
+    size_t w = displayWidth(s);
+    if (w >= width) return s;   // numbers are never cut
+    return std::string(width - w, ' ') + s;
 }
 
 std::vector<int> parseNumbers(const std::string& text) {

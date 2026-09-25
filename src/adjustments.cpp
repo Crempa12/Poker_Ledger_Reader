@@ -1,11 +1,13 @@
 #include "adjustments.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 
 #include "console.hpp"
 #include "players.hpp"
+#include "ui.hpp"
 
 using namespace util;
 
@@ -47,20 +49,23 @@ std::vector<const Adjustment*> filter(const std::vector<Adjustment>& list, const
 }
 
 void printList(const std::vector<Adjustment>& list, const std::vector<PlayerStats>& players) {
-    std::cout << "\nAdjustments (all folders and dates)\n" << divider(100);
+    const int W = 96;
+    std::cout << '\n' << ui::heading("Payments & corrections (every folder and date)", W) << '\n'
+              << ui::dim("  They change who owes whom on settlement sheets, never the leaderboard.") << "\n\n";
     if (list.empty()) {
-        std::cout << "  none\n" << divider(100) << '\n';
+        std::cout << "  none yet\n\n";
         return;
     }
-    std::cout << padRight("#", 4) << padRight("Date", 12) << padRight("Player", 20) << padLeft("Amount", 12)
-              << "  " << padRight("Folder", 26) << "Note\n" << divider(100);
+    std::cout << ui::bold(padLeft("#", 4) + "  " + padRight("Date", 12) + padRight("Player", 18) + padLeft("Amount", 12) + "  " +
+                          padRight("Folder", 18) + "Note")
+              << '\n' << ui::rule(W) << '\n';
     for (size_t i = 0; i < list.size(); ++i) {
         const Adjustment& a = list[i];
-        std::cout << padRight(std::to_string(i + 1), 4) << padRight(formatLocalDate(a.date), 12)
-                  << padRight(players::displayName(players, a.playerNormalized), 20) << padLeft(moneySigned(a.amount), 12)
-                  << "  " << padRight(a.folder.empty() ? "(any)" : a.folder, 26) << a.note << '\n';
+        std::cout << padLeft(std::to_string(i + 1), 4) << "  " << padRight(formatLocalDate(a.date), 12)
+                  << padRight(players::displayName(players, a.playerNormalized), 18) << padLeft(ui::net(a.amount), 12) << "  "
+                  << padRight(a.folder.empty() ? "(all folders)" : a.folder, 18) << padRight(a.note, W - 68) << '\n';
     }
-    std::cout << divider(100) << '\n';
+    std::cout << ui::rule(W) << '\n';
 }
 
 static std::int64_t askDate() {
@@ -92,44 +97,49 @@ bool manage(std::vector<Adjustment>& list,
     bool changed = false;
     while (true) {
         printList(list, players);
-        std::cout << "New adjustments are tagged with the current folder scope: "
-                  << (scope.folder.empty() ? "(any folder)" : scope.folder) << "\n" << divider(60)
-                  << "1. Forgive a debt (someone lets someone off part of what they owe)\n"
-                  << "2. Add or subtract from one player's total (one-sided correction)\n"
-                  << "3. Remove an adjustment\n"
-                  << "0. Back\n";
+        std::cout << ui::dim("  New entries go under: " +
+                             (scope.folder.empty() ? std::string("all folders (they count only when settling everything)")
+                                                   : scope.folder + " (the current folder)")) << "\n\n"
+                  << "  1. Money that changed hands outside the ledger (a payment, or a debt let go)\n"
+                  << "  2. Correct one player's balance by hand (one-sided)\n"
+                  << "  3. Remove an entry\n"
+                  << "  0. Back\n";
         int choice = console::askMenuChoice("Choose: ", 0, 3);
         if (choice == 0) return changed;
 
         if (choice == 1) {
-            std::string creditor = console::pickPlayer(players, "Who is letting the money go (the person owed)?");
+            // Both sides at once, so the books stay balanced: the one who owed owes less,
+            // the one who was owed is owed less.
+            std::string creditor = console::pickPlayer(players, "Who got the money, or let the debt go? (they were owed)");
             if (creditor.empty()) continue;
-            std::string debtor = console::pickPlayer(players, "Who owed it?");
+            std::string debtor = console::pickPlayer(players, "Who paid it, or was let off? (they owed it)");
             if (debtor.empty() || debtor == creditor) { std::cout << "Cancelled.\n"; continue; }
-            double amount = console::askAmount("Amount forgiven: ");
+            double amount = console::askAmount("Amount: ");
             if (amount < EPSILON) continue;
-            std::string note = console::askLine("Note [forgiven]: ");
-            if (note.empty()) note = "forgiven";
+            std::string note = console::askLine("Note [paid]: ");
+            if (note.empty()) note = "paid";
             std::int64_t date = askDate();
             std::string group = newGroup(list);
-            list.push_back({group, date, debtor, +amount, scope.folder, note + " (by " + players::displayName(players, creditor) + ")"});
-            list.push_back({group, date, creditor, -amount, scope.folder, note + " (for " + players::displayName(players, debtor) + ")"});
-            std::cout << players::displayName(players, debtor) << " +" << money(amount) << ", " << players::displayName(players, creditor)
-                      << " -" << money(amount) << ". Totals still sum to zero.\n";
+            std::string from = players::displayName(players, debtor), to = players::displayName(players, creditor);
+            list.push_back({group, date, debtor, +amount, scope.folder, note + " (to " + to + ")"});
+            list.push_back({group, date, creditor, -amount, scope.folder, note + " (from " + from + ")"});
+            std::cout << from << " now owes " << money(amount) << " less and " << to << " is owed " << money(amount)
+                      << " less. The leaderboard does not change.\n";
             changed = true;
         } else if (choice == 2) {
             std::string who = console::pickPlayer(players, "Which player?");
             if (who.empty()) continue;
-            double amount = console::askSignedAmount("Amount to add (negative to subtract): ");
+            double amount = console::askSignedAmount("Amount to add to their balance (negative to subtract): ");
             if (amount > -EPSILON && amount < EPSILON) continue;
             std::string note = console::askLine("Note: ");
             std::int64_t date = askDate();
             list.push_back({newGroup(list), date, who, amount, scope.folder, note});
-            std::cout << "Added. This is one-sided, so the leaderboard total will no longer be $0.00.\n";
+            std::cout << ui::yellow("Added. It is one-sided: settlement sheets will be short by " + money(std::fabs(amount)) +
+                                    " until the other side is entered.") << '\n';
             changed = true;
         } else if (choice == 3) {
             if (list.empty()) continue;
-            int idx = console::askMenuChoice("Adjustment number to remove (0 to cancel): ", 0, static_cast<int>(list.size()));
+            int idx = console::askMenuChoice("Entry number to remove (0 to cancel): ", 0, static_cast<int>(list.size()));
             if (idx == 0) continue;
             std::string group = list[idx - 1].group;
             size_t before = list.size();
@@ -137,7 +147,7 @@ bool manage(std::vector<Adjustment>& list,
                                       [&](const Adjustment& a) { return a.group == group; }),
                        list.end());
             std::cout << "Removed " << (before - list.size()) << " row" << (before - list.size() == 1 ? "" : "s")
-                      << (before - list.size() > 1 ? " (both halves of the forgiven debt)" : "") << ".\n";
+                      << (before - list.size() > 1 ? " (both sides of the payment)" : "") << ".\n";
             changed = true;
         }
         if (changed) saveCSV(filename, list);

@@ -8,6 +8,8 @@
 #include <set>
 #include <sstream>
 
+#include "ui.hpp"
+
 namespace fs = std::filesystem;
 using namespace util;
 
@@ -726,37 +728,41 @@ std::string af1(double v) {
 }  // namespace
 
 void printStyleTable(const std::vector<StyleStats>& rows) {
-    const int W = 128;
+    const int W = 100;   // rows end in a 16-column style label
     if (rows.empty()) {
         std::cout << "No hand logs in scope. Put poker_now_log_<id>.csv files next to their ledgers (see README).\n";
         return;
     }
-    std::cout << divider(W)
-              << padRight("Player", 20) << padLeft("Games", 6) << padLeft("Hands", 7) << padLeft("VPIP", 7)
-              << padLeft("PFR", 6) << padLeft("Flop", 6) << padLeft("WTSD", 6) << padLeft("W$SD", 6)
-              << padLeft("FoldR", 7) << padLeft("AF", 6) << padLeft("Won", 5) << padLeft("Big pot", 10)
-              << "  Style\n" << divider(W);
+    std::cout << ui::heading("How everyone plays", W) << '\n'
+              << ui::bold(padRight("Player", 16) + padLeft("Games", 6) + padLeft("Hands", 7) + padLeft("VPIP", 6) +
+                          padLeft("PFR", 6) + padLeft("Flop", 6) + padLeft("WTSD", 6) + padLeft("W$SD", 6) + padLeft("FoldR", 7) +
+                          padLeft("AF", 6) + padLeft("Big pot", 10) + "  Style")
+              << '\n' << ui::rule(W) << '\n';
     for (const StyleStats& r : rows) {
-        std::cout << padRight(r.displayName, 20) << padLeft(std::to_string(r.games), 6) << padLeft(std::to_string(r.hands), 7)
-                  << padLeft(pct1(r.vpipPct()), 7) << padLeft(pct1(r.pfrPct()), 6) << padLeft(pct1(r.sawFlopPct()), 6)
+        std::string style = r.styleLabel();
+        if (size_t paren = style.find(" ("); paren != std::string::npos) style.erase(paren);   // the legend explains it
+        std::cout << padRight(r.displayName, 16) << padLeft(std::to_string(r.games), 6) << padLeft(std::to_string(r.hands), 7)
+                  << padLeft(pct1(r.vpipPct()), 6) << padLeft(pct1(r.pfrPct()), 6) << padLeft(pct1(r.sawFlopPct()), 6)
                   << padLeft(pct1(r.wtsdPct()), 6) << padLeft(pct1(r.wsdPct()), 6) << padLeft(pct1(r.foldToRaisePct()), 7)
-                  << padLeft(af1(r.aggression()), 6) << padLeft(std::to_string(r.handsWon), 5)
-                  << padLeft(money(r.biggestPotWon), 10) << "  " << r.styleLabel() << '\n';
+                  << padLeft(af1(r.aggression()), 6) << padLeft(money(r.biggestPotWon), 10) << "  "
+                  << (r.hands < 30 ? ui::dim(padRight(style, 16)) : ui::cyan(padRight(style, 16))) << '\n';
     }
-    std::cout << divider(W)
-              << "VPIP = % of hands where money went in voluntarily preflop.  PFR = % raised preflop.\n"
-              << "Flop = % of hands that reached the flop.  WTSD = % of flops that went to showdown.  W$SD = % of showdowns won.\n"
-              << "FoldR = % folded when facing a preflop raise.  AF = postflop (bets + raises) / calls.  Won = hands won.\n\n";
+    std::cout << ui::rule(W) << '\n'
+              << ui::dim("VPIP = % of hands where money went in voluntarily preflop.  PFR = % raised preflop.\n"
+                         "Flop = % of hands that reached the flop.  WTSD = % of flops that went to showdown.\n"
+                         "W$SD = % of showdowns won.  FoldR = % folded facing a preflop raise.  AF = (bets + raises) / calls.\n")
+              << '\n';
 }
 
 void printGameSummaries(const std::vector<const HandLog*>& logs, const players::MergeRules& rules,
                         const std::map<std::string, PlayerStats>& ledgerStats) {
     if (logs.empty()) return;
-    const int W = 128;
-    std::cout << "Hand logs in scope:\n" << divider(W, '-')
-              << padRight("Date", 12) << padRight("Folder", 26) << padLeft("Hands", 7) << padLeft("Hours", 7)
-              << padLeft("Players", 9) << padLeft("Showdown", 10) << padLeft("Biggest pot", 13) << "  Won by (hand #)\n"
-              << divider(W, '-');
+    const int W = 94;
+    std::cout << ui::heading("Hand logs in scope", W) << '\n'
+              << ui::bold(padRight("Date", 12) + padRight("Folder", 16) + padLeft("Hands", 7) + padLeft("Hours", 7) +
+                          padLeft("Players", 9) + padLeft("Showdown", 10) + padLeft("Biggest pot", 13) + "  Won by")
+              << '\n' << ui::rule(W) << '\n';
+    int unreconciled = 0;
     for (const HandLog* log : logs) {
         std::set<std::string> players;
         int showdowns = 0;
@@ -771,15 +777,20 @@ void printGameSummaries(const std::vector<const HandLog*>& logs, const players::
         std::int64_t at = NO_TIME;
         for (const Hand& h : log->hands) if (h.number == log->biggestPotHand) at = h.start;
         std::string winner = displayNameAt(*log, log->biggestPotWinner, at, rules, ledgerStats);
-        std::cout << padRight(formatLocalDate(log->start), 12) << padRight(log->folder, 26)
+        if (log->stackMismatches) ++unreconciled;
+        std::cout << padRight(formatLocalDate(log->start), 12) << padRight(log->folder, 16)
                   << padLeft(std::to_string(log->hands.size()), 7) << padLeft(hrs.str(), 7)
                   << padLeft(std::to_string(players.size()), 9)
                   << padLeft(pct1(log->hands.empty() ? 0.0 : 100.0 * showdowns / log->hands.size()), 10)
-                  << padLeft(money(log->biggestPot), 13) << "  " << winner << " (#" << log->biggestPotHand << ")"
-                  << (log->stackMismatches ? "  [" + std::to_string(log->stackMismatches) + " hands did not reconcile]" : "")
-                  << '\n';
+                  << padLeft(money(log->biggestPot), 13) << "  " << padRight(winner, 13)
+                  << ui::dim(padLeft("#" + std::to_string(log->biggestPotHand), 5))
+                  << (log->stackMismatches ? ui::yellow(" *" + std::to_string(log->stackMismatches)) : "") << '\n';
     }
-    std::cout << divider(W, '-') << '\n';
+    std::cout << ui::rule(W) << '\n';
+    if (unreconciled > 0) {
+        std::cout << ui::yellow("*N: that many hands on the night did not reconcile, so its stats are slightly off.") << '\n';
+    }
+    std::cout << '\n';
 }
 
 bool exportStyleCSV(const std::string& filename, const std::vector<StyleStats>& rows) {
