@@ -454,17 +454,28 @@ void writeStyleTable(std::ostream& o, const ReportInput& in) {
     o << "<div class=card><h2>Playing style (from hand logs)</h2><p class=note>"
       << "VPIP = hands where money went in voluntarily preflop. PFR = raised preflop. Flop = hands that saw the flop. "
       << "WTSD = flops that went to showdown. W$SD = showdowns won. Fold to raise = folded when facing a preflop raise. "
-      << "AF = postflop (bets + raises) / calls.</p><div class=scroll><table><tr><th class=l>Player</th><th>Games</th><th>Hands</th>"
-      << "<th>VPIP</th><th>PFR</th><th>Flop</th><th>WTSD</th><th>W$SD</th><th>Fold to raise</th><th>AF</th><th>Hands won</th>"
+      << "AF = postflop (bets + raises) / calls. H&amp;R = hit &amp; run factor (0-100), in equal thirds: how much of the night "
+      << "they walk away from when winning, how much earlier that is than when losing, and how soon after their best point of "
+      << "the night; in brackets when fewer than 3 winning nights stand behind it.</p><div class=scroll><table><tr><th class=l>Player</th><th>Games</th><th>Hands</th>"
+      << "<th>VPIP</th><th>PFR</th><th>Flop</th><th>WTSD</th><th>W$SD</th><th>Fold to raise</th><th>AF</th><th>H&amp;R</th><th>Hands won</th>"
       << "<th>Biggest pot</th><th>Bounties</th><th class=l>Style</th></tr>";
+    auto hr = [](const handlog::StyleStats& r) {
+        if (r.hitRun < 0) return std::string("-");
+        std::ostringstream s;
+        s.setf(std::ios::fixed);
+        s.precision(0);
+        s << r.hitRun;
+        return r.hitRunReliable ? s.str() : "(" + s.str() + ")";
+    };
     for (const handlog::StyleStats& r : in.style) {
         bool isMe = r.normalizedName == in.meNormalized;
         o << "<tr" << (isMe ? " class=me" : "") << "><td class=l>" << escapeHTML(r.displayName) << "</td><td>" << r.games << "</td><td>" << r.hands
           << "</td><td>" << pct(r.vpipPct()) << "</td><td>" << pct(r.pfrPct()) << "</td><td>" << pct(r.sawFlopPct())
           << "</td><td>" << pct(r.wtsdPct()) << "</td><td>" << pct(r.wsdPct()) << "</td><td>" << pct(r.foldToRaisePct())
-          << "</td><td>" << af(r.aggression()) << "</td><td>" << r.handsWon << "</td><td>" << money(r.biggestPotWon)
+          << "</td><td>" << af(r.aggression()) << "</td><td>" << hr(r) << "</td><td>" << r.handsWon << "</td><td>" << money(r.biggestPotWon)
           << "</td><td>" << (std::fabs(r.bountiesNet) < EPSILON ? "-" : moneySigned(r.bountiesNet))
-          << "</td><td class=l><span class=tag>" << escapeHTML(r.styleLabel()) << "</span></td></tr>";
+          << "</td><td class=l><span class=tag>" << escapeHTML(r.styleLabel()) << "</span>"
+          << (r.hitRunTag.empty() ? "" : " <span class=tag>" + escapeHTML(r.hitRunTag) + "</span>") << "</td></tr>";
     }
     o << "</table></div></div>\n";
 }

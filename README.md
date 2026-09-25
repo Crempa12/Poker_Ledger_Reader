@@ -128,8 +128,8 @@ game. Two logs for the same game keep the one with more hands.
  REPORTS                                 HAND LOGS
   12  Export players CSV                  18  Playing style
   13  Export sheet CSV                    21  Deep profiles
-  14  HTML report                         19  Import from Downloads
-  15  Charts
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
   16  Duplicate check                      0  Save and exit
 ```
 
@@ -281,6 +281,7 @@ who collected the pot. Menu 18 turns the logs in scope into one row per player:
 | W$SD | % of showdowns they won |
 | FoldR | % of the time they folded when facing a preflop raise |
 | AF | postflop aggression: (bets + raises) / calls |
+| H&R | hit & run factor, 0-100 (see menu 22 below); in brackets under 3 winning nights |
 | Big pot | the biggest pot they collected |
 | Style | a label from VPIP and AF: tight/loose, aggressive/passive (needs 30+ hands) |
 
@@ -297,7 +298,98 @@ every player's stack at the next hand must equal the previous stack plus the
 result of the hand (top-ups excepted). A night that fails this check gets a
 yellow `*N` (N hands) in the summary table so you know its numbers are slightly off.
 
-Menu 21 shows deeper profiles in two tables, before the flop and after it.
+Menu 21 shows deeper profiles in two tables, before the flop and after it. The
+second also carries each player's H&R and hit & run tag, and the long read for
+one player adds the tag to their archetype ("Loose-aggressive · Hit & runner").
+
+### Hit & run (menu 22)
+
+The hit & run factor (H&R, 0 to 100) asks one question: when a player is
+winning, do they take the money off the table while the game is still going,
+right after hitting it? It is built from every night in scope that has a hand
+log.
+
+**Every night ends in exactly one exit**, judged on the last time the player
+left (a break they came back from is not an exit):
+
+| Exit | Rule | Counts toward |
+|---|---|---|
+| Stayed | still dealt in during the night's last 10 hands | "when up" or "when down" at 0% |
+| Left up | left for good with chips, 5+ big blinds ahead | "when up" |
+| Left down | left for good with chips, 5+ big blinds behind | "when down" |
+| Left even | within 5 big blinds either way | shown only |
+| Busted out | under 1 big blind after their last hand, no rebuy after it | shown only: running out of chips is not choosing to leave |
+| Removed | the admin forced them to away mode or removed them as they stopped | shown only |
+
+Along the way it counts **rebuys** (busted and put chips back in, by a rebuy, a
+new seat or an admin top-up) and **returns** (gone 30+ hands, then dealt in
+again, and whether they were ahead when they went).
+
+**Three habits come out of those exits**, each a share from 0% to 100%:
+
+- **When up**: on nights they finished ahead, how much of the night (counted
+  in hands from their sit-down, so arriving late is not held against anyone)
+  was still to come when they left. Staying counts as 0%. Each night is
+  weighted by the win: 50+ big blinds counts fully, a 10 bb win a fifth.
+- **When down**: the same on nights they finished behind with chips. This is
+  what separates a hit-and-runner from someone who simply goes home at the
+  same time every night.
+- **The hit**: the part of "when up" that came right after their best point of
+  the night with most of it still in hand. Leaving at the peak counts fully,
+  20 hands (about a quarter of an hour) later half, an hour later a sixteenth,
+  and it is scaled by the share of the peak they kept.
+
+```
+H&R = 100 x ( when up + how much when up exceeds when down + the hit ) / 3
+```
+
+The first part is what the table feels; the other two are why they left.
+Leaving early is normal in this game (164 of 228 nights in the September logs,
+72%, end before the night's last 10 hands), so the first part alone would flag
+nearly everyone who ever wins.
+
+A handful of nights is a noisy read, so each habit leans toward the pool's
+average by a few phantom nights: 2 for "when up" and the hit, 3 for "when
+down". Both were measured on the September logs, by comparing how much one
+player's nights vary with how much players really differ. That came to about 2
+for each. "When down" gets a little more because it rests on far fewer nights
+(46 losing nights, against 110 winning ones), so its measurement is much less
+certain. The player view shows the raw numbers next to the leaning ones.
+
+Tags, in the order they are checked. An H&R in brackets (under 3 winning
+nights) can only be tagged Busts out:
+
+| Tag | When |
+|---|---|
+| Early leaver | leaves 40%+ of the night early when up, within 10 points of that when down, with 2+ losing exits |
+| Hit & runner | H&R 40 or more |
+| Runs when up | H&R 25 to 39 |
+| Busts out | busts out and goes home on 40%+ of their nights (3+ nights), with an H&R under 25 or in brackets |
+| Stays late | H&R under 10 |
+
+For scale, the pool's average habits score 16.
+
+Answering "y" shows one player's every night: the hand they sat down at, their
+last hand, the hands still to come, the result, their peak and how many hands
+(and minutes) they played after it, rebuys, returns and the exit. Both tables
+can be exported to `Saved_Data/hit_and_run.csv` (one row per player) and
+`hit_and_run_nights.csv` (one row per player per night).
+
+Two things about the data behind it:
+
+- **Nights without a hand log are left out.** A ledger cannot say when someone
+  stopped playing: a seat stays open when a player stands up and walks away
+  without quitting, and the game's end is not recorded. Checked against the 223
+  nights the 21 logs deal, the ledger's times called 49 of their 69 "left up"
+  exits "stayed".
+- **PokerNow cuts the first hands off a long night's log** (7 of the 21 logs
+  start between hand #31 and #397). Hands keep their numbers, so the night's
+  length and every exit's position stay exact. The result always comes from
+  the ledger, which covers the whole night. Someone already seated when the log
+  begins has their sit-down hand placed by the ledger's time, and someone who
+  left before it begins is placed the same way (marked `~` in the player view;
+  their peak cannot be known). A peak marked `+` was reached where the log
+  begins and may have been higher before it.
 
 ### Charts
 
@@ -346,6 +438,21 @@ cp -RX . /tmp/plr_check && python3 tools/validate.py /tmp/plr_check ./cmake-buil
 ```
 
 It ends with `ALL CHECKS PASSED` or a list of every mismatch.
+
+`tools/hitrun_selftest.cpp` checks the hit & run factor against nights made up
+for the purpose, one per way a night can end (stayed, left up, down, even,
+busted, rebought, came back, left inside the grace window, arrived late,
+removed by the admin, two accounts for one person, one account for two people,
+a log cut short), plus the peak, the factor arithmetic and the admin lines in
+the log, each worked out by hand:
+
+```bash
+g++ -std=c++20 -Isrc tools/hitrun_selftest.cpp src/*.cpp -o hitrun_selftest && ./hitrun_selftest
+```
+
+`tools/playstyle_report.cpp --hitrun` prints the menu 22 table without the
+menu (`--player NAME` for one player's nights, `--csv FILE` for the per-night
+export).
 
 ## Name merging (menu 4)
 

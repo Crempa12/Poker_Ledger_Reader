@@ -24,6 +24,7 @@
 #include "adjustments.hpp"
 #include "console.hpp"
 #include "handlog.hpp"
+#include "hitrun.hpp"
 #include "ledger.hpp"
 #include "models.hpp"
 #include "players.hpp"
@@ -377,6 +378,11 @@ void warnUnchecked(const App& app) {
 
 // ---------------------------------------------------------------- hand logs
 
+// Every person's night in scope, for the hit & run factor (hand-logged games only).
+std::vector<hitrun::Night> hitRunNights(const App& app, int* unmeasured = nullptr) {
+    return hitrun::collect(app.scoped, app.logs, app.rules, app.stats, unmeasured);
+}
+
 void handLogStats(App& app) {
     std::vector<const handlog::HandLog*> logs = logsInScope(app);
     std::cout << "\nHand-log statistics for " << app.scope.describe() << ": " << logs.size() << " of " << app.scoped.size()
@@ -395,6 +401,7 @@ void handLogStats(App& app) {
     std::cout << '\n';
     handlog::printGameSummaries(logs, app.rules, app.stats);
     std::vector<handlog::StyleStats> style = handlog::computeStyle(logs, app.rules, app.stats);
+    hitrun::annotate(style, hitrun::summarize(hitRunNights(app)));
     handlog::printStyleTable(style);
     if (console::askYesNo("Export this table to Saved_Data/style_stats.csv? (y/n): ") == 'y') {
         fs::path out = app.file("style_stats.csv");
@@ -420,6 +427,7 @@ void deepPlaystyle(App& app) {
                   << " games in scope have no hand log, so these reads cover only part of the money.\n";
 
     std::vector<playstyle::Profile> profiles = playstyle::analyze(logs, app.rules, app.stats);
+    hitrun::annotate(profiles, hitrun::summarize(hitRunNights(app)));
     playstyle::printProfiles(profiles);
 
     while (console::askYesNo("Show the long read for one player? (y/n): ") == 'y') {
@@ -438,6 +446,39 @@ void deepPlaystyle(App& app) {
         fs::path out = app.file("playstyle.csv");
         std::cout << (playstyle::exportCSV(out.string(), profiles) ? "Exported to " : "Could not write ")
                   << out.string() << '\n';
+    }
+}
+
+// ------------------------------------------------------------- hit & run
+
+void hitAndRun(App& app) {
+    int unmeasured = 0;
+    std::vector<hitrun::Night> nights = hitRunNights(app, &unmeasured);
+    std::vector<hitrun::Summary> rows = hitrun::summarize(nights);
+    std::cout << "\nHit & run for " << app.scope.describe() << ".\n";
+    hitrun::printTable(rows, nights, unmeasured);
+    if (rows.empty()) return;
+
+    while (console::askYesNo("Show every night for one player? (y/n): ") == 'y') {
+        std::string name = console::askLine("Player name (blank to stop): ");
+        if (name.empty()) break;
+        const std::string want = normalizeName(name);
+        bool found = false;
+        for (const hitrun::Summary& s : rows)
+            if (s.person == want || normalizeName(s.displayName) == want ||
+                players::resolveCanonical(app.rules, want) == s.person) {
+                hitrun::printPlayer(s, nights);
+                found = true;
+                break;
+            }
+        if (!found) std::cout << "No player matching \"" << name << "\" on the hand-logged nights in scope.\n";
+    }
+    if (console::askYesNo("Export to Saved_Data/hit_and_run.csv and hit_and_run_nights.csv? (y/n): ") == 'y') {
+        fs::path out = app.file("hit_and_run.csv");
+        fs::path outNights = app.file("hit_and_run_nights.csv");
+        std::cout << (hitrun::exportCSV(out.string(), rows) ? "Exported to " : "Could not write ") << out.string() << '\n';
+        std::cout << (hitrun::exportNightsCSV(outNights.string(), nights) ? "Exported to " : "Could not write ")
+                  << outNights.string() << '\n';
     }
 }
 
@@ -750,6 +791,7 @@ fs::path writeReport(App& app, fs::path outPath) {
     in.focusNormalized = app.focusPlayer();
     std::vector<const handlog::HandLog*> logs = logsInScope(app);
     in.style = handlog::computeStyle(logs, app.rules, app.stats);
+    hitrun::annotate(in.style, hitrun::summarize(hitRunNights(app)));
     for (auto it = logs.rbegin(); it != logs.rend(); ++it) {
         report::NightChart night;
         night.log = *it;
@@ -832,8 +874,8 @@ void printMenu(const App& app) {
         ui::bold("HAND LOGS"),
         item(18, "Playing style"),
         item(21, "Deep profiles"),
+        item(22, "Hit & run"),
         item(19, "Import from Downloads"),
-        "",
         item(0, "Save and exit"),
     };
     for (size_t i = 0; i < std::max(left.size(), right.size()); ++i) {
@@ -845,7 +887,7 @@ void runMenu(App& app) {
     bool running = true;
     while (running) {
         printMenu(app);
-        int choice = console::askMenuChoice("\n Choose a number: ", 0, 21);
+        int choice = console::askMenuChoice("\n Choose a number: ", 0, 22);
         std::vector<PlayerStats> byNet = players::sortedByNet(app.stats);
 
         switch (choice) {
@@ -965,6 +1007,7 @@ void runMenu(App& app) {
                 break;
 
             case 21: deepPlaystyle(app); break;
+            case 22: hitAndRun(app); break;
 
             case 0:
                 app.saveAll();
@@ -978,7 +1021,7 @@ void runMenu(App& app) {
         // called from nowhere. These are the views that overflow a standard terminal.
         switch (choice) {
             case 2: case 3: case 5: case 8: case 9: case 11:
-            case 15: case 16: case 18: case 21:
+            case 15: case 16: case 18: case 21: case 22:
                 console::pause();
                 break;
             default:

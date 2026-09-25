@@ -305,6 +305,30 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
             if (ev.amount > EPSILON) out.events.push_back(ev);
             continue;
         }
+        // The admin taking someone out of play: "The admin "A @ id" forced the player "B @ id" to away
+        // mode in the next hand." or "... enqueued the removal of the player "B @ id".". No chips move,
+        // but when B stops being dealt in right after, leaving was not B's choice.
+        if (startsWith(e, "The admin \"")) {
+            size_t q = e.find('"');
+            std::string adminNick, adminId, nick, pid;
+            if (!readPlayerRef(e, q, adminNick, adminId)) continue;
+            const char* kind = "away";
+            size_t p = e.find(" forced the player \"", q);
+            if (p == std::string::npos) {
+                kind = "kick";
+                p = e.find(" enqueued the removal of the player \"", q);
+            }
+            if (p == std::string::npos) continue;
+            size_t r = e.find('"', p);
+            if (!readPlayerRef(e, r, nick, pid)) continue;
+            StackEvent ev;
+            ev.at = rec.at;
+            ev.playerId = pid;
+            ev.hand = static_cast<int>(out.hands.size()) + (inHand ? 1 : 0);
+            ev.kind = kind;
+            out.events.push_back(ev);
+            continue;
+        }
         if (!inHand) continue;
 
         if (startsWith(e, "Player stacks:")) {
@@ -725,6 +749,15 @@ std::string af1(double v) {
     o << v;
     return o.str();
 }
+// Hit & run factor: "-" with no nights to judge, "(42)" on too few winning nights to trust.
+std::string hr1(double v, bool reliable) {
+    if (v < 0) return "-";
+    std::ostringstream o;
+    o.setf(std::ios::fixed);
+    o.precision(0);
+    o << v;
+    return reliable ? o.str() : "(" + o.str() + ")";
+}
 }  // namespace
 
 void printStyleTable(const std::vector<StyleStats>& rows) {
@@ -733,24 +766,28 @@ void printStyleTable(const std::vector<StyleStats>& rows) {
         std::cout << "No hand logs in scope. Put poker_now_log_<id>.csv files next to their ledgers (see README).\n";
         return;
     }
+    // The percentage columns are 5 wide ("100%" plus a space) to make room for H&R.
     std::cout << ui::heading("How everyone plays", W) << '\n'
-              << ui::bold(padRight("Player", 16) + padLeft("Games", 6) + padLeft("Hands", 7) + padLeft("VPIP", 6) +
-                          padLeft("PFR", 6) + padLeft("Flop", 6) + padLeft("WTSD", 6) + padLeft("W$SD", 6) + padLeft("FoldR", 7) +
-                          padLeft("AF", 6) + padLeft("Big pot", 10) + "  Style")
+              << ui::bold(padRight("Player", 16) + padLeft("Games", 6) + padLeft("Hands", 7) + padLeft("VPIP", 5) +
+                          padLeft("PFR", 5) + padLeft("Flop", 5) + padLeft("WTSD", 5) + padLeft("W$SD", 5) + padLeft("FoldR", 6) +
+                          padLeft("AF", 6) + padLeft("H&R", 6) + padLeft("Big pot", 10) + "  Style")
               << '\n' << ui::rule(W) << '\n';
     for (const StyleStats& r : rows) {
         std::string style = r.styleLabel();
         if (size_t paren = style.find(" ("); paren != std::string::npos) style.erase(paren);   // the legend explains it
         std::cout << padRight(r.displayName, 16) << padLeft(std::to_string(r.games), 6) << padLeft(std::to_string(r.hands), 7)
-                  << padLeft(pct1(r.vpipPct()), 6) << padLeft(pct1(r.pfrPct()), 6) << padLeft(pct1(r.sawFlopPct()), 6)
-                  << padLeft(pct1(r.wtsdPct()), 6) << padLeft(pct1(r.wsdPct()), 6) << padLeft(pct1(r.foldToRaisePct()), 7)
-                  << padLeft(af1(r.aggression()), 6) << padLeft(money(r.biggestPotWon), 10) << "  "
+                  << padLeft(pct1(r.vpipPct()), 5) << padLeft(pct1(r.pfrPct()), 5) << padLeft(pct1(r.sawFlopPct()), 5)
+                  << padLeft(pct1(r.wtsdPct()), 5) << padLeft(pct1(r.wsdPct()), 5) << padLeft(pct1(r.foldToRaisePct()), 6)
+                  << padLeft(af1(r.aggression()), 6) << padLeft(hr1(r.hitRun, r.hitRunReliable), 6)
+                  << padLeft(money(r.biggestPotWon), 10) << "  "
                   << (r.hands < 30 ? ui::dim(padRight(style, 16)) : ui::cyan(padRight(style, 16))) << '\n';
     }
     std::cout << ui::rule(W) << '\n'
               << ui::dim("VPIP = % of hands where money went in voluntarily preflop.  PFR = % raised preflop.\n"
                          "Flop = % of hands that reached the flop.  WTSD = % of flops that went to showdown.\n"
-                         "W$SD = % of showdowns won.  FoldR = % folded facing a preflop raise.  AF = (bets + raises) / calls.\n")
+                         "W$SD = % of showdowns won.  FoldR = % folded facing a preflop raise.  AF = (bets + raises) / calls.\n"
+                         "H&R = hit & run factor, 0-100: how early they leave the game when winning (menu 22 explains it).\n"
+                         "An H&R in (brackets) has fewer than 3 winning nights behind it.\n")
               << '\n';
 }
 
@@ -797,12 +834,15 @@ bool exportStyleCSV(const std::string& filename, const std::vector<StyleStats>& 
     std::ofstream out(filename);
     if (!out.is_open()) return false;
     out << "player,normalized,games,hands,vpip_pct,pfr_pct,saw_flop_pct,wtsd_pct,wsd_pct,fold_to_raise_pct,"
-           "aggression,hands_won,biggest_pot_won,net_from_log,bounties_net,all_ins,style\n";
+           "aggression,hands_won,biggest_pot_won,net_from_log,bounties_net,all_ins,style,"
+           "hit_run,hit_run_reliable,hit_run_tag\n";
     for (const StyleStats& r : rows) {
         out << escapeCSV(r.displayName) << ',' << escapeCSV(r.normalizedName) << ',' << r.games << ',' << r.hands << ','
             << fixed2(r.vpipPct()) << ',' << fixed2(r.pfrPct()) << ',' << fixed2(r.sawFlopPct()) << ',' << fixed2(r.wtsdPct()) << ','
             << fixed2(r.wsdPct()) << ',' << fixed2(r.foldToRaisePct()) << ',' << fixed2(r.aggression()) << ',' << r.handsWon << ','
-            << fixed2(r.biggestPotWon) << ',' << fixed2(r.netFromLog) << ',' << fixed2(r.bountiesNet) << ',' << r.allIns << ',' << escapeCSV(r.styleLabel()) << '\n';
+            << fixed2(r.biggestPotWon) << ',' << fixed2(r.netFromLog) << ',' << fixed2(r.bountiesNet) << ',' << r.allIns << ','
+            << escapeCSV(r.styleLabel()) << ',' << (r.hitRun < 0 ? "" : fixed2(r.hitRun)) << ','
+            << (r.hitRunReliable ? "yes" : "no") << ',' << escapeCSV(r.hitRunTag) << '\n';
     }
     return true;
 }

@@ -100,6 +100,12 @@ struct Profile {
     Rate vpipBlinds;           // SB / BB
     Rate vpipEarly;            // everything else
 
+    // --- Leaving the table (hitrun.hpp; filled in by hitrun::annotate) --------
+    double hitRun = -1.0;      // 0-100, -1 = no nights to judge
+    bool hitRunReliable = false;
+    std::string hitRunTag;     // "Hit & runner", "Stays late", ... or empty
+    std::string hitRunLine;    // the three habits in a line or two ("\n" between), for the long read
+
     // The modal sizing band, as a readable label, plus the share of bets in it.
     std::string typicalBetSize() const;
     double betSizeShare(int bucket) const {

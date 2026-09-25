@@ -17,6 +17,7 @@ add_executable(Poker_Ledger_Reader
         src/handlog.cpp
         src/seats.cpp
         src/playstyle.cpp
+        src/hitrun.cpp
         src/ui.cpp
 )
 

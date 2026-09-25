@@ -64,12 +64,14 @@ struct Hand {
 };
 
 // Chips put on the table between hands: a rebuy after busting, or an admin top-up.
+// Also the admin taking a player out of play, which moves no chips.
 struct StackEvent {
     std::int64_t at = util::NO_TIME;
     int hand = 0;             // index of the first hand dealt after it (may equal hands.size())
     std::string playerId;
-    std::string kind;         // "rebuy", "topup", or "remove" (an admin took chips off)
-    double amount = 0.0;      // dollars, always positive
+    std::string kind;         // "rebuy", "topup", "remove" (an admin took chips off),
+                              // "away" (admin forced away mode) or "kick" (admin queued a removal)
+    double amount = 0.0;      // dollars, always positive (0 for "away" and "kick")
 };
 
 // One ledger seat on an account: who was really playing it, and when.
@@ -130,6 +132,10 @@ struct StyleStats {
     double netFromLog = 0.0;        // sum of per-hand nets (should equal the ledger net for the same games)
     double biggestPotWon = 0.0;
     double bountiesNet = 0.0;       // 7-2 bounties received minus paid (part of netFromLog)
+    // Hit & run (see hitrun.hpp), filled in by hitrun::annotate. -1 = no nights to judge.
+    double hitRun = -1.0;
+    bool hitRunReliable = false;
+    std::string hitRunTag;
 
     double pct(int part, int whole) const { return whole == 0 ? 0.0 : 100.0 * part / whole; }
     double vpipPct() const { return pct(vpip, handsVoluntary); }

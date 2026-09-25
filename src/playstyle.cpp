@@ -425,6 +425,12 @@ std::string rateCell(const Rate& r) {
     return os.str();
 }
 
+// Hit & run factor: "-" with no nights to judge, "(42)" on too few winning nights to trust.
+std::string hitRunCell(const Profile& p) {
+    if (p.hitRun < 0) return "-";
+    return p.hitRunReliable ? num(p.hitRun, 0) : "(" + num(p.hitRun, 0) + ")";
+}
+
 void poolAverages(const std::vector<Profile>& all, double& poolV, double& poolP, int& counted) {
     poolV = poolP = 0.0;
     counted = 0;
@@ -441,7 +447,7 @@ void printProfiles(const std::vector<Profile>& rows) {
     poolAverages(rows, poolV, poolP, counted);
 
     // Two tables (before and after the flop) so each fits a normal terminal.
-    const int W = 98;
+    const int W = 100;
     using util::padLeft;
     using util::padRight;
     std::cout << '\n' << ui::dim("Pool average over " + std::to_string(counted) + " players with 200+ hands: VPIP " +
@@ -457,16 +463,17 @@ void printProfiles(const std::vector<Profile>& rows) {
                   << padLeft(rateCell(p.steal), 7) << padLeft(rateCell(p.blindDefend), 7) << "   "
                   << ui::cyan(padRight(p.archetype(poolV, poolP), W - 68)) << '\n';
     }
-    std::cout << ui::rule(W) << "\n\n" << ui::heading("After the flop", W) << '\n'
+    std::cout << ui::rule(W) << "\n\n" << ui::heading("After the flop, and leaving the table", W) << '\n'
               << ui::bold(padRight("Player", 16) + padLeft("CBet", 7) + padLeft("F>CB", 7) + padLeft("ChkR", 7) +
                           padLeft("AF flop", 9) + padLeft("AF turn", 9) + padLeft("AF river", 10) + padLeft("WTSD", 7) +
-                          padLeft("W$SD", 7))
+                          padLeft("W$SD", 7) + padLeft("H&R", 6) + "  Leaving")
               << '\n' << ui::rule(W) << '\n';
     for (const Profile& p : rows) {
         if (p.hands < 50) continue;
         std::cout << padRight(p.displayName, 16) << padLeft(rateCell(p.cbet), 7) << padLeft(rateCell(p.foldToCbet), 7)
                   << padLeft(rateCell(p.checkRaise), 7) << padLeft(num(p.afFlop(), 1), 9) << padLeft(num(p.afTurn(), 1), 9)
-                  << padLeft(num(p.afRiver(), 1), 10) << padLeft(rateCell(p.wtsd), 7) << padLeft(rateCell(p.wsd), 7) << '\n';
+                  << padLeft(num(p.afRiver(), 1), 10) << padLeft(rateCell(p.wtsd), 7) << padLeft(rateCell(p.wsd), 7)
+                  << padLeft(hitRunCell(p), 6) << "  " << ui::cyan(padRight(p.hitRunTag, W - 87)) << '\n';
     }
     std::cout << ui::rule(W) << '\n'
               << ui::dim("A rate in (brackets) has fewer than " + std::to_string(kMinOpportunities) +
@@ -474,7 +481,9 @@ void printProfiles(const std::vector<Profile>& rows) {
                          "Limp = called the big blind with the pot unopened.   3Bet = re-raised a single raise.\n"
                          "Steal = first-in raise from CO/BTN/SB.   Def = did not fold a blind to a steal.\n"
                          "CBet = bet the flop having raised preflop.   F>CB = folded facing a flop c-bet.\n"
-                         "ChkR = check-raised.   AF = (bets + raises) / calls.   WTSD = flops that reached showdown.\n")
+                         "ChkR = check-raised.   AF = (bets + raises) / calls.   WTSD = flops that reached showdown.\n"
+                         "H&R = hit & run factor, 0-100, from every night in scope (menu 22 has the night-by-night exits).\n"
+                         "An H&R in (brackets) has fewer than 3 winning nights behind it; its only possible tag is Busts out.\n")
               << '\n';
 }
 
@@ -485,7 +494,8 @@ void printOnePlayer(const Profile& p, const std::vector<Profile>& all) {
 
     std::cout << "\n" << p.displayName << " - " << p.hands << " hands over " << p.games << " games\n";
     std::cout << std::string(74, '-') << "\n";
-    std::cout << "  Archetype        " << p.archetype(poolV, poolP) << "\n";
+    std::cout << "  Archetype        " << p.archetype(poolV, poolP)
+              << (p.hitRunTag.empty() ? "" : ui::sym(" · ", " | ") + p.hitRunTag) << "\n";
     std::cout << "  VPIP / PFR       " << num(p.vpip.pct(), 1) << "% / " << num(p.pfr.pct(), 1)
               << "%   (pool " << num(poolV, 0) << "% / " << num(poolP, 0) << "%)\n";
     std::cout << "  Passivity gap    " << num(p.passivityGap(), 1)
@@ -518,6 +528,12 @@ void printOnePlayer(const Profile& p, const std::vector<Profile>& all) {
     }
     std::cout << "  Result           " << util::money(p.net) << " over " << p.hands
               << " hands (" << num(p.bbPer100(), 1) << " bb/100)\n";
+    if (p.hitRun >= 0) {
+        std::cout << "  Hit & run        " << hitRunCell(p) << (p.hitRunTag.empty() ? "" : " - " + p.hitRunTag)
+                  << (p.hitRunReliable ? "" : " (fewer than 3 winning nights: not a tendency yet)") << "\n";
+        std::istringstream lines(p.hitRunLine);
+        for (std::string line; std::getline(lines, line);) std::cout << "                   " << line << "\n";
+    }
     std::cout << "  NOTE  bb/100 over " << p.hands << " hands carries a confidence interval far wider\n"
               << "        than any plausible edge. Read it as description, never as proof of skill.\n";
 }
@@ -532,7 +548,8 @@ bool exportCSV(const std::string& filename, const std::vector<Profile>& rows) {
          "donk_pct,donk_n,af_flop,af_turn,af_river,wtsd_pct,wtsd_n,wsd_pct,wsd_n,"
          "showdowns_tabled,courtesy_reveals,bet_lt33_pct,bet_33_50_pct,bet_50_75_pct,"
          "bet_75_100_pct,bet_100_150_pct,bet_over150_pct,overbet_pct,bet_samples,all_ins,net,bb_per_100,"
-         "biggest_pot,vpip_late_pct,vpip_late_n,vpip_blinds_pct,vpip_blinds_n,vpip_early_pct,vpip_early_n\n";
+         "biggest_pot,vpip_late_pct,vpip_late_n,vpip_blinds_pct,vpip_blinds_n,vpip_early_pct,vpip_early_n,"
+         "hit_run,hit_run_reliable,hit_run_tag\n";
     for (const Profile& p : rows) {
         auto rc = [&f](const Rate& r) { f << num(r.pct(), 2) << "," << r.opportunities << ","; };
         f << util::escapeCSV(p.displayName) << "," << p.games << "," << p.hands << "," << p.handsVoluntary << ",";
@@ -547,7 +564,9 @@ bool exportCSV(const std::string& filename, const std::vector<Profile>& rows) {
           << p.betSizeSamples << "," << p.allIns << "," << num(p.net, 2) << "," << num(p.bbPer100(), 3) << ","
           << num(p.biggestPot, 2) << ",";
         rc(p.vpipLate); rc(p.vpipBlinds);
-        f << num(p.vpipEarly.pct(), 2) << "," << p.vpipEarly.opportunities << "\n";
+        f << num(p.vpipEarly.pct(), 2) << "," << p.vpipEarly.opportunities << ","
+          << (p.hitRun < 0 ? "" : num(p.hitRun, 2)) << "," << (p.hitRunReliable ? "yes" : "no") << ","
+          << util::escapeCSV(p.hitRunTag) << "\n";
     }
     return true;
 }
