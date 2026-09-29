@@ -1,5 +1,6 @@
 #pragma once
 // Charts: quick ones in the terminal, full interactive ones in a self-contained HTML file.
+#include <map>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,7 @@ struct ReportInput {
     std::string focusNormalized;               // player for the per-game chart
     std::vector<handlog::StyleStats> style;    // from the hand logs in scope (may be empty)
     std::vector<NightChart> nights;            // newest first
+    std::map<std::string, PlayTime> playtime;  // hours at the table per person (playtime::collect); may be empty
 };
 
 bool writeHTMLReport(const std::string& path, const ReportInput& in);

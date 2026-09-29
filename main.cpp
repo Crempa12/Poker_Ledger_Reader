@@ -29,10 +29,12 @@
 #include "models.hpp"
 #include "players.hpp"
 #include "playstyle.hpp"
+#include "playtime.hpp"
 #include "report.hpp"
 #include "seats.hpp"
 #include "sessions.hpp"
 #include "settlement.hpp"
+#include "showdowns.hpp"
 #include "ui.hpp"
 #include "util.hpp"
 
@@ -482,6 +484,21 @@ void hitAndRun(App& app) {
     }
 }
 
+// ------------------------------------------------------------- time at the table, showdown rivals
+
+// Under a player's history (menu 3): how long they played, and who beats them at showdown.
+void printAtTheTable(const App& app, const PlayerStats& p) {
+    std::map<std::string, PlayTime> time = playtime::collect(app.scoped, app.logs, app.rules);
+    auto t = time.find(p.normalizedName);
+    playtime::printPlayer(p, t == time.end() ? nullptr : &t->second);
+
+    std::vector<const handlog::HandLog*> logs = logsInScope(app);
+    std::map<std::string, showdowns::Record> rivals = showdowns::compute(logs, app.rules, app.stats);
+    auto r = rivals.find(p.normalizedName);
+    showdowns::printPlayer(p.displayName, r == rivals.end() ? nullptr : &r->second, static_cast<int>(logs.size()),
+                           static_cast<int>(app.scoped.size()));
+}
+
 // ---------------------------------------------------------------- import from Downloads
 
 fs::path downloadsDir() {
@@ -789,6 +806,7 @@ fs::path writeReport(App& app, fs::path outPath) {
     in.scope = app.scope;
     in.meNormalized = app.settings.me;
     in.focusNormalized = app.focusPlayer();
+    in.playtime = playtime::collect(app.scoped, app.logs, app.rules);
     std::vector<const handlog::HandLog*> logs = logsInScope(app);
     in.style = handlog::computeStyle(logs, app.rules, app.stats);
     hitrun::annotate(in.style, hitrun::summarize(hitRunNights(app)));
@@ -907,6 +925,7 @@ void runMenu(App& app) {
                 if (idx == 0) break;
                 players::printPlayerHistory(byNet[idx - 1]);
                 report::printCumulativeChart(byNet[idx - 1]);
+                printAtTheTable(app, byNet[idx - 1]);
                 break;
             }
 
@@ -956,8 +975,14 @@ void runMenu(App& app) {
 
             case 12: {
                 fs::path out = app.file("player_summary.csv");
-                std::cout << (players::exportPlayerSummaryCSV(out.string(), byNet) ? "Exported to " : "Could not write ")
+                std::cout << (players::exportPlayerSummaryCSV(out.string(), byNet,
+                                                              playtime::collect(app.scoped, app.logs, app.rules))
+                                  ? "Exported to " : "Could not write ")
                           << out.string() << '\n';
+                fs::path rivals = app.file("showdown_rivals.csv");
+                std::cout << (showdowns::exportCSV(rivals.string(), showdowns::compute(logsInScope(app), app.rules, app.stats))
+                                  ? "Exported to " : "Could not write ")
+                          << rivals.string() << ui::dim("  (who beat whom at showdown)") << '\n';
                 break;
             }
 

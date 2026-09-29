@@ -55,6 +55,8 @@ std::vector<MergeSuggestion> suggestMergesByPlayerId(const std::vector<Game>& ga
 void printLeaderboard(const std::vector<PlayerStats>& list);
 void printCompactList(const std::vector<PlayerStats>& list);
 void printPlayerHistory(const PlayerStats& p);
-bool exportPlayerSummaryCSV(const std::string& filename, const std::vector<PlayerStats>& list);
+// `time` (playtime::collect) fills the time columns; players missing from it get zeros.
+bool exportPlayerSummaryCSV(const std::string& filename, const std::vector<PlayerStats>& list,
+                            const std::map<std::string, PlayTime>& time = {});
 
 }  // namespace players

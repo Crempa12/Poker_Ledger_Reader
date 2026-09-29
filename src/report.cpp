@@ -388,22 +388,44 @@ void writePerGameBars(std::ostream& o, const ReportInput& in) {
 
 void writeLeaderboardTable(std::ostream& o, const ReportInput& in) {
     o << "<div class=card><h2>Leaderboard</h2><div class=scroll><table><tr><th>#</th><th class=l>Player</th><th>Games</th><th>Buy-ins</th>"
-      << "<th>Won</th><th>Lost</th><th>Adjust</th><th>Net</th><th>Avg/game</th><th>Best</th><th>Worst</th><th class=l>Also known as</th></tr>";
+      << "<th>Won</th><th>Lost</th><th>Adjust</th><th>Net</th><th>Avg/game</th><th>Hours</th><th>$/hr</th><th>Best</th><th>Worst</th>"
+      << "<th class=l>Also known as</th></tr>";
+    bool anyEstimate = false;
     for (size_t i = 0; i < in.byNet.size(); ++i) {
         const PlayerStats& p = in.byNet[i];
         std::string aliases;
         for (const std::string& a : p.aliases) {
             if (a != p.normalizedName && a != normalizeName(p.displayName)) aliases += (aliases.empty() ? "" : ", ") + a;
         }
+        std::string hours = "-", rate = "-";
+        auto t = in.playtime.find(p.normalizedName);
+        if (t != in.playtime.end() && t->second.seconds() >= 1.0) {
+            std::ostringstream h;
+            h.setf(std::ios::fixed);
+            h.precision(1);
+            h << t->second.hours();
+            const bool estimate = t->second.secondsEstimated >= 0.5;
+            anyEstimate = anyEstimate || estimate;
+            hours = (estimate ? "~" : "") + h.str();
+            rate = moneySigned(p.totalNet / t->second.hours());
+        }
         o << "<tr" << (p.normalizedName == in.meNormalized ? " class=me" : "") << "><td>" << (i + 1) << "</td><td class=l>"
           << escapeHTML(p.displayName) << "</td><td>" << p.games << "</td><td>" << p.buyIns << "</td><td>" << money(p.totalWon)
           << "</td><td>" << money(p.totalLost) << "</td><td>"
           << (p.adjustments > -EPSILON && p.adjustments < EPSILON ? "" : moneySigned(p.adjustments))
           << "</td><td>" << moneySigned(p.totalNet) << "</td><td>"
-          << moneySigned(p.averagePerGame()) << "</td><td>" << moneySigned(p.biggestWin) << "</td><td>"
-          << moneySigned(p.biggestLoss) << "</td><td class=l>" << escapeHTML(aliases) << "</td></tr>";
+          << moneySigned(p.averagePerGame()) << "</td><td>" << hours << "</td><td>" << rate << "</td><td>" << moneySigned(p.biggestWin)
+          << "</td><td>" << moneySigned(p.biggestLoss) << "</td><td class=l>" << escapeHTML(aliases) << "</td></tr>";
     }
-    o << "</table></div></div>\n";
+    o << "</table></div>";
+    if (!in.playtime.empty()) {
+        o << "<p class=note>Hours = time dealt into hands, from the hand logs. $/hr = net / hours."
+          << (anyEstimate ? " ~ = includes ledger seat time for nights without a hand log (or before a log begins), "
+                            "which runs long: a seat stays open while its player sits out."
+                          : "")
+          << "</p>";
+    }
+    o << "</div>\n";
 }
 
 void writeSettlementTable(std::ostream& o, const ReportInput& in) {

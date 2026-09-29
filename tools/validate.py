@@ -350,5 +350,134 @@ os.rmdir(os.path.join(DATA, "zz_dup_test"))
 out = run_app([], "12\n0\n"); compare_summary(P2, "after-dup-cleanup")
 print("duplicates checked")
 
+# ---------- 9. hand logs (docs/specs/playtime-showdown.md)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import handlog_check as _hc
+
+_hl = _hc.compute(ROOT, games, canon, filed_as, norm, owners)
+
+# whole-corpus scope (no --folder/--from), matching handlog_check's own scope above
+run_app([], "12\n0\n")       # -> player_summary.csv, showdown_rivals.csv
+run_app([], "18\ny\n\n0\n")  # -> style_stats.csv
+run_app([], "21\nn\ny\n\n0\n")  # -> playstyle.csv
+
+def _read_export(name):
+    path = os.path.join(ROOT, "Saved_Data", name)
+    if not os.path.exists(path):
+        check(False, f"hand logs: {name} is missing")
+        return None, []
+    with open(path, encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        rows = list(r)
+        fields = r.fieldnames or []
+    return rows, fields
+
+def _need_cols(name, fields, cols):
+    missing = [c for c in cols if c not in fields]
+    if missing:
+        check(False, f"hand logs: {name} is missing column(s) {missing}")
+        return False
+    return True
+
+def _capped(label, cond, msg, state, cap=15):
+    if cond:
+        return
+    failures.append(msg)
+    state["n"] += 1
+    if state["n"] <= cap:
+        print("FAIL:", msg)
+
+def _finish(label, state, rows_n, cap=15):
+    extra = state["n"] - cap
+    suffix = f", {extra} more failure(s) not shown" if extra > 0 else ""
+    print(f"{label} compared ({rows_n} rows, {state['n']} failure(s){suffix})")
+
+# 9.1 style_stats.csv (menu 18)
+rows, fields = _read_export("style_stats.csv")
+if rows is not None and _need_cols("style_stats.csv", fields, ["normalized", "saw_flop", "showdowns", "showdowns_voluntary", "showdown_wins", "courtesy_reveals"]):
+    st = {"n": 0}
+    seen = set()
+    pool_wins = pool_showdowns = 0
+    for r in rows:
+        c = r["normalized"]; seen.add(c)
+        want = _hl["style"].get(c, {})
+        for k in ("saw_flop", "showdowns", "showdowns_voluntary", "showdown_wins", "courtesy_reveals"):
+            _capped("style_stats", int(r[k]) == want.get(k, 0), f"style_stats: {c} {k} app={r[k]} py={want.get(k, 0)}", st)
+        pool_wins += int(r["showdown_wins"]); pool_showdowns += int(r["showdowns"])
+    for c in set(_hl["style"]) - seen:
+        _capped("style_stats", False, f"style_stats: person {c} (in the hand logs) missing from the app export", st)
+    _finish("style_stats", st, len(rows))
+    print(f"style_stats: pool W$SD (app) = {100.0*pool_wins/pool_showdowns:.1f}%" if pool_showdowns else "style_stats: pool W$SD (app) = n/a")
+print(f"handlog_check: pool W$SD (python) = {_hl['pool']['wsd_pct']:.1f}%" if _hl['pool']['wsd_pct'] is not None else "handlog_check: pool W$SD (python) = n/a")
+
+# 9.2 playstyle.csv (menu 21)
+rows, fields = _read_export("playstyle.csv")
+if rows is not None and _need_cols("playstyle.csv", fields, ["normalized"]):
+    st = {"n": 0}
+    STATS = ("limp", "open", "steal", "cbet", "donk", "checkraise", "wtsd", "wsd")
+    col_pairs = {}
+    for s in STATS:
+        pct_col = next((c for c in (f"{s}_pct", s, f"{s}_percent", f"{s}%") if c in fields), None)
+        n_col = next((c for c in (f"{s}_n", f"{s}_opportunities", f"{s}_opp", f"{s}_count") if c in fields), None)
+        if pct_col is None or n_col is None:
+            check(False, f"hand logs: playstyle.csv is missing the pct/n columns for {s!r} (tried {s}_pct/{s}_n and similar)")
+        else:
+            col_pairs[s] = (pct_col, n_col)
+    seen = set()
+    for r in rows:
+        c = r["normalized"]; seen.add(c)
+        want = _hl["playstyle"].get(c, {})
+        for s, (pct_col, n_col) in col_pairs.items():
+            made_py, opp_py = want.get(s, (0, 0))
+            opp_app = int(r[n_col])
+            made_app = int(round(float(r[pct_col]) * opp_app / 100.0)) if r[pct_col] not in ("", None) else 0
+            _capped("playstyle", opp_app == opp_py, f"playstyle: {c} {s} opportunities app={opp_app} py={opp_py}", st)
+            _capped("playstyle", made_app == made_py, f"playstyle: {c} {s} made app~={made_app} py={made_py} (from pct={r[pct_col]})", st)
+    for c in set(_hl["playstyle"]) - seen:
+        _capped("playstyle", False, f"playstyle: person {c} (in the hand logs) missing from the app export", st)
+    _finish("playstyle", st, len(rows))
+
+# 9.3 showdown_rivals.csv (menu 12)
+rows, fields = _read_export("showdown_rivals.csv")
+if rows is not None and _need_cols("showdown_rivals.csv", fields, ["loser_normalized", "winner_normalized", "times", "amount"]):
+    st = {"n": 0}
+    seen = set()
+    for r in rows:
+        key = (r["loser_normalized"], r["winner_normalized"]); seen.add(key)
+        times_py, cents_py = _hl["rivals"].get(key, [0, 0])
+        _capped("showdown_rivals", int(r["times"]) == times_py, f"showdown_rivals: {key} times app={r['times']} py={times_py}", st)
+        # A loss split between winners is a fraction of a cent per share, so the two sums may round a cent apart.
+        _capped("showdown_rivals", abs(cents(r["amount"]) - cents_py) <= 1, f"showdown_rivals: {key} amount app={r['amount']} py={cents_py/100:.2f}", st)
+    for key in set(_hl["rivals"]) - seen:
+        _capped("showdown_rivals", False, f"showdown_rivals: pair {key} missing from the app export (py times={_hl['rivals'][key][0]})", st)
+    _finish("showdown_rivals", st, len(rows))
+
+# 9.4 player_summary.csv (menu 12): hands_dealt, nights_logged, seconds_dealt, seconds_estimated, per_hour
+rows, fields = _read_export("player_summary.csv")
+need = ["normalized_name", "hands_dealt", "nights_logged", "seconds_dealt", "seconds_estimated", "per_hour"]
+if rows is not None and _need_cols("player_summary.csv", fields, need):
+    st = {"n": 0}
+    P_all = aggregate(scope_filter())
+    seen = set()
+    for r in rows:
+        c = r["normalized_name"]; seen.add(c)
+        want = _hl["playtime"].get(c, {"hands_dealt": 0, "nights_logged": 0, "seconds_dealt": 0.0, "seconds_estimated": 0.0})
+        _capped("player_summary", int(r["hands_dealt"]) == want["hands_dealt"], f"player_summary: {c} hands_dealt app={r['hands_dealt']} py={want['hands_dealt']}", st)
+        _capped("player_summary", int(r["nights_logged"]) == want["nights_logged"], f"player_summary: {c} nights_logged app={r['nights_logged']} py={want['nights_logged']}", st)
+        _capped("player_summary", abs(float(r["seconds_dealt"]) - want["seconds_dealt"]) <= 1, f"player_summary: {c} seconds_dealt app={r['seconds_dealt']} py={want['seconds_dealt']:.2f}", st)
+        _capped("player_summary", abs(float(r["seconds_estimated"]) - want["seconds_estimated"]) <= 1, f"player_summary: {c} seconds_estimated app={r['seconds_estimated']} py={want['seconds_estimated']:.2f}", st)
+        hours_py = (want["seconds_dealt"] + want["seconds_estimated"]) / 3600
+        p = P_all.get(c)
+        if p is not None and hours_py > 0:
+            per_hour_py = (p["net"] - p["adj"]) / 100 / hours_py
+            app_val = r["per_hour"].strip()
+            if app_val == "":
+                _capped("player_summary", False, f"player_summary: {c} per_hour app=blank py={per_hour_py:.2f}", st)
+            else:
+                _capped("player_summary", abs(float(app_val) - per_hour_py) < 0.01, f"player_summary: {c} per_hour app={app_val} py={per_hour_py:.2f}", st)
+    for c in set(_hl["playtime"]) - seen:
+        _capped("player_summary", False, f"player_summary: person {c} (in the hand logs) missing from the app export", st)
+    _finish("player_summary", st, len(rows))
+
 print("\nRESULT:", "ALL CHECKS PASSED" if not failures else f"{len(failures)} FAILURES")
 sys.exit(1 if failures else 0)

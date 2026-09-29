@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -44,14 +45,17 @@ struct Hand {
     std::string myCards;                        // "K♦, 9♠" (the exporting player's hole cards)
     std::vector<std::string> board;             // up to 5 cards
     std::vector<Action> actions;
-    std::map<std::string, std::string> shown;   // playerId -> cards shown at showdown
+    // playerId -> every card they showed, before or after the hand-ended marker ("K♥, K♠"
+    // even when shown one at a time). Showing is optional: a showdown loser who mucks has no entry.
+    std::map<std::string, std::string> shown;
     std::map<std::string, double> collected;    // playerId -> total collected from the pot
     std::map<std::string, double> net;          // playerId -> collected + returned - contributed
-    std::map<std::string, std::string> rank;    // playerId -> winning hand name ("Pair, J's")
+    std::map<std::string, std::string> rank;    // playerId -> winning hand name ("Pair, J's"): showdown winners only
     std::map<std::string, double> bounty;       // playerId -> 7-2 bounty received (+) or paid (-), already included in net
-    // A real showdown: at least two players tabled BOTH cards. PokerNow also logs a single
-    // card when someone chooses to flash one (often after folding), which is not a showdown
-    // and must not count toward WTSD or W$SD - 2,861 of 12,693 reveals in this corpus.
+    std::set<std::string> folded;               // playerIds that folded on any street
+    // A real showdown: PokerNow named a winning hand, or at least two players still in the hand
+    // tabled BOTH cards. PokerNow also logs a single card when someone chooses to flash one (often
+    // after folding), which is not a showdown - 2,861 of 12,693 reveals in this corpus.
     bool showdown = false;
     bool bombPot = false;                       // forced-money hand; excluded from VPIP/PFR/aggression
     bool runItTwice = false;                    // set only by the authoritative all-players marker
@@ -61,6 +65,10 @@ struct Hand {
     double pot = 0.0;                           // total collected in the hand
 
     const Seat* seatOf(const std::string& playerId) const;
+    // Everyone still in the hand when it reached showdown: every seated account that never
+    // folded, whether they tabled their cards or mucked, plus anyone PokerNow named a winner.
+    // Empty when the hand did not reach showdown.
+    std::vector<std::string> atShowdown() const;
 };
 
 // Chips put on the table between hands: a rebuy after busting, or an admin top-up.
@@ -119,9 +127,11 @@ struct StyleStats {
     int handsVoluntary = 0;
     int vpip = 0;                   // voluntarily put money in preflop
     int pfr = 0;                    // raised preflop
-    int sawFlop = 0;
-    int courtesyReveals = 0;        // flashed a single card; not a showdown
-    int showdowns = 0;
+    int sawFlop = 0;                // bomb pots excluded, like handsVoluntary
+    int courtesyReveals = 0;        // hands where they showed exactly one card; not a showdown
+    // Reaching showdown means still being in the hand, whether they tabled their cards or mucked.
+    int showdowns = 0;              // every hand, bomb pots included: the W$SD denominator
+    int showdownsVoluntary = 0;     // bomb pots excluded, to match sawFlop: the WTSD numerator
     int showdownWins = 0;
     int handsWon = 0;
     int facedRaise = 0;             // preflop decisions facing a raise
@@ -141,7 +151,7 @@ struct StyleStats {
     double vpipPct() const { return pct(vpip, handsVoluntary); }
     double pfrPct() const { return pct(pfr, handsVoluntary); }
     double sawFlopPct() const { return pct(sawFlop, handsVoluntary); }
-    double wtsdPct() const { return pct(showdowns, sawFlop); }
+    double wtsdPct() const { return pct(showdownsVoluntary, sawFlop); }
     double wsdPct() const { return pct(showdownWins, showdowns); }
     double foldToRaisePct() const { return pct(foldedToRaise, facedRaise); }
     double aggression() const { return calls == 0 ? (bets + raises > 0 ? 99.0 : 0.0) : double(bets + raises) / calls; }

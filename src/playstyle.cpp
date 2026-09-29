@@ -56,9 +56,11 @@ std::map<std::string, Pos> positionsFor(const Hand& hand) {
     for (const Seat& s : hand.seats) srt.push_back(&s);
     std::sort(srt.begin(), srt.end(), [](const Seat* a, const Seat* b) { return a->seat < b->seat; });
 
+    // A seat number listed twice (or one account twice) means the seat order cannot be trusted: refuse to guess.
+    for (int i = 1; i < n; ++i) if (srt[i]->seat == srt[i - 1]->seat) return out;
     std::map<std::string, int> idx;
     for (int i = 0; i < n; ++i) idx[srt[i]->playerId] = i;
-    if (static_cast<int>(idx.size()) != n) return out;   // duplicate seat: refuse to guess
+    if (static_cast<int>(idx.size()) != n) return out;
 
     std::string sbPid, bbPid;
     for (const Action& a : hand.actions) {
@@ -73,7 +75,9 @@ std::map<std::string, Pos> positionsFor(const Hand& hand) {
     } else if (n == 2 && !sbPid.empty() && idx.count(sbPid)) {
         btn = idx[sbPid];                                   // heads-up: the button posts the small blind
     } else if (!bbPid.empty() && idx.count(bbPid)) {
-        btn = ((idx[bbPid] - 2) % n + n) % n;                // BB sits two seats after the button
+        // BB sits two seats after the button; heads-up the button is simply the other seat
+        // (two seats back from the BB would land on the BB itself).
+        btn = n == 2 ? (idx[bbPid] + 1) % 2 : ((idx[bbPid] - 2) % n + n) % n;
     } else if (!sbPid.empty() && idx.count(sbPid)) {
         btn = ((idx[sbPid] - 1) % n + n) % n;
     }
@@ -157,6 +161,7 @@ std::vector<Profile> analyze(const std::vector<const HandLog*>& logs,
                 auto c = keyOf.find(pid);
                 if (c == keyOf.end()) {
                     std::string key = handlog::personAt(*log, pid, hand.start, rules);
+                    if (key.empty()) key = "@" + pid;   // a nickname with no letters or digits, as in the style table
                     Profile& p = rows[key];
                     if (p.normalizedName.empty()) {
                         p.normalizedName = key;
@@ -189,13 +194,14 @@ std::vector<Profile> analyze(const std::vector<const HandLog*>& logs,
             bool stealAttempt = false;
             std::set<std::string> foldedPre;
             std::set<std::string> vpipSet, pfrSet;
-            std::set<std::string> sawOpenDecision, sawVsOpen, sawVs3Bet, sawStealSpot, sawDefendSpot;
+            std::set<std::string> decidedPre, sawVsOpen, sawVs3Bet, sawDefendSpot;
 
             for (const Action& a : hand.actions) {
                 if (a.street != "preflop" || a.kind == "post") continue;
                 const std::string& k = person(a.playerId);
                 Profile& r = rows[k];
                 const Pos p = posOf(a.playerId);
+                const bool firstDecision = decidedPre.insert(k).second;
 
                 if (a.kind == "fold") foldedPre.insert(a.playerId);
 
@@ -204,20 +210,22 @@ std::vector<Profile> analyze(const std::vector<const HandLog*>& logs,
                     if (a.kind == "raise") pfrSet.insert(k);
                 }
 
-                if (raiseCount == 0 && !a.bombPot && !sawOpenDecision.count(k)) {
-                    sawOpenDecision.insert(k);
+                // The situational rates skip bomb pots entirely: nobody chose to be in them.
+                if (!hand.bombPot && firstDecision && potUnopened) {
+                    // Limp, open raise and steal all need the pot unopened when the player first acts.
+                    // A call behind a limper is not a limp and a raise over limpers is not "first in";
+                    // the big blind's option never counts, because someone has always opened by then.
                     ++r.openRaise.opportunities;
                     ++r.limp.opportunities;
                     if (a.kind == "raise") ++r.openRaise.made;
-                    if (a.kind == "call" && potUnopened) ++r.limp.made;
+                    if (a.kind == "call") ++r.limp.made;
                     // A steal is a first-in raise from the two seats before the blinds, or
-                    // from the small blind itself. Only counted when nobody has entered.
-                    if (potUnopened && (isLate(p) || p == Pos::SB) && !sawStealSpot.count(k)) {
-                        sawStealSpot.insert(k);
+                    // from the small blind itself.
+                    if (isLate(p) || p == Pos::SB) {
                         ++r.steal.opportunities;
                         if (a.kind == "raise") ++r.steal.made;
                     }
-                } else if (raiseCount == 1 && a.playerId != lastRaiser && !a.bombPot && !sawVsOpen.count(k)) {
+                } else if (!hand.bombPot && raiseCount == 1 && a.playerId != lastRaiser && !sawVsOpen.count(k)) {
                     sawVsOpen.insert(k);
                     ++r.threeBet.opportunities;
                     ++r.foldToOpen.opportunities;
@@ -228,7 +236,7 @@ std::vector<Profile> analyze(const std::vector<const HandLog*>& logs,
                         ++r.blindDefend.opportunities;
                         if (a.kind != "fold") ++r.blindDefend.made;
                     }
-                } else if (raiseCount >= 2 && a.playerId == opener && !sawVs3Bet.count(k)) {
+                } else if (!hand.bombPot && raiseCount >= 2 && a.playerId == opener && !sawVs3Bet.count(k)) {
                     sawVs3Bet.insert(k);
                     ++r.foldToThreeBet.opportunities;
                     if (a.kind == "fold") ++r.foldToThreeBet.made;
@@ -275,22 +283,28 @@ std::vector<Profile> analyze(const std::vector<const HandLog*>& logs,
                 for (const Seat& s : hand.seats)
                     if (!foldedPre.count(s.playerId)) flopPlayers.insert(s.playerId);
 
-            if (sawFlop && !hand.bombPot)
-                for (const std::string& pid : flopPlayers) ++rows[person(pid)].wtsd.opportunities;
+            if (sawFlop && !hand.bombPot) {
+                std::set<std::string> people;        // one flop per person, however many accounts
+                for (const std::string& pid : flopPlayers) people.insert(person(pid));
+                for (const std::string& k : people) ++rows[k].wtsd.opportunities;
+            }
 
             double potBefore = 0.0;                  // running pot, for bet sizing
             std::map<std::string, double> streetIn;  // "to" amount committed this street
             std::string street = "preflop";
             std::string firstAggressorThisStreet;
-            std::set<std::string> checkedThisStreet;
-            bool cbetChanceCounted = false;
-            std::set<std::string> sawCbetDecision;
+            std::set<std::string> checkedThisStreet;   // accounts
+            std::set<std::string> checkRaiseSpot;      // people who faced a bet after checking, this street
+            bool aggressorActedOnFlop = false;
+            std::set<std::string> sawCbetDecision, sawDonkSpot;
+            const bool readFlop = !hand.bombPot && !aggressor.empty() && flopPlayers.count(aggressor);
 
             for (const Action& a : hand.actions) {
                 if (a.street != street) {
                     street = a.street;
                     streetIn.clear();
                     checkedThisStreet.clear();
+                    checkRaiseSpot.clear();
                     firstAggressorThisStreet.clear();
                 }
                 const std::string& k = person(a.playerId);
@@ -307,25 +321,36 @@ std::vector<Profile> analyze(const std::vector<const HandLog*>& logs,
                     else if (a.kind == "call")  { if (isFlop) ++r.callsFlop;  else if (isTurn) ++r.callsTurn;  else ++r.callsRiver; }
                     else if (a.kind == "fold")  { if (isFlop) ++r.foldsFlop;  else if (isTurn) ++r.foldsTurn;  else ++r.foldsRiver; }
 
-                    // Check-raise: checked earlier on this street, now raising it.
-                    if (a.kind == "raise" && checkedThisStreet.count(a.playerId)) ++r.checkRaise.made;
-                    if (a.kind == "check") { checkedThisStreet.insert(a.playerId); ++r.checkRaise.opportunities; }
+                    // Check-raise: the chance comes only when someone bets behind a player who
+                    // checked, so it is counted when that player acts again on the street
+                    // (fold, call or raise), once per street. A check that ends the street is no chance.
+                    if (!hand.bombPot && checkedThisStreet.count(a.playerId) &&
+                        (a.kind == "fold" || a.kind == "call" || a.kind == "raise") && checkRaiseSpot.insert(k).second) {
+                        ++r.checkRaise.opportunities;
+                        if (a.kind == "raise") ++r.checkRaise.made;
+                    }
+                    if (a.kind == "check") checkedThisStreet.insert(a.playerId);
                 }
 
                 // Flop continuation betting, measured only on the flop, where the preflop
                 // story is still intact and the sample is largest.
-                if (isFlop && !aggressor.empty() && flopPlayers.count(aggressor)) {
-                    if (a.playerId == aggressor && !cbetChanceCounted &&
-                        (a.kind == "bet" || a.kind == "check" || a.kind == "fold" || a.kind == "call")) {
-                        cbetChanceCounted = true;
-                        ++r.cbet.opportunities;
-                        if (a.kind == "bet" && firstAggressorThisStreet.empty()) ++r.cbet.made;
+                if (isFlop && readFlop) {
+                    // C-bet: the preflop raiser's first flop action, if nobody has bet into them yet.
+                    // A raiser who is donked into had no chance to c-bet.
+                    if (a.playerId == aggressor && !aggressorActedOnFlop) {
+                        aggressorActedOnFlop = true;
+                        if (firstAggressorThisStreet.empty()) {
+                            ++r.cbet.opportunities;
+                            if (a.kind == "bet") ++r.cbet.made;
+                        }
                     }
-                    // Donk bet: someone other than the preflop raiser leads out first.
-                    if (a.kind == "bet" && firstAggressorThisStreet.empty() && a.playerId != aggressor)
-                        ++r.donkBet.made;
-                    if (a.kind == "check" && a.playerId != aggressor && firstAggressorThisStreet.empty())
+                    // Donk bet: someone acting before the preflop raiser, with the flop still
+                    // unbet, leads out. A bet after the raiser checks is a stab, not a donk.
+                    if (a.playerId != aggressor && !aggressorActedOnFlop && sawDonkSpot.insert(k).second &&
+                        firstAggressorThisStreet.empty()) {
                         ++r.donkBet.opportunities;
+                        if (a.kind == "bet") ++r.donkBet.made;
+                    }
                     if (a.playerId != aggressor && !sawCbetDecision.count(k) &&
                         firstAggressorThisStreet == aggressor &&
                         (a.kind == "fold" || a.kind == "call" || a.kind == "raise")) {
@@ -366,23 +391,24 @@ std::vector<Profile> analyze(const std::vector<const HandLog*>& logs,
             }
 
             // ---------- showdown and money ----------
-            std::set<std::string> tabled, winners;
-            for (const auto& s : hand.shown) {
-                if (Hand::shownCardCount(s.second) >= 2) {
-                    if (hand.showdown) tabled.insert(person(s.first));
-                } else {
-                    ++rows[person(s.first)].courtesyReveals;
-                }
-            }
+            // Everyone still in the hand at showdown, tabled or mucked (see handlog::Hand::atShowdown).
+            std::set<std::string> atShowdown, winners, tabled, flashed;
+            for (const std::string& pid : hand.atShowdown()) atShowdown.insert(person(pid));
             for (const auto& rk : hand.rank) {
                 const std::string& k = person(rk.first);
-                tabled.insert(k);
                 winners.insert(k);
                 rows[k].showdownHandClass[rk.second]++;
             }
-            for (const std::string& k : tabled) {
-                ++rows[k].showdownsTabled;
-                ++rows[k].wtsd.made;
+            for (const auto& s : hand.shown) {
+                const int cards = Hand::shownCardCount(s.second);
+                const std::string& k = person(s.first);
+                if (cards == 1) flashed.insert(k);
+                else if (cards >= 2 && atShowdown.count(k)) tabled.insert(k);
+            }
+            for (const std::string& k : flashed) ++rows[k].courtesyReveals;
+            for (const std::string& k : tabled) ++rows[k].showdownsTabled;
+            for (const std::string& k : atShowdown) {
+                if (!hand.bombPot) ++rows[k].wtsd.made;   // the flops it is a share of leave bomb pots out
                 ++rows[k].wsd.opportunities;
                 if (winners.count(k)) ++rows[k].wsd.made;
             }
@@ -549,7 +575,7 @@ bool exportCSV(const std::string& filename, const std::vector<Profile>& rows) {
          "showdowns_tabled,courtesy_reveals,bet_lt33_pct,bet_33_50_pct,bet_50_75_pct,"
          "bet_75_100_pct,bet_100_150_pct,bet_over150_pct,overbet_pct,bet_samples,all_ins,net,bb_per_100,"
          "biggest_pot,vpip_late_pct,vpip_late_n,vpip_blinds_pct,vpip_blinds_n,vpip_early_pct,vpip_early_n,"
-         "hit_run,hit_run_reliable,hit_run_tag\n";
+         "hit_run,hit_run_reliable,hit_run_tag,normalized\n";
     for (const Profile& p : rows) {
         auto rc = [&f](const Rate& r) { f << num(r.pct(), 2) << "," << r.opportunities << ","; };
         f << util::escapeCSV(p.displayName) << "," << p.games << "," << p.hands << "," << p.handsVoluntary << ",";
@@ -566,7 +592,7 @@ bool exportCSV(const std::string& filename, const std::vector<Profile>& rows) {
         rc(p.vpipLate); rc(p.vpipBlinds);
         f << num(p.vpipEarly.pct(), 2) << "," << p.vpipEarly.opportunities << ","
           << (p.hitRun < 0 ? "" : num(p.hitRun, 2)) << "," << (p.hitRunReliable ? "yes" : "no") << ","
-          << util::escapeCSV(p.hitRunTag) << "\n";
+          << util::escapeCSV(p.hitRunTag) << "," << util::escapeCSV(p.normalizedName) << "\n";
     }
     return true;
 }

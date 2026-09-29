@@ -36,7 +36,8 @@ Poker_Ledger_Reader/
     adjustments.csv                 forgiven debts and manual corrections
     seat_owners.csv                 buy-ins that belonged to someone other than the name on them
     session_balances.csv            saved settlements and what has been paid
-    player_summary.csv              export from menu 12
+    player_summary.csv              export from menu 12 (with hours at the table)
+    showdown_rivals.csv             export from menu 12: who beat whom at showdown
     settlements.csv                 export from menu 13
     style_stats.csv                 export from menu 18
     reports/                        HTML reports from menu 14
@@ -47,6 +48,10 @@ Poker_Ledger_Reader/
     console.*                       input prompts
     ledger.*                        finds and parses ledger CSVs (recursively)
     handlog.*                       finds and parses PokerNow hand logs, playing-style stats
+    playstyle.*                     deep profiles (menu 21)
+    hitrun.*                        hit & run factor (menu 22)
+    playtime.*                      hours at the table (menu 3, 12, 14)
+    showdowns.*                     who beats whom at showdown (menu 3, 12)
     players.*                       per-player stats, merge rules, leaderboard, history
     settlement.*                    who-pays-whom, pinned preferences, banker mode
     sessions.*                      saved settlement sessions and payments against them
@@ -54,6 +59,7 @@ Poker_Ledger_Reader/
     seats.*                         seats bought on someone else's account or name
     report.*                        terminal charts and the HTML/SVG report
   tools/validate.py                 recomputes every number from the raw CSVs
+  tools/handlog_check.py            the hand-log half of that: showdowns, rates, rivals, playtime
 ```
 
 Rules of thumb:
@@ -156,6 +162,29 @@ is plain text with no colors or symbols; the numbers are the same.
 - **Last 10 nights** is one bar per night, oldest first: taller means a bigger
   night, green up, red down.
 - The last line checks that every player's net adds up to $0.00.
+
+### Player history (menu 3)
+
+Pick a player to see every night they played, with the running total and its
+chart, then two blocks read from the hand logs in scope:
+
+- **At the table**: hours played, hours per night, poker net per hour, and hands
+  dealt. Time is measured from the hand logs: each hand lasts until the next one
+  starts (a gap over 10 minutes is a break, not a hand), and a player's time is
+  every hand they were dealt. A ledger seat stays open while its player sits out,
+  so the ledger's seat times run long (a median 1.34x the time actually dealt
+  in); they are used only for nights with no hand log, and for the start of a
+  night whose log PokerNow cut short, and hours that include them are marked `~`.
+- **Beaten at showdown by**: the five players who beat them at showdown most
+  often, with how many times and how much they lost to each, plus how many
+  showdowns they reached, won and lost. Everyone still in the hand at showdown
+  counts, whether they tabled their cards or mucked. A chop is no loss, and a
+  hand whose winners split the pot (two boards, run it twice) splits the loss
+  between them by what each collected.
+
+Menu 12 writes both for everyone: hours in `player_summary.csv` and every
+pairing in `showdown_rivals.csv`. The HTML report's leaderboard shows Hours and
+$/hr. The definitions are in `docs/specs/playtime-showdown.md`.
 
 **Scope** is the key idea. Every view (leaderboard, settlement, charts, exports,
 style stats) is computed for the current scope, which is a folder choice plus
@@ -277,8 +306,8 @@ who collected the pot. Menu 18 turns the logs in scope into one row per player:
 | VPIP | % of hands where they put money in voluntarily preflop (blinds do not count) |
 | PFR | % of hands they raised preflop |
 | Flop | % of hands where they saw the flop |
-| WTSD | of the flops they saw, % that went to showdown |
-| W$SD | % of showdowns they won |
+| WTSD | of the flops they saw, % where they were still in at showdown (bomb pots left out of both) |
+| W$SD | % of showdowns they won (anyone still in counts, whether they tabled their cards or mucked) |
 | FoldR | % of the time they folded when facing a preflop raise |
 | AF | postflop aggression: (bets + raises) / calls |
 | H&R | hit & run factor, 0-100 (see menu 22 below); in brackets under 3 winning nights |
@@ -295,12 +324,17 @@ to download. Menu 19 files new downloads for you (see the routine at the top).
 
 The app checks its own reading of every log: each hand must sum to zero and
 every player's stack at the next hand must equal the previous stack plus the
-result of the hand (top-ups excepted). A night that fails this check gets a
+result of the hand (top-ups and chips the admin took off excepted). A night that fails this check gets a
 yellow `*N` (N hands) in the summary table so you know its numbers are slightly off.
 
 Menu 21 shows deeper profiles in two tables, before the flop and after it. The
 second also carries each player's H&R and hit & run tag, and the long read for
 one player adds the tag to their archetype ("Loose-aggressive · Hit & runner").
+Each rate counts only the spots where the choice was really there: a limp or an
+open raise needs the pot unopened when the player first acts, a c-bet needs
+nobody to have bet into the preflop raiser first, a donk bet has to come before
+the raiser acts, and a check-raise chance is a check followed by a bet behind
+it. Bomb pots are left out of all of them (`docs/specs/playtime-showdown.md`).
 
 ### Hit & run (menu 22)
 
@@ -430,7 +464,10 @@ together.
 CSVs using exact integer cents and compares them to the app's own exports:
 player totals per scope, settlement sheets (plain, pinned preferences, banker),
 session balances and payments, history dates and running totals, and the
-duplicate-ledger detection. Run it against a copy of the project folder,
+duplicate-ledger detection. Its last section (with `tools/handlog_check.py`)
+does the same for the hand logs: showdowns and wins, the menu 21 rates, every
+showdown pairing in `showdown_rivals.csv`, and hands and hours per player.
+Run it against a copy of the project folder,
 because it drives the app's menus and writes to that copy's Saved_Data:
 
 ```bash

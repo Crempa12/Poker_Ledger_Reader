@@ -89,6 +89,18 @@ struct PlayerStats {
     double balance() const { return totalNet + adjustments; }
 };
 
+// Time at the table for one person over the games in scope (playtime.hpp says how it is measured).
+struct PlayTime {
+    int nights = 0;                  // games in scope they played
+    int nightsLogged = 0;            // ... of which have a hand log that dealt them a hand
+    int hands = 0;                   // hands dealt, from the hand logs
+    double secondsDealt = 0.0;       // the length of every hand they were dealt, from the hand logs
+    double secondsEstimated = 0.0;   // ledger seat time: nights without a log, and seats before a log begins
+
+    double seconds() const { return secondsDealt + secondsEstimated; }
+    double hours() const { return seconds() / 3600.0; }
+};
+
 struct SettlementEntry {
     std::string fromDisplay;
     std::string fromNormalized;

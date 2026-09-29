@@ -343,19 +343,25 @@ void printPlayerHistory(const PlayerStats& p) {
     std::cout << ui::rule(W) << '\n';
 }
 
-bool exportPlayerSummaryCSV(const std::string& filename, const std::vector<PlayerStats>& list) {
+bool exportPlayerSummaryCSV(const std::string& filename, const std::vector<PlayerStats>& list,
+                            const std::map<std::string, PlayTime>& time) {
     std::ofstream out(filename);
     if (!out.is_open()) return false;
 
-    out << "rank,display_name,normalized_name,games,buy_ins,total_won,total_lost,adjustments,total_net,avg_per_game,biggest_win,biggest_loss,aliases\n";
+    out << "rank,display_name,normalized_name,games,buy_ins,total_won,total_lost,adjustments,total_net,avg_per_game,biggest_win,biggest_loss,aliases,"
+           "hands_dealt,nights_logged,seconds_dealt,seconds_estimated,hours,per_hour\n";
     for (size_t i = 0; i < list.size(); ++i) {
         const PlayerStats& p = list[i];
         std::string aliases;
         for (const std::string& a : p.aliases) aliases += (aliases.empty() ? "" : " | ") + a;
+        auto tt = time.find(p.normalizedName);
+        const PlayTime t = tt == time.end() ? PlayTime{} : tt->second;
         out << (i + 1) << ',' << escapeCSV(p.displayName) << ',' << escapeCSV(p.normalizedName) << ','
             << p.games << ',' << p.buyIns << ',' << fixed2(p.totalWon) << ',' << fixed2(p.totalLost) << ','
             << fixed2(p.adjustments) << ',' << fixed2(p.totalNet) << ',' << fixed2(p.averagePerGame()) << ',' << fixed2(p.biggestWin) << ','
-            << fixed2(p.biggestLoss) << ',' << escapeCSV(aliases) << '\n';
+            << fixed2(p.biggestLoss) << ',' << escapeCSV(aliases) << ',' << t.hands << ',' << t.nightsLogged << ','
+            << fixed2(t.secondsDealt) << ',' << fixed2(t.secondsEstimated) << ',' << fixed2(t.hours()) << ','
+            << (t.seconds() >= 1.0 ? fixed2(p.totalNet / t.hours()) : "") << '\n';   // same "no time" line as menu 3 and the report
     }
     return true;
 }

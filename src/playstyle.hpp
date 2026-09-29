@@ -53,8 +53,8 @@ struct Profile {
     // --- Preflop shape -------------------------------------------------------
     Rate vpip;                 // voluntarily put money in
     Rate pfr;                  // raised
-    Rate limp;                 // called the big blind when the pot was unopened
-    Rate openRaise;            // raised first in
+    Rate limp;                 // first to act in an unopened pot, and called the big blind
+    Rate openRaise;            // first to act in an unopened pot, and raised (a raise over limpers is not one)
     Rate threeBet;             // re-raised a single raise
     Rate foldToThreeBet;       // opened, then folded to a re-raise
     Rate foldToOpen;           // folded facing a single raise
@@ -62,10 +62,11 @@ struct Profile {
     Rate blindDefend;          // in a blind, did not fold to a steal attempt
 
     // --- Postflop shape ------------------------------------------------------
-    Rate cbet;                 // was the preflop raiser and bet the flop
+    // All four skip bomb pots, which have no preflop raiser to continue from.
+    Rate cbet;                 // was the preflop raiser, nobody bet into them, and bet the flop
     Rate foldToCbet;           // folded facing a flop continuation bet
-    Rate checkRaise;           // checked then raised on the same street
-    Rate donkBet;              // bet into the preflop raiser before they acted
+    Rate checkRaise;           // checked, faced a bet on the same street, then raised it
+    Rate donkBet;              // acted before the preflop raiser on an unbet flop, and bet
 
     // Per-street aggression: (bets + raises) / calls, the standard AF, split by street
     // so a player who fires the flop and gives up on the turn is visible as such.
@@ -74,10 +75,11 @@ struct Profile {
     int betsRiver = 0, raisesRiver = 0, callsRiver = 0, foldsRiver = 0;
 
     // --- Showdown ------------------------------------------------------------
-    Rate wtsd;                 // of flops seen, how many reached showdown
-    Rate wsd;                  // of showdowns, how many were won
-    int showdownsTabled = 0;   // hands where they turned over both cards
-    int courtesyReveals = 0;   // flashed a single card (not a showdown)
+    // At showdown = still in the hand when it got there, whether they tabled their cards or mucked.
+    Rate wtsd;                 // of flops seen, how many reached showdown (bomb pots out of both)
+    Rate wsd;                  // of showdowns (bomb pots included), how many were won
+    int showdownsTabled = 0;   // showdowns where they turned over both cards, during the hand or after it
+    int courtesyReveals = 0;   // hands where they showed exactly one card (not a showdown)
     std::map<std::string, int> showdownHandClass;   // "Two Pair" -> count, at showdown
 
     // --- Sizing and commitment ----------------------------------------------

@@ -92,6 +92,20 @@ std::vector<std::string> splitCards(const std::string& s) {
     return out;
 }
 
+// Adds the cards of one "shows a ..." line to what the account has shown this hand. Players can
+// show one card at a time ("shows a K♥." then "shows a K♠."), so reveals add up; a card shown
+// twice counts once.
+void addShown(std::string& shown, const std::string& line) {
+    std::string cards = trim(line);
+    if (!cards.empty() && cards.back() == '.') cards.pop_back();
+    std::vector<std::string> have = splitCards(shown);
+    for (const std::string& c : splitCards(cards)) {
+        if (std::find(have.begin(), have.end(), c) != have.end()) continue;
+        shown += (shown.empty() ? "" : ", ") + c;
+        have.push_back(c);
+    }
+}
+
 // Cards inside the last [...] of a board line.
 std::vector<std::string> bracketCards(const std::string& text) {
     size_t open = text.rfind('[');
@@ -127,6 +141,17 @@ struct Money {
 const Seat* Hand::seatOf(const std::string& playerId) const {
     for (const Seat& s : seats) if (s.playerId == playerId) return &s;
     return nullptr;
+}
+
+std::vector<std::string> Hand::atShowdown() const {
+    std::vector<std::string> out;
+    if (!showdown) return out;
+    auto add = [&](const std::string& pid) {
+        if (std::find(out.begin(), out.end(), pid) == out.end()) out.push_back(pid);
+    };
+    for (const Seat& s : seats) if (!folded.count(s.playerId)) add(s.playerId);
+    for (const auto& r : rank) add(r.first);
+    return out;
 }
 
 // ======================================================================
@@ -209,10 +234,12 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
         for (const auto& b : hand.bounty) hand.net[b.first] += b.second;
         for (const auto& c : hand.collected) hand.pot += c.second;
         // A hand reached showdown if PokerNow named a winning hand (it only prints
-        // "collected N from pot with <Rank>" at showdown), or if at least two players
-        // tabled both their cards. One player flashing a single card is neither.
+        // "collected N from pot with <Rank>" at showdown), or if at least two players still
+        // in the hand tabled both their cards. One player flashing a single card is neither,
+        // and nor are cards shown after the hand ended (they are added to it below, later).
         int tabled = 0;
-        for (const auto& s : hand.shown) if (Hand::shownCardCount(s.second) >= 2) ++tabled;
+        for (const auto& s : hand.shown)
+            if (!hand.folded.count(s.first) && Hand::shownCardCount(s.second) >= 2) ++tabled;
         hand.showdown = !hand.rank.empty() || tabled >= 2;
         out.hands.push_back(hand);
         inHand = false;
@@ -329,7 +356,19 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
             out.events.push_back(ev);
             continue;
         }
-        if (!inHand) continue;
+        if (!inHand) {
+            // Cards shown after the hand-ended marker belong to the hand that just finished: a
+            // showdown loser often mucks, then turns their cards over once the pot is pushed.
+            if (!e.empty() && e[0] == '"' && !out.hands.empty()) {
+                size_t p = 0;
+                std::string nick, pid;
+                if (readPlayerRef(e, p, nick, pid)) {
+                    std::string rest = trim(e.substr(p));
+                    if (startsWith(rest, "shows a ")) addShown(out.hands.back().shown[pid], rest.substr(8));
+                }
+            }
+            continue;
+        }
 
         if (startsWith(e, "Player stacks:")) {
             size_t p = 0;
@@ -394,7 +433,7 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
             hand.actions.push_back(a);
         };
 
-        if (startsWith(rest, "folds")) act("fold", 0);
+        if (startsWith(rest, "folds")) { act("fold", 0); hand.folded.insert(pid); }
         else if (startsWith(rest, "checks")) act("check", 0);
         else if (startsWith(rest, "calls ")) { double n = numberAt(rest, 6); money.live(pid, n); act("call", n); }
         else if (startsWith(rest, "bets ")) { double n = numberAt(rest, 5); money.live(pid, n); act("bet", n); }
@@ -415,9 +454,7 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
             act("post", n, pt);
         }
         else if (startsWith(rest, "shows a ")) {
-            std::string cards = trim(rest.substr(8));
-            if (!cards.empty() && cards.back() == '.') cards.pop_back();
-            hand.shown[pid] = cards;
+            addShown(hand.shown[pid], rest.substr(8));
             // Whether this was a real showdown is decided in finish(): a single flashed card
             // is a courtesy reveal, not a showdown, and often comes from a player who folded.
         }
@@ -441,6 +478,12 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
 
     if (out.hands.empty()) { error = "no hands in " + file.string(); return false; }
 
+    // Chips the admin took off a stack between two hands ("stack from 60.00 to 20.00"), keyed by
+    // the hand dealt next and the account, so the check below does not call that a mismatch.
+    std::map<std::pair<int, std::string>, double> removedBefore;
+    for (const StackEvent& ev : out.events)
+        if (ev.kind == "remove") removedBefore[{ev.hand, ev.playerId}] += ev.amount;
+
     // Biggest pot, and a sanity check of the money maths against the next hand's stacks.
     for (size_t h = 0; h < out.hands.size(); ++h) {
         const Hand& hd = out.hands[h];
@@ -456,7 +499,9 @@ bool parseLogFile(const fs::path& file, const fs::path& root, HandLog& out, std:
                 const Seat* ns = next.seatOf(s.playerId);
                 if (!ns) continue;
                 auto it = hd.net.find(s.playerId);
-                double expected = s.stack + (it == hd.net.end() ? 0.0 : it->second);
+                auto removed = removedBefore.find({static_cast<int>(h) + 1, s.playerId});
+                double expected = s.stack + (it == hd.net.end() ? 0.0 : it->second) -
+                                  (removed == removedBefore.end() ? 0.0 : removed->second);
                 // A stack above the expected value is a top-up; below it means the maths went wrong.
                 if (ns->stack < expected - 0.011) { ++out.stackMismatches; break; }
             }
@@ -627,20 +672,18 @@ std::vector<StyleStats> computeStyle(const std::vector<const HandLog*>& logs,
                     for (const std::string& k : sawFlop) ++rows[k].sawFlop;
                 }
             }
-            // Only players who tabled BOTH cards in a hand that actually reached showdown
-            // count toward WTSD/W$SD. A single flashed card is a courtesy reveal, and in
-            // this corpus it frequently comes from someone who had already folded.
-            std::set<std::string> atShowdown, showdownWinners;
-            for (const auto& s : hand.shown) {
-                if (Hand::shownCardCount(s.second) >= 2) {
-                    if (hand.showdown) atShowdown.insert(person(s.first));
-                } else {
-                    ++rows[person(s.first)].courtesyReveals;
-                }
-            }
-            for (const auto& r : hand.rank) { atShowdown.insert(person(r.first)); showdownWinners.insert(person(r.first)); }
+            // Everyone still in the hand at showdown counts, whether they tabled their cards or
+            // mucked. Counting only those who tabled both cards missed about half of all showdown
+            // losers (2,264 of 9,062 showdown seats), which put the pool's W$SD at 68% instead of 51%.
+            std::set<std::string> atShowdown, showdownWinners, flashed;
+            for (const std::string& pid : hand.atShowdown()) atShowdown.insert(person(pid));
+            for (const auto& r : hand.rank) showdownWinners.insert(person(r.first));
+            // A single card shown, before or after the hand ended, is a courtesy reveal.
+            for (const auto& s : hand.shown) if (Hand::shownCardCount(s.second) == 1) flashed.insert(person(s.first));
+            for (const std::string& k : flashed) ++rows[k].courtesyReveals;
             for (const std::string& k : atShowdown) {
                 ++rows[k].showdowns;
+                if (!hand.bombPot) ++rows[k].showdownsVoluntary;   // WTSD's flops leave bomb pots out too
                 if (showdownWinners.count(k)) ++rows[k].showdownWins;
             }
             std::map<std::string, double> collected;
@@ -835,14 +878,15 @@ bool exportStyleCSV(const std::string& filename, const std::vector<StyleStats>& 
     if (!out.is_open()) return false;
     out << "player,normalized,games,hands,vpip_pct,pfr_pct,saw_flop_pct,wtsd_pct,wsd_pct,fold_to_raise_pct,"
            "aggression,hands_won,biggest_pot_won,net_from_log,bounties_net,all_ins,style,"
-           "hit_run,hit_run_reliable,hit_run_tag\n";
+           "hit_run,hit_run_reliable,hit_run_tag,saw_flop,showdowns,showdowns_voluntary,showdown_wins,courtesy_reveals\n";
     for (const StyleStats& r : rows) {
         out << escapeCSV(r.displayName) << ',' << escapeCSV(r.normalizedName) << ',' << r.games << ',' << r.hands << ','
             << fixed2(r.vpipPct()) << ',' << fixed2(r.pfrPct()) << ',' << fixed2(r.sawFlopPct()) << ',' << fixed2(r.wtsdPct()) << ','
             << fixed2(r.wsdPct()) << ',' << fixed2(r.foldToRaisePct()) << ',' << fixed2(r.aggression()) << ',' << r.handsWon << ','
             << fixed2(r.biggestPotWon) << ',' << fixed2(r.netFromLog) << ',' << fixed2(r.bountiesNet) << ',' << r.allIns << ','
             << escapeCSV(r.styleLabel()) << ',' << (r.hitRun < 0 ? "" : fixed2(r.hitRun)) << ','
-            << (r.hitRunReliable ? "yes" : "no") << ',' << escapeCSV(r.hitRunTag) << '\n';
+            << (r.hitRunReliable ? "yes" : "no") << ',' << escapeCSV(r.hitRunTag) << ',' << r.sawFlop << ','
+            << r.showdowns << ',' << r.showdownsVoluntary << ',' << r.showdownWins << ',' << r.courtesyReveals << '\n';
     }
     return true;
 }

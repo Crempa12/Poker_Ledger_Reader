@@ -18,6 +18,8 @@ add_executable(Poker_Ledger_Reader
         src/seats.cpp
         src/playstyle.cpp
         src/hitrun.cpp
+        src/playtime.cpp
+        src/showdowns.cpp
         src/ui.cpp
 )
 
