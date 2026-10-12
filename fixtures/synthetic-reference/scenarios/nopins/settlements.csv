@@ -1,0 +1,29 @@
+from,to,amount,reason,from_normalized,to_normalized
+Quorin,Plenkor,46.85,auto,quorin,plenkor
+707070,Plenkor,7.87,auto,707070,plenkor
+"Quinn ""Q"" Varn",Plenkor,3.26,auto,quinnqvarn,plenkor
+Dulvane,Frymoss,24.94,auto,dulvane,frymoss
+Dulvane,🎴,5.06,auto,dulvane,unnamedfakeid
+Ostrelin,🎴,19.55,auto,ostrelin,unnamedfakeid
+Ostrelin,Bexrunn,1.50,auto,ostrelin,bexrunn
+Nuvrask,Vorndal,35.41,auto,nuvrask,vorndal
+Nuvrask,Pindrel,5.59,auto,nuvrask,pindrel
+Tarvelle,🎲Brask,21.85,auto,tarvelle,brask
+Tarvelle,Pindrel,8.15,auto,tarvelle,pindrel
+Ekvarto,Jolwick,37.52,auto,ekvarto,jolwick
+Lumqat,Jolwick,11.25,auto,lumqat,jolwick
+Lumqat,Hiltrex,1.50,auto,lumqat,hiltrex
+Lumqat,Ylmande,0.50,auto,lumqat,ylmande
+Zaqvin,Gorvast,77.22,auto,zaqvin,gorvast
+Ombrix,Sybnari,54.56,auto,ombrix,sybnari
+"Harlo, Dromm",Sybnari,36.91,auto,harlodromm,sybnari
+"Harlo, Dromm",Mirtavo,15.33,auto,harlodromm,mirtavo
+Wexlorn,Mirtavo,14.20,auto,wexlorn,mirtavo
+Wexlorn,Gorvast,0.97,auto,wexlorn,gorvast
+Fenquor,Vextor,33.06,auto,fenquor,vextorion
+Quelzit,Hespyre,22.47,auto,quelzit,hespyre
+Quelzit,Vextor,7.63,auto,quelzit,vextorion
+Rixmoot,Cavlorn,5.00,auto,rixmoot,cavlorn
+Rixmoot,Mari Quenby,2.82,auto,rixmoot,marisolquenby
+Rixmoot,Frymoss Two,1.08,auto,rixmoot,frymosstwo
+Rixmoot,Vextor,0.85,auto,rixmoot,vextorion

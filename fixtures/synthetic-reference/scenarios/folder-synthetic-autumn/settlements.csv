@@ -1,0 +1,26 @@
+from,to,amount,reason,from_normalized,to_normalized
+Nuvrask,Kaxtun,35.97,auto,nuvrask,kaxtun
+Nuvrask,🎲Brask,12.79,auto,nuvrask,brask
+Ostrelin,🎲Brask,5.42,auto,ostrelin,brask
+Dulvane,Pindrel,30.00,auto,dulvane,pindrel
+Quorin,Gorvast,10.46,auto,quorin,gorvast
+Quorin,Pindrel,7.06,auto,quorin,pindrel
+Fenquor,Rixmoot,30.01,auto,fenquor,rixmoot
+Fenquor,Hespyre,3.05,auto,fenquor,hespyre
+Ekvarto,Zaqvin,21.75,auto,ekvarto,zaqvin
+Wexlorn,Hespyre,7.65,auto,wexlorn,hespyre
+Wexlorn,Zaqvin,3.56,auto,wexlorn,zaqvin
+"Harlo, Dromm",Jolwick,48.77,auto,harlodromm,jolwick
+"Harlo, Dromm",Vextor,29.04,auto,harlodromm,vextorion
+"Harlo, Dromm",Frymoss,9.51,auto,harlodromm,frymoss
+Hiltrex,Sybnari,21.26,auto,hiltrex,sybnari
+Hiltrex,Frymoss,0.73,auto,hiltrex,frymoss
+Hiltrex,Ylmande,0.25,auto,hiltrex,ylmande
+Quelzit,Mirtavo,43.08,auto,quelzit,mirtavo
+Quelzit,Mari Quenby,6.33,auto,quelzit,marisolquenby
+Ombrix,Vorndal,35.41,auto,ombrix,vorndal
+Ombrix,Plenkor,4.76,auto,ombrix,plenkor
+Tarvelle,Lumqat,16.61,auto,tarvelle,lumqat
+Tarvelle,Plenkor,7.90,auto,tarvelle,plenkor
+Tarvelle,Mari Quenby,3.49,auto,tarvelle,marisolquenby
+Tarvelle,Cavlorn,2.00,auto,tarvelle,cavlorn

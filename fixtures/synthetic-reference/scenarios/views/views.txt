@@ -1,0 +1,325 @@
+Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
+WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
+WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
+Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
+WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
+         They count for the name on the seat until you check them in menu 20.
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- Pins, banker, me & display ----------------------------------------------
+  1. Zaqvin always pays Sybnari   Venmo only
+  2. Gorvast always pays Sybnari
+
+  Banker   off                 pins first, then automatic matching
+  Me       Zaqvin              highlighted in charts and the report
+  Display  fancy               colors, boxes and charts
+----------------------------------------------------------------------------
+  1. Pin a payment (someone always pays someone)
+  2. Remove a pin
+  3. Set the banker
+  4. Turn banker mode off
+  5. Set who "me" is
+  6. Switch display to simple (use this if you see odd characters)
+  0. Back
+Choose: 
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- Leaderboard - all folders -----------------------------------------------------------------------
+
+   #  Player             Nights   Up-Dn         Net  Avg/night       Best      Worst  Last 10 nights
+----------------------------------------------------------------------------------------------------
+   1  Sybnari                 3     3-0     +$91.47    +$30.49    +$52.93    +$17.28  +++
+   2  Gorvast                 4     3-1     +$78.19    +$19.55    +$98.28    -$31.46  ++-+
+   3  Plenkor                 6     5-1     +$57.98     +$9.66    +$20.90     -$3.54  ++++-+
+   4  Jolwick                 4     3-1     +$48.77    +$12.19    +$45.00    -$24.34  +++-
+   5  Vorndal                 2     1-1     +$35.41    +$17.71    +$51.03    -$15.62  +-
+   6  Mirtavo                 6     3-3     +$29.53     +$4.92    +$31.71    -$23.26  -+--++
+   7  Vextor                  1     1-0     +$29.04    +$29.04    +$29.04    +$29.04  +
+   8  Frymoss                 5     3-2     +$24.94     +$4.99    +$32.94    -$22.70  -+++-
+   9  🎴                      2     2-0     +$24.61    +$12.30    +$17.70     +$6.91  ++
+  10  Hespyre                 4     3-1     +$22.47     +$5.62    +$22.79    -$12.09  ++-+
+  11  Pindrel                 3     2-1     +$13.74     +$4.58    +$37.06    -$25.56  -++
+  12  Mari Quenby             1     1-0      +$9.82     +$9.82     +$9.82     +$9.82  +
+  13  Cavlorn                 8     6-2      +$5.00     +$0.62     +$2.00     -$1.00  +-++-+++
+  14  Bexrunn                 4     2-1      +$1.50     +$0.38     +$2.00     -$1.00  +-+.
+  15  Hiltrex                 3     2-1      +$1.50     +$0.50    +$21.72    -$22.24  ++-
+  16  Frymoss Two             1     1-0      +$1.08     +$1.08     +$1.08     +$1.08  +
+  17  Ylmande                 4     3-1      +$0.50     +$0.12     +$0.25     -$0.05  ++-+
+  18  Kaxtun                  5     2-3      -$1.61     -$0.32    +$20.97    -$17.82  +---+
+  19  🎲Brask                 3     1-2      -$3.15     -$1.05    +$18.21    -$14.47  --+
+  20  Quinn "Q" Varn          1     0-1      -$3.26     -$3.26     -$3.26     -$3.26  -
+  21  707070                  3     1-2      -$7.87     -$2.62     +$7.08     -$9.22  --+
+  22  Rixmoot                 2     1-1     -$10.14     -$5.07    +$30.01    -$40.15  -+
+  23  Lumqat                  2     1-1     -$13.25     -$6.62    +$16.61    -$29.86  -+
+  24  Wexlorn                 4     2-2     -$15.17     -$3.79     +$7.77    -$14.16  -++-
+  25  Ostrelin                3     0-2     -$21.05     -$7.02      $0.00    -$15.63  .--
+  26  Quorin                 2     0-2     -$21.85    -$10.93     -$4.33    -$17.52  --
+  27  Dulvane                 1     0-1     -$30.00    -$30.00    -$30.00    -$30.00  -
+  28  Tarvelle                1     0-1     -$30.00    -$30.00    -$30.00    -$30.00  -
+  29  Quelzit                 7     4-3     -$30.10     -$4.30    +$12.34    -$45.22  +-++-+-
+  30  Fenquor                 2     0-1     -$33.06    -$16.53      $0.00    -$33.06  .-
+  31  Ekvarto                 3     1-2     -$37.52    -$12.51     +$8.89    -$24.66  -+-
+  32  Nuvrask                 3     2-1     -$41.00    -$13.67     +$7.76    -$54.11  +-+
+  33  Harlo, Dromm            3     2-1     -$52.24    -$17.41    +$25.93    -$87.32  ++-
+  34  Ombrix                  2     0-2     -$54.56    -$27.28    -$14.39    -$40.17  --
+  35  Zaqvin                  5     2-3     -$64.72    -$12.94    +$24.91    -$52.17  ---++
+----------------------------------------------------------------------------------------------------
+ !! The games are off by +$5.00: a ledger does not balance (see the warning at startup).
+
+ Payments & corrections  (menu 17) not in the table; settlement sheets count them
+   2026-03-20  Quorin                -$25.00   paid (from Brask)                                   
+   2026-03-20  🎲Brask                +$25.00   paid (to Quorin)                                    
+   2026-06-01  Vextor                 +$12.50   debt let go (to Zaqvin)                             
+   2026-06-01  Zaqvin                 -$12.50   debt let go (from Vextorion)                        
+   2026-09-05  Mari Quenby             -$7.00   typo fix                                            
+   One-sided: they add up to -$7.00, so a settlement sheet will be short by that much.
+
+ Nights = games played   Up-Dn = nights won-lost   Last 10: oldest to newest   Nicknames: menu 4
+
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- Saved sheets: all -----------------------------------------------------------------------
+   #  Sheet                 From            To                     Owed  Still owed  Status
+--------------------------------------------------------------------------------------------
+   1  Winter 2026 sheet     Jolwick         Kaxtun               $15.00       $0.00  paid
+   2  Winter 2026 sheet     Mirtavo         Zaqvin               $25.00      $10.00  partial
+   3  Winter 2026 sheet     Zaqvin          Plenkor              $40.00      $40.00  open
+--------------------------------------------------------------------------------------------
+
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- Who still owes whom (every saved sheet) ---------------------------
+   1  Zaqvin                --->  Plenkor                   $40.00
+   2  Mirtavo               --->  Zaqvin                    $10.00
+
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- Duplicate ledger check ----------------------------------------------------------------
+1. SAME LEDGER ID, DIFFERENT CONTENT in the same folder (probably an earlier export of the same game)
+     skipped: <work>/runs/views/Games/Synthetic Spring/ledger_pglFAKE0005 (1).csv
+     matches: <work>/runs/views/Games/Synthetic Spring/ledger_pglFAKE0005.csv
+2. OVERLAP: 3 sit-downs also appear in another ledger with a different id in the same folder
+     kept:    <work>/runs/views/Games/Synthetic Spring/ledger_pglFAKE0009.csv
+     matches: <work>/runs/views/Games/Synthetic Spring/ledger_pglFAKE0008.csv
+     Both files are still counted. If they are the same game, delete the older export.
+3. IDENTICAL CONTENT across folders
+     skipped: <work>/runs/views/Games/Synthetic Winter/ledger_pglFAKE0004.csv
+     matches: <work>/runs/views/Games/Synthetic Autumn/ledger_pglFAKE0004.csv
+==========================================================================================
+
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- Payments & corrections (every folder and date) ----------------------------------------------
+  They change who owes whom on settlement sheets, never the leaderboard.
+
+   #  Date        Player                  Amount  Folder            Note
+------------------------------------------------------------------------------------------------
+   1  2026-03-20  🎲Brask                +$25.00  Synthetic Spring  paid (to Quorin)            
+   2  2026-03-20  Quorin                -$25.00  Synthetic Spring  paid (from Brask)           
+   3  2026-06-01  Vextor                 +$12.50  (all folders)     debt let go (to Zaqvin)     
+   4  2026-06-01  Zaqvin                 -$12.50  (all folders)     debt let go (from Vextorion)
+   5  2026-09-05  Mari Quenby             -$7.00  (all folders)     typo fix                    
+------------------------------------------------------------------------------------------------
+  New entries go under: all folders (they count only when settling everything)
+
+  1. Money that changed hands outside the ledger (a payment, or a debt let go)
+  2. Correct one player's balance by hand (one-sided)
+  3. Remove an entry
+  0. Back
+Choose: 
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- Shared accounts: a seat played by someone other than its name -------------------------
+  PokerNow credits a seat to the name and account it was bought on. When someone
+  plays on a friend's account, or under a friend's name, hand the seat to the person
+  whose money it was. Totals, settlement sheets, charts and hand-log stats follow.
+  If one seat mixed two people's money, give it to one of them here and move the other
+  person's share with menu 17 (payments & corrections). Someone who only changed their
+  nickname is menu 4: merging keeps every one of their seats together.
+
+  1. Review seats that look shared (3 to check)
+  2. Reassign any seat in a game
+  3. List saved seat owners / undo one (3 saved, 1 seat reassigned)
+  0. Back
+Choose: 
+-- Saved seat owners -----------------------------------------------------------------------------
+#   Game        Nickname        Account             Net  Counted for   Note
+--------------------------------------------------------------------------------------------------
+1   2026-10-03  Ombrix          FAKEid0040       -$2.47  Hespyre       bought under "Ombrix" on a.
+2   2026-01-14  Hespyre         FAKEid0040      +$10.79  Hespyre       checked: name was right    
+3   (not loaded)Ghostly         FAKEid0031            -  Zaqvin        bought under "Ghostly" on .
+--------------------------------------------------------------------------------------------------
+Number to undo, so the seat counts for its nickname again (0 = back): 
+-- Shared accounts: a seat played by someone other than its name -------------------------
+  PokerNow credits a seat to the name and account it was bought on. When someone
+  plays on a friend's account, or under a friend's name, hand the seat to the person
+  whose money it was. Totals, settlement sheets, charts and hand-log stats follow.
+  If one seat mixed two people's money, give it to one of them here and move the other
+  person's share with menu 17 (payments & corrections). Someone who only changed their
+  nickname is menu 4: merging keeps every one of their seats together.
+
+  1. Review seats that look shared (3 to check)
+  2. Reassign any seat in a game
+  3. List saved seat owners / undo one (3 saved, 1 seat reassigned)
+  0. Back
+Choose: 
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Saved merge rules, preferences, settings, seat owners and session balances. Bye.

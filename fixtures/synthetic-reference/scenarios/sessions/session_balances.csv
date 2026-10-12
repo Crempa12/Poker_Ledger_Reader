@@ -1,0 +1,32 @@
+session_id,from_display,from_normalized,to_display,to_normalized,original_amount,remaining_amount,status
+Winter 2026 sheet,Jolwick,jolwick,Kaxtun,kaxtun,15.00,0.00,paid
+Winter 2026 sheet,Mirtavo,mirtavo,Zaqvin,zaqvin,25.00,10.00,partial
+Winter 2026 sheet,Zaqvin,zaqvin,Plenkor,plenkor,40.00,40.00,open
+reference-all,707070,707070,Plenkor,plenkor,7.87,3.94,partial
+reference-all,Dulvane,dulvane,Frymoss,frymoss,24.94,24.94,open
+reference-all,Dulvane,dulvane,🎴,unnamedfakeid,5.06,5.06,open
+reference-all,Ekvarto,ekvarto,Jolwick,jolwick,37.52,37.52,open
+reference-all,Fenquor,fenquor,Vextor,vextorion,33.06,33.06,open
+reference-all,"Harlo, Dromm",harlodromm,Gorvast,gorvast,22.71,22.71,open
+reference-all,"Harlo, Dromm",harlodromm,Mirtavo,mirtavo,29.53,29.53,open
+reference-all,Lumqat,lumqat,Hiltrex,hiltrex,1.50,1.50,open
+reference-all,Lumqat,lumqat,Jolwick,jolwick,11.25,11.25,open
+reference-all,Lumqat,lumqat,Ylmande,ylmande,0.50,0.50,open
+reference-all,Nuvrask,nuvrask,Pindrel,pindrel,5.59,5.59,open
+reference-all,Nuvrask,nuvrask,Vorndal,vorndal,35.41,35.41,open
+reference-all,Ombrix,ombrix,Gorvast,gorvast,54.56,54.56,open
+reference-all,Ostrelin,ostrelin,Bexrunn,bexrunn,1.50,1.50,open
+reference-all,Ostrelin,ostrelin,🎴,unnamedfakeid,19.55,19.55,open
+reference-all,Quelzit,quelzit,Hespyre,hespyre,22.47,22.47,open
+reference-all,Quelzit,quelzit,Vextor,vextorion,7.63,7.63,open
+reference-all,"Quinn ""Q"" Varn",quinnqvarn,Plenkor,plenkor,3.26,3.26,open
+reference-all,Quorin,quorin,Plenkor,plenkor,46.85,46.85,open
+reference-all,Rixmoot,rixmoot,Cavlorn,cavlorn,5.00,5.00,open
+reference-all,Rixmoot,rixmoot,Frymoss Two,frymosstwo,1.08,1.08,open
+reference-all,Rixmoot,rixmoot,Mari Quenby,marisolquenby,2.82,2.82,open
+reference-all,Rixmoot,rixmoot,Vextor,vextorion,0.85,0.85,open
+reference-all,Tarvelle,tarvelle,🎲Brask,brask,21.85,21.85,open
+reference-all,Tarvelle,tarvelle,Pindrel,pindrel,8.15,8.15,open
+reference-all,Wexlorn,wexlorn,Gorvast,gorvast,0.92,0.92,open
+reference-all,Wexlorn,wexlorn,Sybnari,sybnari,14.25,14.25,open
+reference-all,Zaqvin,zaqvin,Sybnari,sybnari,77.22,77.22,open

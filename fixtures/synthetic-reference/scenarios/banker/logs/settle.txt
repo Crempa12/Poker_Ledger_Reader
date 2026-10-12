@@ -1,0 +1,189 @@
+Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
+WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
+WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
+Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
+WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
+         They count for the name on the seat until you check them in menu 20.
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker Cavlorn | pinned payments 2                             |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- What would you like to settle? ------------------------------------------
+  1. One game (a single ledger)
+  2. One folder (every game in it)
+  3. Everything in the current scope (all folders)
+  0. Cancel
+Choose: 
+-- Everything in all folders, 12 games -------------------------------------
+  Player                   Poker net    Payments   Settles as
+  Sybnari                    +$91.47           -   is owed $91.47
+  Gorvast                    +$78.19           -   is owed $78.19
+  Plenkor                    +$57.98           -   is owed $57.98
+  Jolwick                    +$48.77           -   is owed $48.77
+  Vextor                     +$29.04     +$12.50   is owed $41.54
+  Vorndal                    +$35.41           -   is owed $35.41
+  Mirtavo                    +$29.53           -   is owed $29.53
+  Frymoss                    +$24.94           -   is owed $24.94
+  🎴                         +$24.61           -   is owed $24.61
+  Hespyre                    +$22.47           -   is owed $22.47
+  🎲Brask                     -$3.15     +$25.00   is owed $21.85
+  Pindrel                    +$13.74           -   is owed $13.74
+  Cavlorn                     +$5.00           -   is owed $5.00
+  Mari Quenby                 +$9.82      -$7.00   is owed $2.82
+  Bexrunn                     +$1.50           -   is owed $1.50
+  Hiltrex                     +$1.50           -   is owed $1.50
+  Frymoss Two                 +$1.08           -   is owed $1.08
+  Ylmande                     +$0.50           -   is owed $0.50
+  Kaxtun                      -$1.61           -   owes $1.61
+  Quinn "Q" Varn              -$3.26           -   owes $3.26
+  707070                      -$7.87           -   owes $7.87
+  Rixmoot                    -$10.14           -   owes $10.14
+  Lumqat                     -$13.25           -   owes $13.25
+  Wexlorn                    -$15.17           -   owes $15.17
+  Ostrelin                   -$21.05           -   owes $21.05
+  Dulvane                    -$30.00           -   owes $30.00
+  Tarvelle                   -$30.00           -   owes $30.00
+  Quelzit                    -$30.10           -   owes $30.10
+  Fenquor                    -$33.06           -   owes $33.06
+  Ekvarto                    -$37.52           -   owes $37.52
+  Nuvrask                    -$41.00           -   owes $41.00
+  Quorin                    -$21.85     -$25.00   owes $46.85
+  Harlo, Dromm               -$52.24           -   owes $52.24
+  Ombrix                     -$54.56           -   owes $54.56
+  Zaqvin                     -$64.72     -$12.50   owes $77.22
+
+Banker mode is on: everyone settles through Cavlorn.
+Pins and one-off requests are skipped. Turn the banker off in menu 6 to use them.
+
+  !! This sheet does not balance: its totals add up to -$2.00 instead of $0.00.
+    The banker is left holding $2.00 that nobody is owed.
+    The cause is a one-sided correction (menu 17) or a ledger that does not balance.
+
+(banker mode)
+-- Settlement sheet --------------------------------------------------------
+  34 payments, 18 senders, 18 receivers
+
+  Cavlorn               --->  Bexrunn                   $1.50   banker
+                        --->  🎲Brask                  $21.85   banker
+                        --->  Frymoss                  $24.94   banker
+                        --->  Frymoss Two               $1.08   banker
+                        --->  Gorvast                  $78.19   banker
+                        --->  Hespyre                  $22.47   banker
+                        --->  Hiltrex                   $1.50   banker
+                        --->  Jolwick                  $48.77   banker
+                        --->  Mari Quenby               $2.82   banker
+                        --->  Mirtavo                  $29.53   banker
+                        --->  Pindrel                  $13.74   banker
+                        --->  Plenkor                  $57.98   banker
+                        --->  Sybnari                  $91.47   banker
+                        --->  🎴                       $24.61   banker
+                        --->  Vextor                   $41.54   banker
+                        --->  Vorndal                  $35.41   banker
+                        --->  Ylmande                   $0.50   banker
+                              sends $497.90 in all, to 17 people
+  Zaqvin                --->  Cavlorn                  $77.22   banker
+  Ombrix                --->  Cavlorn                  $54.56   banker
+  Harlo, Dromm          --->  Cavlorn                  $52.24   banker
+  Quorin               --->  Cavlorn                  $46.85   banker
+  Nuvrask               --->  Cavlorn                  $41.00   banker
+  Ekvarto               --->  Cavlorn                  $37.52   banker
+  Fenquor               --->  Cavlorn                  $33.06   banker
+  Quelzit               --->  Cavlorn                  $30.10   banker
+  Dulvane               --->  Cavlorn                  $30.00   banker
+  Tarvelle              --->  Cavlorn                  $30.00   banker
+  Ostrelin              --->  Cavlorn                  $21.05   banker
+  Wexlorn               --->  Cavlorn                  $15.17   banker
+  Lumqat                --->  Cavlorn                  $13.25   banker
+  Rixmoot               --->  Cavlorn                  $10.14   banker
+  707070                --->  Cavlorn                   $7.87   banker
+  Quinn "Q" Varn        --->  Cavlorn                   $3.26   banker
+  Kaxtun                --->  Cavlorn                   $1.61   banker
+
+-- Who receives what -------------------------------------------------------
+  Bexrunn                   $1.50   from Cavlorn
+  Cavlorn                 $504.90   from 707070, Dulvane, Ekvarto, Fenquor,
+                                         Harlo, Dromm, Kaxtun, Lumqat,
+                                         Nuvrask, Ombrix, Ostrelin, Quelzit,
+                                         Quinn "Q" Varn, Quorin, Rixmoot,
+                                         Tarvelle, Wexlorn, Zaqvin
+  Frymoss                  $24.94   from Cavlorn
+  Frymoss Two               $1.08   from Cavlorn
+  Gorvast                  $78.19   from Cavlorn
+  Hespyre                  $22.47   from Cavlorn
+  Hiltrex                   $1.50   from Cavlorn
+  Jolwick                  $48.77   from Cavlorn
+  Mari Quenby               $2.82   from Cavlorn
+  Mirtavo                  $29.53   from Cavlorn
+  Pindrel                  $13.74   from Cavlorn
+  Plenkor                  $57.98   from Cavlorn
+  Sybnari                  $91.47   from Cavlorn
+  Vextor                   $41.54   from Cavlorn
+  Vorndal                  $35.41   from Cavlorn
+  Ylmande                   $0.50   from Cavlorn
+  🎲Brask                  $21.85   from Cavlorn
+  🎴                       $24.61   from Cavlorn
+
+  Next: 7 saves this sheet as a session, 13 exports it as CSV.
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker Cavlorn | pinned payments 2                             |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Exported to <work>/runs/banker/settle/Saved_Data/settlements.csv
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker Cavlorn | pinned payments 2                             |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Saved merge rules, preferences, settings, seat owners and session balances. Bye.

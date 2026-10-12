@@ -11,7 +11,12 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "fixtures": "node tools/make-fixtures.ts",
+    "reference": "bash reference/run.sh",
+    "check:privacy": "node tools/check-privacy.ts",
+    "parity": "node tools/parity.ts --reference fixtures/synthetic-reference --data fixtures/synthetic",
+    "parity:real": "PARITY_REAL=1 vitest run packages/core/test/parity.test.ts -t 'real data'"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

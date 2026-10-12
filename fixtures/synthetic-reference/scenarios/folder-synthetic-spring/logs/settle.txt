@@ -1,0 +1,170 @@
+Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
+WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
+WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
+Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
+WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
+         They count for the name on the seat until you check them in menu 20.
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   5 games | Mar 14 - May 2 | folder "Synthetic Spring"        |
+| 27 players | hand logs 0/5 | books off by +$5.00                           |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- What would you like to settle? ------------------------------------------
+  1. One game (a single ledger)
+  2. One folder (every game in it)
+  3. Everything in the current scope (folder "Synthetic Spring")
+  0. Cancel
+Choose: 
+-- Everything in folder "Synthetic Spring", 5 games ------------------------
+  Player                   Poker net    Payments   Settles as
+  Harlo, Dromm               +$35.08           -   is owed $35.08
+  Frymoss                    +$30.86           -   is owed $30.86
+  🎴                         +$24.61           -   is owed $24.61
+  Plenkor                    +$24.42           -   is owed $24.42
+  Hiltrex                    +$23.74           -   is owed $23.74
+  Sybnari                    +$17.28           -   is owed $17.28
+  Quelzit                    +$12.45           -   is owed $12.45
+  Wexlorn                    +$10.20           -   is owed $10.20
+  Mirtavo                     +$9.71           -   is owed $9.71
+  Ekvarto                     +$8.89           -   is owed $8.89
+  Nuvrask                     +$7.76           -   is owed $7.76
+  707070                      +$7.08           -   is owed $7.08
+  🎲Brask                    -$21.36     +$25.00   is owed $3.64
+  Pindrel                     +$2.24           -   is owed $2.24
+  Cavlorn                     +$1.75           -   is owed $1.75
+  Bexrunn                     +$1.00           -   is owed $1.00
+  Hespyre                     +$0.98           -   is owed $0.98
+  Ylmande                     -$0.05           -   owes $0.05
+  Quinn "Q" Varn              -$3.26           -   owes $3.26
+  Ombrix                     -$14.39           -   owes $14.39
+  Ostrelin                   -$15.63           -   owes $15.63
+  Zaqvin                     -$15.89           -   owes $15.89
+  Quorin                     -$4.33     -$25.00   owes $29.33
+  Lumqat                     -$29.86           -   owes $29.86
+  Gorvast                    -$30.55           -   owes $30.55
+  Kaxtun                     -$37.58           -   owes $37.58
+  Rixmoot                    -$40.15           -   owes $40.15
+  Not on this sheet: 3 payments/corrections saved under "all folders" (settle option 3).
+
+Pinned payments that apply here:
+  Zaqvin always pays Sybnari
+  Gorvast always pays Sybnari
+
+Does anyone want to send their money to a specific person? (y/n): 
+  !! This sheet does not balance: its totals add up to +$5.00 instead of $0.00.
+    Some winners get $5.00 less than the table above shows.
+    The cause is a one-sided correction (menu 17) or a ledger that does not balance.
+
+-- Settlement sheet --------------------------------------------------------
+  20 payments, 10 senders, 16 receivers
+
+  Rixmoot               --->  Frymoss                  $30.86   
+                        --->  Quelzit                   $9.29   
+                              sends $40.15 in all, to 2 people
+  Kaxtun                --->  Hiltrex                  $23.74   
+                        --->  Wexlorn                  $10.20   
+                        --->  🎲Brask                   $3.64   
+                              sends $37.58 in all, to 3 people
+  Gorvast               --->  Sybnari                   $1.39   pinned
+                        --->  Harlo, Dromm             $29.16   
+                              sends $30.55 in all, to 2 people
+  Lumqat                --->  🎴                       $24.61   
+                        --->  707070                    $5.25   
+                              sends $29.86 in all, to 2 people
+  Quorin               --->  Plenkor                  $24.42   
+                        --->  Quelzit                   $3.16   
+                        --->  Cavlorn                   $1.75   
+                              sends $29.33 in all, to 3 people
+  Zaqvin                --->  Sybnari                  $15.89   pinned
+  Ostrelin              --->  Mirtavo                   $9.71   
+                        --->  Harlo, Dromm              $5.92   
+                              sends $15.63 in all, to 2 people
+  Ombrix                --->  Ekvarto                   $8.89   
+                        --->  Nuvrask                   $5.50   
+                              sends $14.39 in all, to 2 people
+  Quinn "Q" Varn        --->  Nuvrask                   $2.26   
+                        --->  Bexrunn                   $1.00   
+                              sends $3.26 in all, to 2 people
+  Ylmande               --->  Hespyre                   $0.05   
+
+-- Who receives what -------------------------------------------------------
+  707070                    $5.25   from Lumqat
+  Bexrunn                   $1.00   from Quinn "Q" Varn
+  Cavlorn                   $1.75   from Quorin
+  Ekvarto                   $8.89   from Ombrix
+  Frymoss                  $30.86   from Rixmoot
+  Harlo, Dromm             $35.08   from Gorvast, Ostrelin
+  Hespyre                   $0.05   from Ylmande
+  Hiltrex                  $23.74   from Kaxtun
+  Mirtavo                   $9.71   from Ostrelin
+  Nuvrask                   $7.76   from Ombrix, Quinn "Q" Varn
+  Plenkor                  $24.42   from Quorin
+  Quelzit                  $12.45   from Rixmoot, Quorin
+  Sybnari                  $17.28   from Zaqvin, Gorvast
+  Wexlorn                  $10.20   from Kaxtun
+  🎲Brask                   $3.64   from Kaxtun
+  🎴                       $24.61   from Lumqat
+
+  Next: 7 saves this sheet as a session, 13 exports it as CSV.
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   5 games | Mar 14 - May 2 | folder "Synthetic Spring"        |
+| 27 players | hand logs 0/5 | books off by +$5.00                           |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Exported to <work>/runs/folder-synthetic-spring/settle/Saved_Data/settlements.csv
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   5 games | Mar 14 - May 2 | folder "Synthetic Spring"        |
+| 27 players | hand logs 0/5 | books off by +$5.00                           |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Saved merge rules, preferences, settings, seat owners and session balances. Bye.

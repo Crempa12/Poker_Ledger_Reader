@@ -1,0 +1,59 @@
+{
+  "name": "banker",
+  "description": "Banker mode: everyone settles through one person (the most games in the all-data sheet).",
+  "status": "ok",
+  "code": "Poker_Ledger_Reader",
+  "data": "fixtures/synthetic",
+  "tz": "America/New_York",
+  "flags": [],
+  "notes": [
+    "banker set in the run copy: the player with the most games in the all-data sheet (8 games)"
+  ],
+  "expected_exports": [
+    "player_summary.csv",
+    "showdown_rivals.csv",
+    "settlements.csv"
+  ],
+  "missing_exports": [],
+  "steps": [
+    {
+      "kind": "summary",
+      "log": "logs/summary.txt",
+      "exit": 0,
+      "args": [],
+      "menu_file": "01-summary.txt",
+      "menu": [
+        "12",
+        "0"
+      ]
+    },
+    {
+      "kind": "settle",
+      "log": "logs/settle.txt",
+      "exit": 0,
+      "args": [],
+      "menu_file": "02-settle.txt",
+      "menu": [
+        "5",
+        "3",
+        "",
+        "13",
+        "0"
+      ]
+    }
+  ],
+  "exports": [
+    {
+      "file": "player_summary.csv",
+      "data_rows": 35
+    },
+    {
+      "file": "settlements.csv",
+      "data_rows": 34
+    },
+    {
+      "file": "showdown_rivals.csv",
+      "data_rows": 0
+    }
+  ]
+}

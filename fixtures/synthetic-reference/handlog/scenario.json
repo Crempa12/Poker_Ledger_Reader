@@ -1,0 +1,66 @@
+{
+  "name": "handlog",
+  "description": "Hand-log exports (menus 18, 21, 22, the standalone playstyle_report, showdown rivals). Empty when the data has no hand logs.",
+  "status": "ok",
+  "code": "Poker_Ledger_Reader",
+  "data": "fixtures/synthetic",
+  "tz": "America/New_York",
+  "flags": [],
+  "notes": [
+    "hand-log files in the data: no"
+  ],
+  "expected_exports": [],
+  "missing_exports": [],
+  "steps": [
+    {
+      "kind": "style",
+      "log": "logs/style.txt",
+      "exit": 0,
+      "args": [],
+      "menu_file": "style.txt",
+      "menu": [
+        "18",
+        "",
+        "0"
+      ]
+    },
+    {
+      "kind": "playstyle",
+      "log": "logs/playstyle.txt",
+      "exit": 0,
+      "args": [],
+      "menu_file": "playstyle.txt",
+      "menu": [
+        "21",
+        "",
+        "0"
+      ]
+    },
+    {
+      "kind": "hit-and-run",
+      "log": "logs/hit-and-run.txt",
+      "exit": 0,
+      "args": [],
+      "menu_file": "hit-and-run.txt",
+      "menu": [
+        "22",
+        "",
+        "0"
+      ]
+    }
+  ],
+  "exports": [
+    {
+      "file": "showdown_rivals.csv",
+      "data_rows": 0
+    },
+    {
+      "file": "tool/hit_and_run_nights_tool.csv",
+      "data_rows": 0
+    },
+    {
+      "file": "tool/playstyle_tool.csv",
+      "data_rows": 0
+    }
+  ]
+}

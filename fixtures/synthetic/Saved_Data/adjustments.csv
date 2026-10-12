@@ -1,0 +1,6 @@
+group,date,player_normalized,amount,folder,note
+pay-0001,2026-03-20,brask,25.00,Synthetic Spring,paid (to Quorin)
+pay-0001,2026-03-20,quorin,-25.00,Synthetic Spring,paid (from Brask)
+let-0002,2026-06-01,vextorion,12.50,,debt let go (to Zaqvin)
+let-0002,2026-06-01,zaqvin,-12.50,,debt let go (from Vextorion)
+adj-0003,2026-09-05,marisolquenby,-7.00,,typo fix

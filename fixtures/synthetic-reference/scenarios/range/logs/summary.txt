@@ -1,0 +1,52 @@
+Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
+WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
+WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
+Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
+WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
+         They count for the name on the seat until you check them in menu 20.
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   6 games | Feb 25 - May 2 | all folders, 2026-02-25 to 2026. |
+| 31 players | hand logs 0/6 | books off by +$5.00                           |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Exported to <work>/runs/range/summary/Saved_Data/player_summary.csv
+Exported to <work>/runs/range/summary/Saved_Data/showdown_rivals.csv  (who beat whom at showdown)
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   6 games | Feb 25 - May 2 | all folders, 2026-02-25 to 2026. |
+| 31 players | hand logs 0/6 | books off by +$5.00                           |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Saved merge rules, preferences, settings, seat owners and session balances. Bye.

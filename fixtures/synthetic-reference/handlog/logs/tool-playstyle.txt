@@ -1,0 +1,24 @@
+Games loaded: 12   in scope: 12   hand logs in scope: 0
+Hands analysed: 0
+
+[2mPool average over 0 players with 200+ hands: VPIP 0%, PFR 0%[0m
+
+[2m──[0m [1mBefore the flop[0m [2m─────────────────────────────────────────────────────────────────────────────────[0m
+[1mPlayer            Hands   VPIP    PFR   Limp   3Bet  Steal    Def   Archetype[0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+
+[2m──[0m [1mAfter the flop, and leaving the table[0m [2m───────────────────────────────────────────────────────────[0m
+[1mPlayer             CBet   F>CB   ChkR  AF flop  AF turn  AF river   WTSD   W$SD   H&R  Leaving[0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[2mA rate in (brackets) has fewer than 25 opportunities behind it and is not a tendency.
+Limp = called the big blind with the pot unopened.   3Bet = re-raised a single raise.
+Steal = first-in raise from CO/BTN/SB.   Def = did not fold a blind to a steal.
+CBet = bet the flop having raised preflop.   F>CB = folded facing a flop c-bet.
+ChkR = check-raised.   AF = (bets + raises) / calls.   WTSD = flops that reached showdown.
+H&R = hit & run factor, 0-100, from every night in scope (menu 22 has the night-by-night exits).
+An H&R in (brackets) has fewer than 3 winning nights behind it; its only possible tag is Busts out.
+[0m
+
+Wrote <out>/handlog/tool/playstyle_tool.csv

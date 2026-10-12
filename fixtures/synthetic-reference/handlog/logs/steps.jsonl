@@ -1,0 +1,3 @@
+{"kind": "style", "log": "logs/style.txt", "exit": 0, "args": [], "menu_file": "style.txt", "menu": ["18", "", "0"]}
+{"kind": "playstyle", "log": "logs/playstyle.txt", "exit": 0, "args": [], "menu_file": "playstyle.txt", "menu": ["21", "", "0"]}
+{"kind": "hit-and-run", "log": "logs/hit-and-run.txt", "exit": 0, "args": [], "menu_file": "hit-and-run.txt", "menu": ["22", "", "0"]}

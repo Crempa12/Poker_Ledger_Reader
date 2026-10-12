@@ -1,0 +1,138 @@
+Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
+WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
+WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
+Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
+WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
+         They count for the name on the seat until you check them in menu 20.
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   3 games | Jan 14 - Feb 11 | folder "Synthetic Winter"       |
+| 16 players | hand logs 0/3 | books balanced                                |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- What would you like to settle? ------------------------------------------
+  1. One game (a single ledger)
+  2. One folder (every game in it)
+  3. Everything in the current scope (folder "Synthetic Winter")
+  0. Cancel
+Choose: 
+-- Everything in folder "Synthetic Winter", 3 games ------------------------
+  Player                   Poker net    Payments   Settles as
+  Gorvast                    +$98.28           -   is owed $98.28
+  Sybnari                    +$52.93           -   is owed $52.93
+  Plenkor                    +$20.90           -   is owed $20.90
+  Hespyre                    +$10.79           -   is owed $10.79
+  Quelzit                     +$6.86           -   is owed $6.86
+  Cavlorn                     +$1.25           -   is owed $1.25
+  Frymoss Two                 +$1.08           -   is owed $1.08
+  Bexrunn                     +$0.50           -   is owed $0.50
+  Ylmande                     +$0.30           -   is owed $0.30
+  Wexlorn                    -$14.16           -   owes $14.16
+  707070                     -$14.95           -   owes $14.95
+  Frymoss                    -$16.16           -   owes $16.16
+  Mirtavo                    -$23.26           -   owes $23.26
+  Ekvarto                    -$24.66           -   owes $24.66
+  Pindrel                    -$25.56           -   owes $25.56
+  Zaqvin                     -$74.14           -   owes $74.14
+  Not on this sheet: 3 payments/corrections saved under "all folders" (settle option 3).
+
+Pinned payments that apply here:
+  Zaqvin always pays Sybnari
+
+Does anyone want to send their money to a specific person? (y/n): 
+-- Settlement sheet --------------------------------------------------------
+  15 payments, 7 senders, 9 receivers
+
+  Zaqvin                --->  Sybnari                  $52.93   pinned
+                        --->  Gorvast                  $21.21   
+                              sends $74.14 in all, to 2 people
+  Pindrel               --->  Gorvast                  $25.56   
+  Ekvarto               --->  Gorvast                  $24.66   
+  Mirtavo               --->  Gorvast                  $23.26   
+  Frymoss               --->  Plenkor                  $16.16   
+  707070                --->  Hespyre                  $10.79   
+                        --->  Plenkor                   $4.16   
+                              sends $14.95 in all, to 2 people
+  Wexlorn               --->  Quelzit                   $6.86   
+                        --->  Gorvast                   $3.59   
+                        --->  Cavlorn                   $1.25   
+                        --->  Frymoss Two               $1.08   
+                        --->  Plenkor                   $0.58   
+                        --->  Bexrunn                   $0.50   
+                        --->  Ylmande                   $0.30   
+                              sends $14.16 in all, to 7 people
+
+-- Who receives what -------------------------------------------------------
+  Bexrunn                   $0.50   from Wexlorn
+  Cavlorn                   $1.25   from Wexlorn
+  Frymoss Two               $1.08   from Wexlorn
+  Gorvast                  $98.28   from Pindrel, Ekvarto, Mirtavo, Zaqvin,
+                                         Wexlorn
+  Hespyre                  $10.79   from 707070
+  Plenkor                  $20.90   from Frymoss, 707070, Wexlorn
+  Quelzit                   $6.86   from Wexlorn
+  Sybnari                  $52.93   from Zaqvin
+  Ylmande                   $0.30   from Wexlorn
+
+  Next: 7 saves this sheet as a session, 13 exports it as CSV.
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   3 games | Jan 14 - Feb 11 | folder "Synthetic Winter"       |
+| 16 players | hand logs 0/3 | books balanced                                |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Exported to <work>/runs/folder-synthetic-winter/settle/Saved_Data/settlements.csv
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   3 games | Jan 14 - Feb 11 | folder "Synthetic Winter"       |
+| 16 players | hand logs 0/3 | books balanced                                |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Saved merge rules, preferences, settings, seat owners and session balances. Bye.

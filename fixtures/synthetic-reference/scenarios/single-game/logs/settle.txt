@@ -1,0 +1,127 @@
+Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
+WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
+WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
+Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
+WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
+         They count for the name on the seat until you check them in menu 20.
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- What would you like to settle? ------------------------------------------
+  1. One game (a single ledger)
+  2. One folder (every game in it)
+  3. Everything in the current scope (all folders)
+  0. Cancel
+Choose: 
+   #  Date              Folder             Players     Buy-ins  Game
+--------------------------------------------------------------------------------------------
+   1  2026-11-01 01:20  Synthetic Autumn         9     $242.70  pglFAKE0012               
+   2  2026-10-24 19:00  Synthetic Autumn        24   $1,200.00  pglFAKE0011               
+   3  2026-10-03 19:03  Synthetic Autumn         7     $265.22  pglFAKE0010               
+   4  2026-05-02 19:10  Synthetic Spring         9     $300.00  pglFAKE0008               
+   5  2026-05-02 19:05  Synthetic Spring         9     $250.00  pglFAKE0009               
+   6  2026-04-18 19:00  Synthetic Spring        10     $230.00  pglFAKE0007               
+   7  2026-04-04 19:20  Synthetic Spring         7     $160.00  pglFAKE0006               
+   8  2026-03-14 23:40  Synthetic Spring        10     $280.00  pglFAKE0005               
+   9  2026-02-25 19:10  Synthetic Autumn         6     $170.00  pglFAKE0004               
+  10  2026-02-11 19:02  Synthetic Winter         8     $270.00  pglFAKE0003               
+  11  2026-01-28 19:31  Synthetic Winter         7     $200.00  pglFAKE0002               
+  12  2026-01-14 19:02  Synthetic Winter         7     $220.00  pglFAKE0001               
+--------------------------------------------------------------------------------------------
+Game number (0 to cancel): 
+-- Game of 2026-11-01, 1 game ----------------------------------------------
+  Player                   Poker net    Payments   Settles as
+  Mirtavo                    +$31.71           -   is owed $31.71
+  Zaqvin                     +$24.91           -   is owed $24.91
+  Plenkor                    +$16.20           -   is owed $16.20
+  Nuvrask                     +$5.35           -   is owed $5.35
+  Bexrunn                      $0.00           -   even
+  Quelzit                    -$15.51           -   owes $15.51
+  Vorndal                    -$15.62           -   owes $15.62
+  Frymoss                    -$22.70           -   owes $22.70
+  Jolwick                    -$24.34           -   owes $24.34
+
+Does anyone want to send their money to a specific person? (y/n): 
+-- Settlement sheet --------------------------------------------------------
+  7 payments, 4 senders, 4 receivers
+
+  Jolwick               --->  Zaqvin                   $24.34   
+  Frymoss               --->  Mirtavo                  $22.70   
+  Vorndal               --->  Plenkor                  $15.62   
+  Quelzit               --->  Mirtavo                   $9.01   
+                        --->  Nuvrask                   $5.35   
+                        --->  Plenkor                   $0.58   
+                        --->  Zaqvin                    $0.57   
+                              sends $15.51 in all, to 4 people
+
+-- Who receives what -------------------------------------------------------
+  Mirtavo                  $31.71   from Frymoss, Quelzit
+  Nuvrask                   $5.35   from Quelzit
+  Plenkor                  $16.20   from Vorndal, Quelzit
+  Zaqvin                   $24.91   from Jolwick, Quelzit
+
+  Next: 7 saves this sheet as a session, 13 exports it as CSV.
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Exported to <work>/runs/single-game/settle/Saved_Data/settlements.csv
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Saved merge rules, preferences, settings, seat owners and session balances. Bye.

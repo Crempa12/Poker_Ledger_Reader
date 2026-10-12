@@ -1,0 +1,141 @@
+Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
+WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
+WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
+Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
+WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
+         They count for the name on the seat until you check them in menu 20.
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- Saved sheets: all -----------------------------------------------------------------------
+   #  Sheet                 From            To                     Owed  Still owed  Status
+--------------------------------------------------------------------------------------------
+   1  Winter 2026 sheet     Jolwick         Kaxtun               $15.00       $0.00  paid
+   2  Winter 2026 sheet     Mirtavo         Zaqvin               $25.00      $10.00  partial
+   3  Winter 2026 sheet     Zaqvin          Plenkor              $40.00      $40.00  open
+   4  reference-all         707070          Plenkor               $7.87       $3.94  partial
+   5  reference-all         Dulvane         Frymoss              $24.94      $24.94  open
+   6  reference-all         Dulvane         🎴                    $5.06       $5.06  open
+   7  reference-all         Ekvarto         Jolwick              $37.52      $37.52  open
+   8  reference-all         Fenquor         Vextor               $33.06      $33.06  open
+   9  reference-all         Harlo, Dromm    Gorvast              $22.71      $22.71  open
+  10  reference-all         Harlo, Dromm    Mirtavo              $29.53      $29.53  open
+  11  reference-all         Lumqat          Hiltrex               $1.50       $1.50  open
+  12  reference-all         Lumqat          Jolwick              $11.25      $11.25  open
+  13  reference-all         Lumqat          Ylmande               $0.50       $0.50  open
+  14  reference-all         Nuvrask         Pindrel               $5.59       $5.59  open
+  15  reference-all         Nuvrask         Vorndal              $35.41      $35.41  open
+  16  reference-all         Ombrix          Gorvast              $54.56      $54.56  open
+  17  reference-all         Ostrelin        Bexrunn               $1.50       $1.50  open
+  18  reference-all         Ostrelin        🎴                   $19.55      $19.55  open
+  19  reference-all         Quelzit         Hespyre              $22.47      $22.47  open
+  20  reference-all         Quelzit         Vextor                $7.63       $7.63  open
+  21  reference-all         Quinn "Q" Varn  Plenkor               $3.26       $3.26  open
+  22  reference-all         Quorin         Plenkor              $46.85      $46.85  open
+  23  reference-all         Rixmoot         Cavlorn               $5.00       $5.00  open
+  24  reference-all         Rixmoot         Frymoss Two           $1.08       $1.08  open
+  25  reference-all         Rixmoot         Mari Quenby           $2.82       $2.82  open
+  26  reference-all         Rixmoot         Vextor                $0.85       $0.85  open
+  27  reference-all         Tarvelle        🎲Brask              $21.85      $21.85  open
+  28  reference-all         Tarvelle        Pindrel               $8.15       $8.15  open
+  29  reference-all         Wexlorn         Gorvast               $0.92       $0.92  open
+  30  reference-all         Wexlorn         Sybnari              $14.25      $14.25  open
+  31  reference-all         Zaqvin          Sybnari              $77.22      $77.22  open
+--------------------------------------------------------------------------------------------
+
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+-- Who still owes whom (every saved sheet) ---------------------------
+   1  Zaqvin                --->  Sybnari                   $77.22
+   2  Ombrix                --->  Gorvast                   $54.56
+   3  Quorin               --->  Plenkor                   $46.85
+   4  Zaqvin                --->  Plenkor                   $40.00
+   5  Ekvarto               --->  Jolwick                   $37.52
+   6  Nuvrask               --->  Vorndal                   $35.41
+   7  Fenquor               --->  Vextor                    $33.06
+   8  Harlo, Dromm          --->  Mirtavo                   $29.53
+   9  Dulvane               --->  Frymoss                   $24.94
+  10  Harlo, Dromm          --->  Gorvast                   $22.71
+  11  Quelzit               --->  Hespyre                   $22.47
+  12  Tarvelle              --->  🎲Brask                   $21.85
+  13  Ostrelin              --->  🎴                        $19.55
+  14  Wexlorn               --->  Sybnari                   $14.25
+  15  Lumqat                --->  Jolwick                   $11.25
+  16  Mirtavo               --->  Zaqvin                    $10.00
+  17  Tarvelle              --->  Pindrel                    $8.15
+  18  Quelzit               --->  Vextor                     $7.63
+  19  Nuvrask               --->  Pindrel                    $5.59
+  20  Dulvane               --->  🎴                         $5.06
+  21  Rixmoot               --->  Cavlorn                    $5.00
+  22  707070                --->  Plenkor                    $3.94
+  23  Quinn "Q" Varn        --->  Plenkor                    $3.26
+  24  Rixmoot               --->  Mari Quenby                $2.82
+  25  Ostrelin              --->  Bexrunn                    $1.50
+  26  Lumqat                --->  Hiltrex                    $1.50
+  27  Rixmoot               --->  Frymoss Two                $1.08
+  28  Wexlorn               --->  Gorvast                    $0.92
+  29  Rixmoot               --->  Vextor                     $0.85
+  30  Lumqat                --->  Ylmande                    $0.50
+
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
+| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Saved merge rules, preferences, settings, seat owners and session balances. Bye.

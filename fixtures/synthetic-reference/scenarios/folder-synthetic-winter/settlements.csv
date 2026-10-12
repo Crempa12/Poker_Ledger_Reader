@@ -1,0 +1,16 @@
+from,to,amount,reason,from_normalized,to_normalized
+Zaqvin,Sybnari,52.93,preference,zaqvin,sybnari
+Pindrel,Gorvast,25.56,auto,pindrel,gorvast
+Ekvarto,Gorvast,24.66,auto,ekvarto,gorvast
+Mirtavo,Gorvast,23.26,auto,mirtavo,gorvast
+Zaqvin,Gorvast,21.21,auto,zaqvin,gorvast
+Frymoss,Plenkor,16.16,auto,frymoss,plenkor
+707070,Hespyre,10.79,auto,707070,hespyre
+707070,Plenkor,4.16,auto,707070,plenkor
+Wexlorn,Quelzit,6.86,auto,wexlorn,quelzit
+Wexlorn,Gorvast,3.59,auto,wexlorn,gorvast
+Wexlorn,Cavlorn,1.25,auto,wexlorn,cavlorn
+Wexlorn,Frymoss Two,1.08,auto,wexlorn,frymosstwo
+Wexlorn,Plenkor,0.58,auto,wexlorn,plenkor
+Wexlorn,Bexrunn,0.50,auto,wexlorn,bexrunn
+Wexlorn,Ylmande,0.30,auto,wexlorn,ylmande

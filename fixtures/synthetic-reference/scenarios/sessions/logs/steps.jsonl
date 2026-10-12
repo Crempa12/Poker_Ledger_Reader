@@ -1,0 +1,3 @@
+{"kind": "save", "log": "logs/save.txt", "exit": 0, "args": [], "menu_file": "01-save.txt", "menu": ["5", "3", "n", "", "7", "reference-all", "13", "0"]}
+{"kind": "part-pay", "log": "logs/part-pay.txt", "exit": 0, "args": [], "menu_file": "02-part-pay.txt", "menu": ["10", "3", "3.93", "0"]}
+{"kind": "views", "log": "logs/views.txt", "exit": 0, "args": [], "menu_file": "03-views.txt", "menu": ["8", "", "11", "", "0"]}
