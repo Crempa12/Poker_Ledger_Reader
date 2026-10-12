@@ -1,0 +1,18 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.idea/
+.vscode/
+
+# Reference runs on real game data stay on this machine, never in git.
+local/
+
+# Real PokerNow files and app state must never be committed on this branch.
+# Made-up ones for tests live under fixtures/ and are allowed back in below.
+Games/
+Saved_Data/
+ledger_*.csv
+poker_now_log_*.csv
+!fixtures/**
