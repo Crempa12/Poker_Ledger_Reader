@@ -4,15 +4,17 @@
 // Pure: the caller reads and writes session_balances.csv. Every function returns
 // new balances and leaves its input alone.
 
-import type { SessionBalance, SessionStatus, SettlementEntry } from "./models.ts";
+import type { SessionBalance, SettlementEntry, WarnFn } from "./models.ts";
+import { libcppSort } from "./libcpp-sort.ts";
 import {
+  EPSILON_CENTS,
+  centsOfDollars,
   compareBytes,
-  dollarsToCents,
   escapeCSV,
-  fixed2,
   fixed2Cents,
   normalizeName,
   parseCSV,
+  readNumber,
   toDoubleSafe,
   trim,
 } from "./util.ts";
@@ -24,8 +26,8 @@ export type Balances = Map<string, SessionBalance>;
 export const SESSION_BALANCES_HEADER =
   "session_id,from_display,from_normalized,to_display,to_normalized,original_amount,remaining_amount,status";
 
-// The C++ EPSILON (0.009 dollars), in cents.
-const EPSILON_CENTS = 0.9;
+// The statuses the app writes. Any other word in a saved file is kept as written.
+export const SESSION_STATUSES: readonly string[] = ["open", "partial", "paid"];
 
 export function makeKey(sessionId: string, fromNormalized: string, toNormalized: string): string {
   return `${sessionId}|${fromNormalized}->${toNormalized}`;
@@ -36,11 +38,6 @@ function byKey(a: SessionBalance, b: SessionBalance): number {
   if (a.sessionId !== b.sessionId) return compareBytes(a.sessionId, b.sessionId);
   if (a.fromNormalized !== b.fromNormalized) return compareBytes(a.fromNormalized, b.fromNormalized);
   return compareBytes(a.toNormalized, b.toNormalized);
-}
-
-// Whole cents of a dollar amount, rounded the way printf rounds it (see adjustments.ts).
-function centsOf(dollars: number): number {
-  return dollarsToCents(fixed2(dollars));
 }
 
 // The status a balance has for its remaining amount (the C++ updateStatus). Under
@@ -56,24 +53,47 @@ function updateStatus(b: SessionBalance): SessionBalance {
 // session or no names is left out. A repeated key keeps its last row, as the C++
 // load does. The status is kept as written, so the file round-trips even if a
 // hand edit put in another word; the app itself writes only open, partial, paid.
-export function parseSessionBalances(text: string): Balances {
+// Malformed rows are reported to warn: a short row, a money cell that is junk (read
+// as 0) or not finite (the row is refused), an unknown status, a row with no names.
+export function parseSessionBalances(text: string, warn?: WarnFn): Balances {
   const balances: Balances = new Map();
-  for (const row of parseCSV(text)) {
-    if (row.length < 8) continue;
+  parseCSV(text).forEach((row, k) => {
+    const at = { source: "session_balances.csv", row: k + 1 };
+    if (row.length < 8) {
+      warn?.({ ...at, code: "short-row", field: null });
+      return;
+    }
     const cell = (i: number): string => row[i] ?? "";
+    const money = (i: number, field: string): number | null => {
+      const reading = readNumber(cell(i));
+      if (reading === "non-finite") {
+        warn?.({ ...at, code: "non-finite-number", field });
+        return null;
+      }
+      if (reading === "junk") warn?.({ ...at, code: "bad-number", field });
+      return centsOfDollars(toDoubleSafe(cell(i)));
+    };
+    const originalCents = money(5, "original_amount");
+    const remainingCents = money(6, "remaining_amount");
+    if (originalCents === null || remainingCents === null) return;
+    const status = trim(cell(7));
+    if (!SESSION_STATUSES.includes(status)) warn?.({ ...at, code: "unknown-status", field: "status" });
     const bal: SessionBalance = {
       sessionId: trim(cell(0)),
       fromDisplay: trim(cell(1)),
       fromNormalized: normalizeName(cell(2)),
       toDisplay: trim(cell(3)),
       toNormalized: normalizeName(cell(4)),
-      originalCents: centsOf(toDoubleSafe(cell(5))),
-      remainingCents: centsOf(toDoubleSafe(cell(6))),
-      status: trim(cell(7)) as SessionStatus,
+      originalCents,
+      remainingCents,
+      status,
     };
-    if (bal.sessionId === "" || bal.fromNormalized === "" || bal.toNormalized === "") continue;
+    if (bal.sessionId === "" || bal.fromNormalized === "" || bal.toNormalized === "") {
+      warn?.({ ...at, code: "dropped-row", field: null });
+      return;
+    }
     balances.set(makeKey(bal.sessionId, bal.fromNormalized, bal.toNormalized), bal);
-  }
+  });
   return balances;
 }
 
@@ -111,6 +131,8 @@ export function addSettlementBatch(
 ): Balances {
   const next: Balances = new Map(balances);
   for (const e of entries) {
+    // Sheet entries are whole cents by construction (calculateSheet), so anything else is a caller's bug.
+    if (!Number.isSafeInteger(e.amountCents)) throw new RangeError("a settlement entry is not a whole number of cents");
     const key = makeKey(sessionId, e.fromNormalized, e.toNormalized);
     const existing = next.get(key);
     if (existing === undefined) {
@@ -148,28 +170,33 @@ export interface PaymentResult {
   balance: SessionBalance | null; // the updated balance, or null when nothing was recorded
   appliedCents: number; // the part that counted against what was still owed
   overpaidCents: number; // the part above what was owed. Not recorded, as the C++ does
+  refused: string | null; // why an amount was refused (not a whole number of cents), else null
 }
 
 // Records a payment against one balance. A payment of nothing, or against a
 // balance that is not there, changes nothing. A payment above what is owed
-// clears the balance, and the excess is reported but not kept.
+// clears the balance, and the excess is reported but not kept. An amount that is
+// not a whole number of cents (NaN, inf, 12.5) is refused and changes nothing.
 export function recordPayment(
   balances: Balances,
   sessionId: string,
   pair: PaymentPair,
   amountCents: number,
 ): PaymentResult {
+  if (!Number.isSafeInteger(amountCents)) {
+    return { balances, balance: null, appliedCents: 0, overpaidCents: 0, refused: "Amount must be a whole number of cents." };
+  }
   const key = makeKey(sessionId, pair.fromNormalized, pair.toNormalized);
   const current = balances.get(key);
   if (current === undefined || !(amountCents > 0)) {
-    return { balances, balance: null, appliedCents: 0, overpaidCents: 0 };
+    return { balances, balance: null, appliedCents: 0, overpaidCents: 0, refused: null };
   }
   const owed = Math.max(current.remainingCents, 0);
   const applied = Math.min(amountCents, owed);
   const updated = updateStatus({ ...current, remainingCents: current.remainingCents - applied });
   const next: Balances = new Map(balances);
   next.set(key, updated);
-  return { balances: next, balance: updated, appliedCents: applied, overpaidCents: amountCents - applied };
+  return { balances: next, balance: updated, appliedCents: applied, overpaidCents: amountCents - applied, refused: null };
 }
 
 export interface CombinedDebt {
@@ -201,6 +228,9 @@ export function combinedUnpaid(balances: Balances): CombinedDebt[] {
       debt.totalCents += b.remainingCents;
     }
   }
-  const inPairOrder = [...byPair.entries()].sort(([a], [b]) => compareBytes(a, b)).map(([, debt]) => debt);
-  return inPairOrder.sort((a, b) => b.totalCents - a.totalCents);
+  const debts = [...byPair.entries()].sort(([a], [b]) => compareBytes(a, b)).map(([, debt]) => debt);
+  // The C++ sorts these by total with std::sort, which is not stable: two equal totals
+  // keep the order libc++ leaves them in, so that sort is ported (libcppSort).
+  libcppSort(debts, 0, debts.length, (a, b) => a.totalCents > b.totalCents);
+  return debts;
 }

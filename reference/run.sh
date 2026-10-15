@@ -16,6 +16,9 @@
 # clock time) are never sent. Paths in the output are rewritten to <work>, <out> and <home>.
 # See reference/README.md.
 
+# Unset variables are errors, and a failing command inside a pipeline fails the pipeline.
+set -uo pipefail
+
 HERE="$(cd "$(dirname "$0")" && pwd -P)"
 PY=(python3 -I "$HERE/helpers.py")
 
@@ -103,12 +106,13 @@ grep -a -q -F "$BIN" "$BIN/plr" || fail "plr does not carry its copy path (build
 # ---- helpers ---------------------------------------------------------------------------------
 
 # Rewrites the work, output and home paths so the saved text names no real folder.
+# A failure is returned, not ignored: an unsanitized file could keep a real folder name.
 sanitize_file() {
   [ -f "$1" ] || return 0
   if [ -n "$SAN_HOME" ]; then
-    perl -pi -e 's/\Q$ENV{SAN_WORK}\E/<work>/g; s/\Q$ENV{SAN_OUT}\E/<out>/g; s/\Q$ENV{SAN_HOME}\E/<home>/g' "$1"
+    perl -pi -e 's/\Q$ENV{SAN_WORK}\E/<work>/g; s/\Q$ENV{SAN_OUT}\E/<out>/g; s/\Q$ENV{SAN_HOME}\E/<home>/g' "$1" || return 1
   else
-    perl -pi -e 's/\Q$ENV{SAN_WORK}\E/<work>/g; s/\Q$ENV{SAN_OUT}\E/<out>/g' "$1"
+    perl -pi -e 's/\Q$ENV{SAN_WORK}\E/<work>/g; s/\Q$ENV{SAN_OUT}\E/<out>/g' "$1" || return 1
   fi
 }
 
@@ -130,7 +134,7 @@ tool_run() { # tool_run <log file> <program> [args...]
   env -i HOME="$HOME_DIR" PATH=/usr/bin:/bin TZ="$TZ_NAME" \
     perl -e 'alarm 180; exec @ARGV' "$@" < /dev/null > "$log" 2>&1
   local rc=$?
-  sanitize_file "$log"
+  sanitize_file "$log" || fail "could not sanitize $log"
   return $rc
 }
 
@@ -158,7 +162,7 @@ step() {
   mkdir -p "$sdir/logs" || fail "cannot create $sdir/logs"
   run_app "$ROOT" "$input" "$log" "$@"
   rc=$?
-  sanitize_file "$log"
+  sanitize_file "$log" || fail "could not sanitize $log"
   local record=("--steps" "$sdir/logs/steps.jsonl" "--kind" "$kind" "--log" "$rel" "--exit" "$rc")
   [ "$menu" != "-" ] && record+=("--menu" "$menu")
   for a in "$@"; do record+=("--arg=$a"); done
@@ -386,7 +390,10 @@ scenario_handlog() {
     --csv "$sdir/tool/playstyle_tool.csv"
 
   # Written by menu 12 in the all-data run (the hand-log side of the same export).
-  cp -p "$OUT/scenarios/all/showdown_rivals.csv" "$sdir/showdown_rivals.csv" 2>/dev/null
+  # Only when the all-data run wrote it: a missing file is left out, a failed copy stops the run.
+  if [ -f "$OUT/scenarios/all/showdown_rivals.csv" ]; then
+    cp -p "$OUT/scenarios/all/showdown_rivals.csv" "$sdir/showdown_rivals.csv" || fail "cannot copy showdown_rivals.csv"
+  fi
   finish "$sdir" handlog \
     "Hand-log exports (menus 18, 21, 22, the standalone playstyle_report, showdown rivals). Empty when the data has no hand logs." \
     --note="hand-log files in the data: $hasLogs"
@@ -395,7 +402,11 @@ scenario_handlog
 
 # ---- manifest, sanitizing, and the no-change checks -------------------------------------------
 
-find "$OUT" -path "$WORK" -prune -o -type f -print | while IFS= read -r f; do sanitize_file "$f"; done
+# Every saved file, the work copies excluded. The loop runs in this shell (no pipe), so a failure
+# is seen here and stops the run before the manifest is written.
+while IFS= read -r f; do
+  sanitize_file "$f" || fail "could not sanitize $f"
+done < <(find "$OUT" -path "$WORK" -prune -o -type f -print)
 "${PY[@]}" manifest "$OUT" > "$OUT/manifest.txt" || fail "manifest failed"
 
 status_snapshot "$CODE" "$WORK/.git-status-code-after"

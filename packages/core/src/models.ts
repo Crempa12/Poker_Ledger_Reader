@@ -75,6 +75,15 @@ export interface Adjustment {
   note: string;
 }
 
+// The row-level figures a player's dollar totals are replayed from. The C++ app kept
+// double dollars and added them one at a time, so the same adds are replayed here
+// (see players.ts playerDollars). It is plain data, so a copy of a PlayerStats (a
+// JSON round trip, a server-to-browser prop) replays to the same cents.
+export interface PlayerReplay {
+  gameRowNetsCents: number[][]; // one list per game, rows in row order, games in input order
+  adjustmentCents: number[]; // in input order
+}
+
 // Aggregated view of a player across every game in the current scope.
 export interface PlayerStats {
   displayName: string;
@@ -90,7 +99,30 @@ export interface PlayerStats {
   history: GameResult[]; // sorted by date
   aliases: string[]; // normalized names folded into this player, sorted
   playerIds: string[]; // ledger account ids seen for this player, sorted
+  replay: PlayerReplay;
 }
+
+// What a reader noticed about the data it was given. The app's own messages (the
+// "Skipped:" and "does not balance" lines) are not warnings; these are for code
+// that wants to tell a person what was read as zero, dropped or kept as written.
+export type WarningCode =
+  | "short-row" // fewer fields than the header needs: the row is read as blanks or skipped
+  | "missing-column" // a column the reader uses is not in the header: read as blank
+  | "bad-number" // a number field holds no number (or overflows): read as 0
+  | "non-finite-number" // inf or nan (or a value too big for a double): the row is refused
+  | "bad-date" // a date or time that is not blank but reads as no time
+  | "dropped-row" // a row left out for lacking a name, a value or an owner
+  | "unknown-status" // a session status other than open, partial or paid: kept as written
+  | "merge-cycle"; // merge rules that point round in a circle: the result depends on order
+
+export interface DataWarning {
+  code: WarningCode;
+  source: string; // the file it came from, by its name (a path inside the data root, or a saved file)
+  row: number; // 1-based, counting the data rows after the header; 0 when the whole file is meant
+  field: string | null; // the column, when one column is to blame
+}
+
+export type WarnFn = (warning: DataWarning) => void;
 
 // Time at the table for one person over the games in scope.
 export interface PlayTime {
@@ -131,7 +163,9 @@ export interface SessionBalance {
   toNormalized: string;
   originalCents: number;
   remainingCents: number;
-  status: SessionStatus;
+  // "open", "partial" or "paid" as the app writes them. A hand edit may put another
+  // word here: it is kept as written, and a warning says so (see parseSessionBalances).
+  status: SessionStatus | string;
 }
 
 // Which games are being looked at: a folder and a date range.
@@ -154,11 +188,6 @@ export interface Settings {
 // money: an exact cents division can differ from the console app's last cent.
 export function averagePerGameDollars(rowNetsCents: number[], games: number): number {
   return games === 0 ? 0 : sumCentsAsDollars(rowNetsCents) / games;
-}
-
-// What settlement sheets use: the poker result plus payments and corrections.
-export function balanceCents(stats: PlayerStats): number {
-  return stats.totalNetCents + stats.adjustmentsCents;
 }
 
 export function playTimeSeconds(time: PlayTime): number {

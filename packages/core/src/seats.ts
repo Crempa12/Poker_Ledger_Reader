@@ -5,9 +5,18 @@
 // settlement and chart then counts it for them instead of for the nickname on the
 // ledger. Pure: the functions return new data and leave their inputs alone.
 
-import type { Epoch, Game, LedgerRow, SeatOwner } from "./models.ts";
+import type { Epoch, Game, LedgerRow, SeatOwner, WarnFn } from "./models.ts";
 import { accountsByPerson, personOf, resolveCanonical } from "./players.ts";
-import { compareBytes, escapeCSV, normalizeName, parseCSV, parseISO8601UTC, trim, wallClock } from "./util.ts";
+import {
+  compareBytes,
+  escapeCSV,
+  normalizeName,
+  pad,
+  parseCSV,
+  parseISO8601UTC,
+  trim,
+  wallClock,
+} from "./util.ts";
 
 export const SEAT_OWNERS_HEADER = "ledger_id,player_id,session_start_at,nickname,owner_normalized,note\n";
 
@@ -28,10 +37,6 @@ export type OwnerChoice = { kind: "nickname" } | { kind: "person"; person: strin
 
 // ---------------- seat_owners.csv ----------------
 
-function pad(n: number, width: number): string {
-  return String(n).padStart(width, "0");
-}
-
 // Written back in the same shape PokerNow uses, so the file lines up with the
 // ledger by eye.
 function formatUTC(epoch: Epoch): string {
@@ -42,10 +47,14 @@ function formatUTC(epoch: Epoch): string {
 
 // The rows of seat_owners.csv (header skipped). A row with fewer than five fields,
 // or without a ledger id or an owner, is ignored.
-export function parseSeatOwnersCSV(text: string): SeatOwner[] {
+export function parseSeatOwnersCSV(text: string, warn?: WarnFn): SeatOwner[] {
   const out: SeatOwner[] = [];
-  for (const row of parseCSV(text)) {
-    if (row.length < 5) continue;
+  parseCSV(text).forEach((row, k) => {
+    const at = { source: "seat_owners.csv", row: k + 1, field: null };
+    if (row.length < 5) {
+      warn?.({ code: "short-row", ...at });
+      return;
+    }
     const seat: SeatOwner = {
       ledgerId: trim(row[0] ?? ""),
       playerId: trim(row[1] ?? ""),
@@ -54,9 +63,13 @@ export function parseSeatOwnersCSV(text: string): SeatOwner[] {
       owner: normalizeName(row[4] ?? ""),
       note: row.length > 5 ? trim(row[5] ?? "") : "",
     };
-    if (seat.ledgerId === "" || seat.owner === "") continue;
+    if (trim(row[2] ?? "") !== "" && seat.start === null) warn?.({ code: "bad-date", ...at, field: "session_start_at" });
+    if (seat.ledgerId === "" || seat.owner === "") {
+      warn?.({ code: "dropped-row", ...at });
+      return;
+    }
     out.push(seat);
-  }
+  });
   return out;
 }
 
@@ -136,18 +149,6 @@ export function usualOwnerForSeats(usual: ReadonlyMap<string, string>, rows: rea
   if (accounts.size !== 1) return "";
   const [account] = accounts;
   return account === undefined ? "" : (usual.get(account) ?? "");
-}
-
-// The seat numbers the user typed (1-based), as row indexes in the game. Repeats
-// are kept once, in the order given. Null when there are none, or one is out of range.
-export function pickSeatRows(game: Game, numbers: readonly number[]): number[] | null {
-  if (numbers.length === 0) return null;
-  const picked: number[] = [];
-  for (const n of numbers) {
-    if (n < 1 || n > game.rows.length) return null;
-    if (!picked.includes(n - 1)) picked.push(n - 1);
-  }
-  return picked;
 }
 
 // Is time a before time b? A missing time counts as -1, the C++ NO_TIME value.
@@ -245,29 +246,6 @@ export function removeSeatOwner(list: readonly SeatOwner[], index: number): Seat
   return list.filter((_, i) => i !== index);
 }
 
-// Menu 4's "different people" answer: every unchecked seat on `account` played
-// under one of `people` is saved as "name was right". Returns the new list and how
-// many were added. The caller applies the list to the games.
-export function confirmNames(
-  games: readonly Game[],
-  list: readonly SeatOwner[],
-  rules: ReadonlyMap<string, string>,
-  account: string,
-  people: readonly string[],
-): { list: SeatOwner[]; added: number } {
-  const out = [...list];
-  let added = 0;
-  for (const g of games) {
-    for (const r of g.rows) {
-      if (r.playerId !== account || r.ownerReviewed || r.owner !== "") continue;
-      if (!people.includes(nicknamePerson(rules, r))) continue;
-      out.push(seatOwnerFor(rules, g, r, { kind: "nickname" }));
-      added++;
-    }
-  }
-  return { list: out, added };
-}
-
 // ---------------- finding seats that look shared ----------------
 
 // Seats not yet reviewed where the account usually belongs to someone else, or the
@@ -302,27 +280,4 @@ export function findSuspicious(games: readonly Game[], rules: ReadonlyMap<string
     });
   }
   return out;
-}
-
-// Menu 20's grouping: flagged seats with the same name on the same account in the
-// same game get one answer. The newest game comes first, as in the menu.
-export function groupSharedSeats(flags: readonly Flag[], games: readonly Game[]): Flag[][] {
-  const byId = new Map<string, Game>();
-  for (const g of games) if (!byId.has(g.id)) byId.set(g.id, g);
-  const groups: Flag[][] = [];
-  const groupOf = new Map<string, number>();
-  for (const f of [...flags].reverse()) {
-    const game = byId.get(f.gameId);
-    const row = game?.rows[f.row];
-    if (game === undefined || row === undefined) throw new Error(`flag points at no seat: ${f.gameId} row ${f.row}`);
-    const key = `${f.gameId}|${row.playerId}|${normalizeName(row.nickname)}`;
-    const at = groupOf.get(key);
-    if (at === undefined) {
-      groupOf.set(key, groups.length);
-      groups.push([f]);
-    } else {
-      groups[at]?.push(f);
-    }
-  }
-  return groups;
 }

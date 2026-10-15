@@ -8,7 +8,6 @@ import {
   ledgerFolder,
   listFolders,
   loadAllGames,
-  logId,
   looksLikeLedger,
   parseLedgerFile,
 } from "../src/ledger.ts";
@@ -266,9 +265,11 @@ describe("folders, scopes and ids", () => {
     expect(listFolders(games)).toEqual(["(root)", "a", "a b", "b"]);
   });
 
-  it("gives the id a hand log is filed under", () => {
-    const r = parseLedgerFile(file("ledger_pglEX1.csv", ALICE, BOB));
-    expect(r.ok && logId(r.game)).toBe("pglEX1");
+  it("keeps the file stem as the game id, with any browser copy suffix removed", () => {
+    const plain = parseLedgerFile(file("ledger_pglEX1.csv", ALICE, BOB));
+    expect(plain.ok && plain.game.id).toBe("ledger_pglEX1");
+    const copy = parseLedgerFile(file("ledger_pglEX1 (1).csv", ALICE, BOB));
+    expect(copy.ok && copy.game.id).toBe("ledger_pglEX1");
   });
 
   it("keeps the games of a folder, and a game night belongs to the local date it starts on", () => {

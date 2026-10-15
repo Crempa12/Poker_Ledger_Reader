@@ -6,27 +6,24 @@
 // a payment is two balanced rows sharing one group, a correction is one row,
 // removing a group removes both sides, and the scope gives the folder tag.
 
-import type { Adjustment, Epoch, Scope } from "./models.ts";
+import type { Adjustment, Epoch, Scope, WarnFn } from "./models.ts";
 import { scopeContains } from "./models.ts";
 import {
-  dollarsToCents,
+  EPSILON_CENTS,
+  EPSILON_DOLLARS,
+  centsOfDollars,
   escapeCSV,
-  fixed2,
   fixed2Cents,
   formatLocalDate,
   normalizeName,
   parseCSV,
   parseLocalDate,
+  readNumber,
   toDoubleSafe,
   trim,
   wallClock,
   zonedTimeToEpoch,
 } from "./util.ts";
-
-// The C++ EPSILON: anything under a cent counts as nothing. Dollars for the
-// file check, cents for amounts held as whole cents.
-const EPSILON_DOLLARS = 0.009;
-const EPSILON_CENTS = 0.9;
 
 export const ADJUSTMENTS_HEADER = "group,date,player_normalized,amount,folder,note";
 
@@ -41,31 +38,46 @@ function cell(row: string[], i: number): string {
   return row[i] ?? "";
 }
 
-// Whole cents of a dollar amount, rounded the way printf rounds it. The file is
-// written with printf, so this is what a saved amount reads back as.
-function centsOf(dollars: number): number {
-  return dollarsToCents(fixed2(dollars));
-}
+// The refusal for an amount that is not a whole number of cents (NaN, inf, 12.5).
+const NOT_WHOLE_CENTS = "Amount must be a whole number of cents.";
 
 // Reads adjustments.csv text. A row needs four fields. Rows with no player or an
 // amount under a cent are left out, as the C++ loadCSV does. A bad date is kept
-// as null (the C++ NO_TIME), so it counts only in an unbounded scope.
-export function parseAdjustments(text: string, timeZone: string): Adjustment[] {
+// as null (the C++ NO_TIME), so it counts only in an unbounded scope. Anything
+// malformed is reported to warn: a short row, an amount that is junk (read as 0,
+// so it is left out) or not finite (refused), a row with no player, a bad date.
+export function parseAdjustments(text: string, timeZone: string, warn?: WarnFn): Adjustment[] {
   const list: Adjustment[] = [];
-  for (const row of parseCSV(text)) {
-    if (row.length < 4) continue;
+  parseCSV(text).forEach((row, k) => {
+    const at = { source: "adjustments.csv", row: k + 1 };
+    if (row.length < 4) {
+      warn?.({ ...at, code: "short-row", field: null });
+      return;
+    }
+    const reading = readNumber(cell(row, 3));
+    if (reading === "non-finite") {
+      warn?.({ ...at, code: "non-finite-number", field: "amount" });
+      return;
+    }
+    if (reading === "junk") warn?.({ ...at, code: "bad-number", field: "amount" });
     const dollars = toDoubleSafe(cell(row, 3));
     const playerNormalized = normalizeName(cell(row, 2));
-    if (playerNormalized === "" || Math.abs(dollars) < EPSILON_DOLLARS) continue;
+    if (playerNormalized === "") {
+      warn?.({ ...at, code: "dropped-row", field: "player_normalized" });
+      return;
+    }
+    if (Math.abs(dollars) < EPSILON_DOLLARS) return;
+    const date = parseLocalDate(cell(row, 1), false, timeZone);
+    if (trim(cell(row, 1)) !== "" && date === null) warn?.({ ...at, code: "bad-date", field: "date" });
     list.push({
       group: trim(cell(row, 0)),
-      date: parseLocalDate(cell(row, 1), false, timeZone),
+      date,
       playerNormalized,
-      amountCents: centsOf(dollars),
+      amountCents: centsOfDollars(dollars),
       folder: row.length > 4 ? trim(cell(row, 4)) : "",
       note: row.length > 5 ? trim(cell(row, 5)) : "",
     });
-  }
+  });
   return list;
 }
 
@@ -93,16 +105,6 @@ export function filter(list: readonly Adjustment[], scope: Scope): Adjustment[] 
   return list.filter((a) => scopeContains(scope, a.folder, a.date));
 }
 
-// The folder tag a new entry gets: the folder being viewed, or "" for all folders.
-export function folderTag(scope: Scope): string {
-  return scope.folder;
-}
-
-// How a folder tag reads on screen. An untagged entry says "(all folders)".
-export function folderLabel(folder: string): string {
-  return folder === "" ? "(all folders)" : folder;
-}
-
 // The date a new entry gets from the typed text. Blank means today: local midnight
 // of the day nowSeconds falls on in timeZone. Anything else is YYYY-MM-DD or
 // M/D/YY, read as local midnight.
@@ -117,26 +119,10 @@ export function chooseDate(text: string, nowSeconds: number, timeZone: string): 
   return { ok: true, value: date };
 }
 
-// A group id unique in the list: "adj<seconds>-<n>". The counter is the caller's
-// state (the C++ used a static one). Pass 0 at the start, then the counter this
-// returns, so ids stay unique when two entries fall in the same second.
-export function newGroup(
-  list: readonly Adjustment[],
-  nowSeconds: number,
-  counter: number,
-): { group: string; counter: number } {
-  let n = counter;
-  for (;;) {
-    n++;
-    const group = `adj${nowSeconds}-${n}`;
-    if (!list.some((a) => a.group === group)) return { group, counter: n };
-  }
-}
-
 export interface PaymentInput {
   group: string;
   date: Epoch;
-  folder: string; // folderTag(scope)
+  folder: string; // the scope's folder, "" for all folders
   note: string; // blank becomes "paid"
   amountCents: number; // the money that changed hands, positive
   creditor: string; // normalized: was owed the money, or let the debt go
@@ -151,6 +137,7 @@ export interface PaymentInput {
 export function paymentRows(input: PaymentInput): Checked<[Adjustment, Adjustment]> {
   if (input.creditor === "") return refuse("Pick who got the money, or let the debt go.");
   if (input.debtor === "" || input.debtor === input.creditor) return refuse("Cancelled.");
+  if (!Number.isSafeInteger(input.amountCents)) return refuse(NOT_WHOLE_CENTS);
   if (input.amountCents < EPSILON_CENTS) return refuse("Amount is too small to record.");
   if (input.date === null) return refuse("Pick a date.");
   const note = trim(input.note) === "" ? "paid" : trim(input.note);
@@ -176,7 +163,7 @@ export function paymentRows(input: PaymentInput): Checked<[Adjustment, Adjustmen
 export interface CorrectionInput {
   group: string;
   date: Epoch;
-  folder: string; // folderTag(scope)
+  folder: string; // the scope's folder, "" for all folders
   note: string;
   amountCents: number; // signed: positive adds to the balance, negative takes away
   player: string; // normalized
@@ -186,6 +173,7 @@ export interface CorrectionInput {
 // come up short by its amount until the other side is entered.
 export function correctionRow(input: CorrectionInput): Checked<Adjustment> {
   if (input.player === "") return refuse("Pick a player.");
+  if (!Number.isSafeInteger(input.amountCents)) return refuse(NOT_WHOLE_CENTS);
   if (Math.abs(input.amountCents) < EPSILON_CENTS) return refuse("Amount is too small to record.");
   if (input.date === null) return refuse("Pick a date.");
   return {

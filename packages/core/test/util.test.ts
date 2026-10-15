@@ -5,12 +5,9 @@ import {
   compareBytes,
   dollarsToCents,
   escapeCSV,
-  escapeHTML,
   fixed2,
   fixed2Cents,
   formatLocalDate,
-  formatLocalDateTime,
-  formatShortDate,
   isExcludedDir,
   lower,
   money,
@@ -22,7 +19,6 @@ import {
   parseCSV,
   parseISO8601UTC,
   parseLocalDate,
-  parseNumbers,
   splitCSVLine,
   sumCentsAsDollars,
   toDoubleSafe,
@@ -58,9 +54,6 @@ describe("CSV text", () => {
     expect(escapeCSV('say "hi"')).toBe('"say ""hi"""');
   });
 
-  it("escapes HTML special characters", () => {
-    expect(escapeHTML(`<b>&'"`)).toBe("&lt;b&gt;&amp;&#39;&quot;");
-  });
 });
 
 describe("names and text", () => {
@@ -130,16 +123,6 @@ describe("numbers from text", () => {
     expect(dollarsToCents("junk")).toBe(0);
   });
 
-  it("reads numbers the way stoi does, with commas as separators", () => {
-    expect(parseNumbers("3")).toEqual([3]);
-    expect(parseNumbers("2,5 7")).toEqual([2, 5, 7]);
-    expect(parseNumbers("2.5")).toEqual([2]);
-    expect(parseNumbers("3abc")).toEqual([3]);
-    expect(parseNumbers("1 x 2")).toEqual([]);
-    expect(parseNumbers("")).toEqual([]);
-    expect(parseNumbers("2147483648")).toEqual([]);
-    expect(parseNumbers("-5")).toEqual([-5]);
-  });
 });
 
 describe("fixed2 and money match C printf on macOS", () => {
@@ -252,21 +235,21 @@ describe("dates and times", () => {
     expect(parseLocalDate("2026-09-06", false, SANTIAGO)).toBe(1788667200); // 04:00Z, the change itself
   });
 
-  it("resolves a repeated wall time to its earlier instant", () => {
-    // 2026-11-01 01:30 happens twice in New York: EDT (05:30Z) comes first.
-    expect(zonedTimeToEpoch(2026, 11, 1, 1, 30, 0, NEW_YORK)).toBe(1793511000);
+  it("resolves a repeated wall time to its later instant, as mktime does on macOS", () => {
+    // 2026-11-01 01:30 happens twice in New York: EDT (05:30Z) and then EST (06:30Z).
+    expect(zonedTimeToEpoch(2026, 11, 1, 1, 30, 0, NEW_YORK)).toBe(1793514600);
+  });
+
+  it("gives the later instant for a repeated end of day (Santiago, 2019-04-06)", () => {
+    // Clocks went back at 24:00, so 23:59:59 happens twice; the C++ on macOS gives the later one.
+    expect(parseLocalDate("2019-04-06", true, SANTIAGO)).toBe(1554609599);
   });
 
   it("formats in the zone it is given, never the machine's", () => {
     expect(formatLocalDate(1793595599, NEW_YORK)).toBe("2026-11-01");
-    expect(formatLocalDateTime(1793595599, NEW_YORK)).toBe("2026-11-01 23:59");
-    expect(formatLocalDateTime(0, NEW_YORK)).toBe("1969-12-31 19:00");
-    expect(formatLocalDateTime(0, "UTC")).toBe("1970-01-01 00:00");
-    expect(formatLocalDateTime(0, "Asia/Tokyo")).toBe("1970-01-01 09:00");
-    expect(formatShortDate(0, NEW_YORK)).toBe("Dec 31");
+    expect(formatLocalDate(0, NEW_YORK)).toBe("1969-12-31");
+    expect(formatLocalDate(0, "Asia/Tokyo")).toBe("1970-01-01");
     expect(formatLocalDate(null, NEW_YORK)).toBe("unknown");
-    expect(formatLocalDateTime(null, NEW_YORK)).toBe("unknown");
-    expect(formatShortDate(null, NEW_YORK)).toBe("?");
   });
 });
 

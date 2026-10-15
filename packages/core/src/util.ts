@@ -139,7 +139,7 @@ function stodPrefix(text: string): number | null {
   const numeral = decimal[0];
   const value = Number(numeral);
   const mantissa = numeral.split(/[eE]/)[0] ?? "";
-  if (!Number.isFinite(value)) return null; // overflow
+  if (!Number.isFinite(value)) return value; // overflow: a non-finite value (the C++ reads it as 0)
   if (value === 0 && /[1-9]/.test(mantissa)) return null; // underflow to zero
   if (value !== 0 && Math.abs(value) < SMALLEST_NORMAL) return null; // subnormal
   return value;
@@ -150,6 +150,21 @@ function stodPrefix(text: string): number | null {
 export function toDoubleSafe(s: string): number {
   const v = stodPrefix(trim(s));
   return v === null || !Number.isFinite(v) ? 0 : v;
+}
+
+// What a number field holds, read the way the C++ stod reads it. "junk" is text
+// with no number in it, or an overflow or underflow (the C++ reads those as 0).
+// "non-finite" is inf or nan: toDoubleSafe reads it as 0, because the money here
+// is whole cents, and the C++ app would show it as "inf" or "nan". Callers that
+// report bad data use this to say so.
+export type NumberReading = "blank" | "number" | "junk" | "non-finite";
+
+export function readNumber(s: string): NumberReading {
+  const t = trim(s);
+  if (t === "") return "blank";
+  const v = stodPrefix(t);
+  if (v === null) return "junk";
+  return Number.isFinite(v) ? "number" : "non-finite";
 }
 
 // Rounds a value to a whole number of cents, half away from zero, with no -0.
@@ -176,18 +191,6 @@ export function dollarsToCents(s: string): number {
 export function escapeCSV(s: string): string {
   if (!/[,"\n]/.test(s)) return s;
   return '"' + s.replace(/"/g, '""') + '"';
-}
-
-const HTML_ENTITIES: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
-
-export function escapeHTML(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => HTML_ENTITIES[c] ?? c);
 }
 
 const float64View = new DataView(new ArrayBuffer(8));
@@ -227,6 +230,17 @@ export function fixed2(dollars: number): string {
   const digits = roundedCents(magnitude).toString().padStart(3, "0");
   return (negative ? "-" : "") + digits.slice(0, -2) + "." + digits.slice(-2);
 }
+
+// Whole cents of a dollar amount, rounded the way printf rounds it. The files are
+// written with printf, so this is what a saved amount reads back as.
+export function centsOfDollars(dollars: number): number {
+  return dollarsToCents(fixed2(dollars));
+}
+
+// The C++ EPSILON: anything under a cent counts as nothing. EPSILON_DOLLARS is for
+// values held in dollars, EPSILON_CENTS for amounts held as whole cents.
+export const EPSILON_DOLLARS = 0.009;
+export const EPSILON_CENTS = 0.9;
 
 // "12.34" for 1234 cents (integer cents only; no rounding needed).
 export function fixed2Cents(cents: number): string {
@@ -284,24 +298,6 @@ export function moneySignedCents(cents: number): string {
   return moneySigned(cents / 100);
 }
 
-// "3" / "2,5 7" -> [2, 5, 7]. Each token is read like std::stoi: an optional
-// sign and leading digits, where anything after the digits is ignored. A token
-// with no digits, or a value outside the int range, makes the whole result [].
-const INT_PREFIX = /^[+-]?\d+/;
-
-export function parseNumbers(text: string): number[] {
-  const tokens = text.replace(/,/g, " ").split(/[ \t\n\v\f\r]+/).filter((t) => t !== "");
-  const out: number[] = [];
-  for (const token of tokens) {
-    const match = INT_PREFIX.exec(token);
-    if (!match) return [];
-    const value = Number(match[0]);
-    if (value > 2147483647 || value < -2147483648) return [];
-    out.push(value === 0 ? 0 : value);
-  }
-  return out;
-}
-
 // Milliseconds for a wall-clock reading taken as UTC. Fields out of range roll
 // over (day 31 of February becomes early March), as mktime and timegm do.
 function utcMs(year: number, month: number, day: number, hour: number, minute: number, second: number): number {
@@ -327,10 +323,23 @@ function scanInt(s: string, pos: number, width: number): { value: number; next: 
 
 const UNLIMITED = 1_000_000_000;
 
-// "2031-05-06T03:34:31.484Z" -> epoch seconds (UTC). The fraction and the zone
-// are not read; the C++ sscanf does the same. Text shorter than 19 characters,
-// or without the six numeric fields, gives null.
+// The C++ NO_TIME value. The C++ app uses it both for "no time" and as an ordinary
+// instant, so the one stamp that is exactly this instant (1969-12-31T23:59:59Z)
+// reads as no time, as it does there.
+export const NO_TIME_EPOCH = -1;
+
+// "2031-05-06T03:34:31.484Z" -> epoch seconds (UTC), or null for "no time". The
+// fraction and the zone are not read; the C++ sscanf does the same. Text shorter
+// than 19 characters, or without the six numeric fields, gives null. So does the
+// instant NO_TIME_EPOCH, as in the C++ app.
 export function parseISO8601UTC(raw: string): number | null {
+  const epoch = readISO8601(raw);
+  return epoch === null || epoch === NO_TIME_EPOCH ? null : epoch;
+}
+
+// The same reading with no "no time" rule of its own: null only for text that is
+// not a stamp. A caller that reports bad dates tests this rather than parseISO8601UTC.
+export function readISO8601(raw: string): number | null {
   const s = trim(raw);
   if (s.length < 19) return null;
   let pos = 0;
@@ -395,9 +404,10 @@ export function parseLocalDate(raw: string, endOfDay: boolean, timeZone: string)
     if (year < 100) year += 2000;
   }
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  return endOfDay
+  const epoch = endOfDay
     ? zonedTimeToEpoch(year, month, day, 23, 59, 59, timeZone)
     : zonedTimeToEpoch(year, month, day, 0, 0, 0, timeZone);
+  return epoch === NO_TIME_EPOCH ? null : epoch; // the C++ NO_TIME collision, as in parseISO8601UTC
 }
 
 const DAY_MS = 86_400_000;
@@ -411,7 +421,8 @@ function offsetAt(instantMs: number, timeZone: string): number {
 
 // Epoch seconds for a wall-clock reading in timeZone. Handles daylight saving:
 //  - a reading that happens once gives its one instant;
-//  - a reading that happens twice (clocks set back) gives the earlier instant;
+//  - a reading that happens twice (clocks set back) gives the later instant, which
+//    is what mktime with tm_isdst = -1 gives on macOS (the C++ app's machine);
 //  - a reading the clocks skip (clocks set forward) gives the moment of the change,
 //    using the offset from before it, the same answer mktime gives.
 export function zonedTimeToEpoch(
@@ -432,7 +443,7 @@ export function zonedTimeToEpoch(
     const instant = wall - offset;
     if (offsetAt(instant, timeZone) === offset) found.push(instant);
   }
-  if (found.length > 0) return Math.floor(Math.min(...found) / 1000);
+  if (found.length > 0) return Math.floor(Math.max(...found) / 1000);
   return Math.floor((wall - before) / 1000);
 }
 
@@ -445,24 +456,55 @@ export interface WallClock {
   second: number;
 }
 
+// Formatters by zone, most recently used last. A long-lived server that takes zones
+// from users must not grow this without limit, so the oldest one goes first.
+const FORMATTER_CACHE_LIMIT = 16;
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
 function formatterFor(timeZone: string): Intl.DateTimeFormat {
-  let formatter = formatters.get(timeZone);
-  if (formatter === undefined) {
-    formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      hourCycle: "h23", // hours 0-23; "24" would be a midnight quirk of other cycles
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric",
-    });
-    formatters.set(timeZone, formatter);
+  const cached = formatters.get(timeZone);
+  if (cached !== undefined) {
+    formatters.delete(timeZone); // move it to the back
+    formatters.set(timeZone, cached);
+    return cached;
+  }
+  // Intl throws a RangeError for a zone the runtime does not know.
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23", // hours 0-23; "24" would be a midnight quirk of other cycles
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+  });
+  formatters.set(timeZone, formatter);
+  if (formatters.size > FORMATTER_CACHE_LIMIT) {
+    const oldest = formatters.keys().next().value;
+    if (oldest !== undefined) formatters.delete(oldest);
   }
   return formatter;
+}
+
+// Is this an IANA zone name the runtime knows? Check it where a zone enters the
+// program (a profile, a database row), not deep inside a date calculation.
+export function isValidTimeZone(timeZone: string): boolean {
+  try {
+    formatterFor(timeZone);
+    return true;
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+}
+
+// The item at index i, or a RangeError. For code that must never read past the end
+// of its array (the sort port): a silent undefined there would corrupt the order.
+export function itemAt<T>(list: ArrayLike<T>, i: number): T {
+  const v = i >= 0 && i < list.length ? list[i] : undefined;
+  if (v === undefined) throw new RangeError(`index ${i} is outside the array of ${list.length}`);
+  return v;
 }
 
 // The wall-clock reading of an instant (whole seconds) in timeZone.
@@ -482,7 +524,8 @@ export function wallClock(epochSeconds: number, timeZone: string): WallClock {
   };
 }
 
-function pad(n: number, width: number): string {
+// A whole number with leading zeros: pad(7, 2) is "07".
+export function pad(n: number, width: number): string {
   return String(n).padStart(width, "0");
 }
 
@@ -491,22 +534,6 @@ export function formatLocalDate(epoch: number | null, timeZone: string): string 
   if (epoch === null) return "unknown";
   const w = wallClock(epoch, timeZone);
   return `${pad(w.year, 4)}-${pad(w.month, 2)}-${pad(w.day, 2)}`;
-}
-
-// "2031-05-06 19:16" in timeZone, or "unknown" for null.
-export function formatLocalDateTime(epoch: number | null, timeZone: string): string {
-  if (epoch === null) return "unknown";
-  const w = wallClock(epoch, timeZone);
-  return `${pad(w.year, 4)}-${pad(w.month, 2)}-${pad(w.day, 2)} ${pad(w.hour, 2)}:${pad(w.minute, 2)}`;
-}
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-// "May 6" in timeZone, or "?" for null.
-export function formatShortDate(epoch: number | null, timeZone: string): string {
-  if (epoch === null) return "?";
-  const w = wallClock(epoch, timeZone);
-  return `${MONTHS[w.month - 1] ?? "?"} ${w.day}`;
 }
 
 // Orders strings by their UTF-8 bytes, as C++ std::string does. For valid text

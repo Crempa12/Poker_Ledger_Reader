@@ -5,16 +5,19 @@
 // root, plus its text), so nothing here touches the disk. tools/load.ts reads
 // the files from a data root.
 
-import type { Game, LedgerRow, Scope } from "./models.ts";
+import type { Game, LedgerRow, Scope, WarnFn } from "./models.ts";
 import { scopeContains } from "./models.ts";
 import {
   cleanStem,
   compareBytes,
   isExcludedDir,
+  itemAt,
   lower,
   moneySignedCents,
   parseCents,
   parseISO8601UTC,
+  readISO8601,
+  readNumber,
   splitCSVLine,
   trim,
 } from "./util.ts";
@@ -105,7 +108,7 @@ function comparePaths(a: string, b: string): number {
 
 // Every ledger among the files: a .csv outside the excluded folders whose first
 // line has player_nickname. Sorted by path.
-export function discoverLedgerFiles(files: LedgerInput[]): LedgerInput[] {
+export function discoverLedgerFiles(files: readonly LedgerInput[]): LedgerInput[] {
   return files
     .filter((f) => isCandidatePath(f.relativePath) && looksLikeLedger(f.text))
     .sort((a, b) => comparePaths(a.relativePath, b.relativePath));
@@ -128,15 +131,20 @@ function fingerprint(game: Game): string {
 // Parses one ledger file. A seat with no start time and no money moved was never
 // played, so it is counted in skippedRows and left out. Every other row is kept,
 // whatever its name: dropping one unbalances the books.
-export function parseLedgerFile(file: LedgerInput): ParseResult {
+export function parseLedgerFile(file: LedgerInput, warn?: WarnFn): ParseResult {
   const name = fileNameOf(file.relativePath);
   if (file.text === "") return { ok: false, error: `empty file ${name}` };
 
   const lines = file.text.split("\n");
   const col = new Map<string, number>();
-  splitCSVLine(lines[0] ?? "").forEach((header, i) => col.set(trim(header), i));
+  const headerCells = splitCSVLine(lines[0] ?? "");
+  headerCells.forEach((header, i) => col.set(trim(header), i));
   if (!col.has("player_nickname") || !col.has("net")) {
     return { ok: false, error: `missing player_nickname/net columns in ${name}` };
+  }
+  const source = file.relativePath;
+  for (const field of ["player_id", "session_start_at", "session_end_at", "buy_in", "buy_out", "stack"]) {
+    if (!col.has(field)) warn?.({ code: "missing-column", source, row: 0, field });
   }
 
   const cell = (row: string[], key: string): string => {
@@ -157,14 +165,43 @@ export function parseLedgerFile(file: LedgerInput): ParseResult {
     rows: [],
   };
 
+  // A money cell in whole cents. Junk reads as 0, as the C++ stod does, and is warned
+  // about. inf, nan and a value too big for a double are not money at all: null, and
+  // the caller refuses the row, so no total is built on them.
+  const moneyCell = (cells: string[], key: string, rowNo: number): number | null => {
+    const text = cell(cells, key);
+    const reading = readNumber(text);
+    if (reading === "non-finite") {
+      warn?.({ code: "non-finite-number", source, row: rowNo, field: key });
+      return null;
+    }
+    if (reading === "junk") warn?.({ code: "bad-number", source, row: rowNo, field: key });
+    return parseCents(text);
+  };
+  // A date or time: blank reads as no time silently; text that is not a stamp is warned about.
+  const dateCell = (cells: string[], key: string, rowNo: number): number | null => {
+    const text = cell(cells, key);
+    if (trim(text) !== "" && readISO8601(text) === null) {
+      warn?.({ code: "bad-date", source, row: rowNo, field: key });
+    }
+    return parseISO8601UTC(text);
+  };
+
+  let rowNo = 0; // data rows counted from 1, blank lines not counted
   for (let k = 1; k < lines.length; k++) {
     const line = lines[k] ?? "";
     if (trim(line) === "") continue;
+    rowNo++;
     const cells = splitCSVLine(line);
+    if (cells.length < headerCells.length) warn?.({ code: "short-row", source, row: rowNo, field: null });
 
-    const start = parseISO8601UTC(cell(cells, "session_start_at"));
-    const end = parseISO8601UTC(cell(cells, "session_end_at"));
-    const netCents = parseCents(cell(cells, "net"));
+    const start = dateCell(cells, "session_start_at", rowNo);
+    const end = dateCell(cells, "session_end_at", rowNo);
+    const netCents = moneyCell(cells, "net", rowNo);
+    const buyInCents = moneyCell(cells, "buy_in", rowNo);
+    const buyOutCents = moneyCell(cells, "buy_out", rowNo);
+    const stackCents = moneyCell(cells, "stack", rowNo);
+    if (netCents === null || buyInCents === null || buyOutCents === null || stackCents === null) continue;
     if (start === null && netCents === 0) {
       game.skippedRows++;
       continue;
@@ -175,9 +212,9 @@ export function parseLedgerFile(file: LedgerInput): ParseResult {
       playerId: trim(cell(cells, "player_id")),
       start,
       end,
-      buyInCents: parseCents(cell(cells, "buy_in")),
-      buyOutCents: parseCents(cell(cells, "buy_out")),
-      stackCents: parseCents(cell(cells, "stack")),
+      buyInCents,
+      buyOutCents,
+      stackCents,
       netCents,
       owner: "",
       ownerReviewed: false,
@@ -211,17 +248,17 @@ function moreComplete(a: Game, b: Game): boolean {
 //   same ledger id, different content              -> the less complete export skipped
 //   different ids that share sit-down rows         -> both kept, flagged as "overlap"
 // Then the games are sorted by start time (no start first), then by id.
-export function loadAllGames(files: LedgerInput[]): LoadResult {
+export function loadAllGames(files: readonly LedgerInput[], warn?: WarnFn): LoadResult {
   const result: LoadResult = { games: [], messages: [], duplicates: [] };
 
   const parsed: Game[] = []; // every parsed ledger, in path order
   for (const file of discoverLedgerFiles(files)) {
-    const r = parseLedgerFile(file);
+    const r = parseLedgerFile(file, warn);
     if (r.ok) parsed.push(r.game);
     else result.messages.push("Skipped: " + r.error);
   }
 
-  const at = (k: number): Game => parsed[k] as Game;
+  const at = (k: number): Game => itemAt(parsed, k);
   const n = parsed.length;
   const fps = parsed.map(fingerprint);
   const sitDowns = parsed.map((g) => new Set(g.rows.map(sitDownKey)));
@@ -327,14 +364,6 @@ export function listFolders(games: Game[]): string[] {
 export function filterGames(games: Game[], scope: Scope): Game[] {
   return games.filter((g) => scopeContains(scope, g.folder, g.start));
 }
-
-// The id its hand log is filed under: "ledger_pglX" -> "pglX".
-export function logId(game: Game): string {
-  return game.id.startsWith("ledger_") ? game.id.slice(7) : game.id;
-}
-
-export const DUPLICATE_CHECK_TITLE = "Duplicate ledger check";
-export const NO_DUPLICATES_MESSAGE = "No duplicate or overlapping ledgers found.";
 
 // One entry of the duplicate check, as data: the text the console app prints.
 export interface DuplicateEntry {

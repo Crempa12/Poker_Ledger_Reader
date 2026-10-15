@@ -5,12 +5,9 @@ import {
   NAME_RIGHT_NOTE,
   apply,
   assignSeats,
-  confirmNames,
   findSuspicious,
-  groupSharedSeats,
   nicknamePerson,
   parseSeatOwnersCSV,
-  pickSeatRows,
   removeSeatOwner,
   seatOwnerFor,
   serializeSeatOwnersCSV,
@@ -219,25 +216,6 @@ describe("saving an answer", () => {
     expect(list).toEqual([]);
   });
 
-  it("confirms every unchecked seat of an account under the people given, and not the rest", () => {
-    // The last two seats are not the same sit-down (another start time), so only the first is confirmed.
-    const games = [
-      game("ledger_one", [
-        seat("Ann", "acctA", 100),
-        seat("Bo", "acctA", -100),
-        seat("Ann", "acctA", 0, { start: START + 1, ownerReviewed: true }),
-        seat("Ann", "acctA", 0, { start: START + 1, owner: "bo" }),
-      ]),
-    ];
-    const result = confirmNames(games, [], NO_RULES, "acctA", ["ann"]);
-    expect(result.added).toBe(1);
-    expect(result.list).toEqual([
-      { ledgerId: "ledger_one", playerId: "acctA", start: START, nickname: "Ann", owner: "ann", note: NAME_RIGHT_NOTE },
-    ]);
-    const applied = apply(games, result.list, NO_RULES);
-    expect(applied.games[0]?.rows.map((r) => r.ownerReviewed)).toEqual([true, false, false, false]);
-  });
-
   it("removes one entry by its index", () => {
     const list: SeatOwner[] = [
       { ledgerId: "a", playerId: "p", start: null, nickname: "n", owner: "x", note: "" },
@@ -260,15 +238,7 @@ describe("helpers for the menu", () => {
     expect(usualOwnerForSeats(usual, [seat("Fay", "acctF", 0)])).toBe("");
   });
 
-  it("turns typed seat numbers into row indexes, once each, and rejects bad input", () => {
-    const g = game("g1", [seat("A", "p", 0), seat("B", "p", 0), seat("C", "p", 0)]);
-    expect(pickSeatRows(g, [3, 1, 3])).toEqual([2, 0]);
-    expect(pickSeatRows(g, [])).toBeNull();
-    expect(pickSeatRows(g, [0])).toBeNull();
-    expect(pickSeatRows(g, [4])).toBeNull();
-  });
-
-  it("groups flagged seats with the same name on the same account in one game, newest game first", () => {
+  it("flags a seat whose account overlaps another seat of the same person, and no others", () => {
     // Gus has two seats on acctG1 and one on acctG2, all overlapping, so all three are flagged.
     const g1 = game("g1", [
       seat("Gus", "acctG1", -100, { end: START + HOUR }),
@@ -277,8 +247,6 @@ describe("helpers for the menu", () => {
     ]);
     const flags = findSuspicious([g1], NO_RULES);
     expect(flags.map((f) => f.row)).toEqual([0, 1, 2]);
-    const groups = groupSharedSeats(flags, [g1]);
-    // Newest flag first: the acctG2 seat, then the two acctG1 seats as one answer.
-    expect(groups.map((grp) => grp.map((f) => `${f.gameId}:${f.row}`))).toEqual([["g1:2"], ["g1:1", "g1:0"]]);
+    expect(flags.map((f) => f.overlapAccounts)).toEqual([["acctG2"], ["acctG2"], ["acctG1"]]);
   });
 });

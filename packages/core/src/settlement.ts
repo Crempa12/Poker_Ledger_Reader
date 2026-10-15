@@ -7,26 +7,28 @@
 // whole cents: each amount is printed as fixed2 of its double and stored in cents.
 
 import {
+  EPSILON_DOLLARS,
   compareBytes,
   dollarsToCents,
   escapeCSV,
   fixed2,
   fixed2Cents,
+  itemAt,
   lower,
-  moneyCents,
-  moneySignedCents,
   normalizeName,
   parseCSV,
   trim,
 } from "./util.ts";
-import type { PaymentPreference, PlayerStats, Settings, SettlementEntry, SettlementReason } from "./models.ts";
+import type {
+  PaymentPreference,
+  PlayerStats,
+  Settings,
+  SettlementEntry,
+  SettlementReason,
+  WarnFn,
+} from "./models.ts";
 import { balanceDollars } from "./players.ts";
-
-// The reason a sheet entry was made, as the settlements.csv tag. "requested" is
-// a one-off request for this sheet only.
-export type SheetReason = SettlementReason;
-
-export type SheetEntry = SettlementEntry;
+import { libcppSort } from "./libcpp-sort.ts";
 
 // The sheet's balances do not add up to zero. "effect" says what the C++ tells
 // the user about it; amountCents is the amount that sentence names.
@@ -39,7 +41,7 @@ export interface SheetWarning {
 }
 
 export interface SheetResult {
-  entries: SheetEntry[];
+  entries: SettlementEntry[];
   warnings: SheetWarning[];
 }
 
@@ -47,23 +49,29 @@ export interface SheetResult {
 
 // payment_preferences.csv: "payer_normalized,payee_normalized,note". Rows with a
 // missing name, or payer = payee, are dropped (as the C++ does).
-export function loadPreferencesCSV(text: string): PaymentPreference[] {
+export function parsePreferencesCSV(text: string, warn?: WarnFn): PaymentPreference[] {
   const prefs: PaymentPreference[] = [];
-  for (const row of parseCSV(text)) {
-    if (row.length < 2) continue;
+  parseCSV(text).forEach((row, k) => {
+    const at = { source: "payment_preferences.csv", row: k + 1, field: null };
+    if (row.length < 2) {
+      warn?.({ code: "short-row", ...at });
+      return;
+    }
     const payer = normalizeName(row[0] ?? "");
     const payee = normalizeName(row[1] ?? "");
     const note = row.length > 2 ? trim(row[2] ?? "") : "";
-    if (payer !== "" && payee !== "" && payer !== payee) {
-      prefs.push({ payerNormalized: payer, payeeNormalized: payee, note, oneOff: false });
+    if (payer === "" || payee === "" || payer === payee) {
+      warn?.({ code: "dropped-row", ...at });
+      return;
     }
-  }
+    prefs.push({ payerNormalized: payer, payeeNormalized: payee, note, oneOff: false });
+  });
   return prefs;
 }
 
 // Writes the pinned payments. One-off requests are for one sheet only and are
 // never written (the C++ header says so; no C++ code creates one today).
-export function savePreferencesCSV(prefs: PaymentPreference[]): string {
+export function serializePreferencesCSV(prefs: readonly PaymentPreference[]): string {
   let out = "payer_normalized,payee_normalized,note\n";
   for (const p of prefs) {
     if (p.oneOff) continue;
@@ -74,7 +82,7 @@ export function savePreferencesCSV(prefs: PaymentPreference[]): string {
 
 // settings.csv: "key,value" rows for me, banker and display. Keys not in the file
 // keep their value from `current`, as the C++ loads into the existing settings.
-export function loadSettingsCSV(text: string, current: Settings): Settings {
+export function parseSettingsCSV(text: string, current: Settings): Settings {
   const settings: Settings = { ...current };
   for (const row of parseCSV(text)) {
     if (row.length < 2) continue;
@@ -87,7 +95,7 @@ export function loadSettingsCSV(text: string, current: Settings): Settings {
   return settings;
 }
 
-export function saveSettingsCSV(settings: Settings): string {
+export function serializeSettingsCSV(settings: Settings): string {
   return (
     "key,value\n" +
     `me,${escapeCSV(settings.me)}\n` +
@@ -99,7 +107,7 @@ export function saveSettingsCSV(settings: Settings): string {
 // The settlement sheet as the C++ exportCSV writes it. The reason is written as
 // the raw tag: "preference" (pinned), "requested" (one-off), "banker" or "auto".
 // Amounts are two decimals.
-export function settlementsCSV(entries: SheetEntry[]): string {
+export function settlementsCSV(entries: readonly SettlementEntry[]): string {
   let out = "from,to,amount,reason,from_normalized,to_normalized\n";
   for (const e of entries) {
     out +=
@@ -109,32 +117,10 @@ export function settlementsCSV(entries: SheetEntry[]): string {
   return out;
 }
 
-// The sentences the C++ prints when the sheet does not balance, without colors
-// and without the menu reference.
-export function warningText(w: SheetWarning): string[] {
-  const lines = [`This sheet does not balance: its totals add up to ${moneySignedCents(w.totalCents)} instead of $0.00.`];
-  switch (w.effect) {
-    case "banker-pays-more":
-      lines.push(`The banker pays out ${moneyCents(w.amountCents)} more than their own result covers.`);
-      break;
-    case "banker-holds":
-      lines.push(`The banker is left holding ${moneyCents(w.amountCents)} that nobody is owed.`);
-      break;
-    case "winners-short":
-      lines.push(`Some winners get ${moneyCents(w.amountCents)} less than the table above shows.`);
-      break;
-    case "debt-unpaid":
-      lines.push(`${moneyCents(w.amountCents)} of debt has nobody to be paid to.`);
-      break;
-  }
-  lines.push("The cause is a one-sided correction or a ledger that does not balance.");
-  return lines;
-}
-
 // ---------------- calculation ----------------
 
 // The C++ EPSILON, in dollars: anything under a cent is nothing.
-const EPS = 0.009;
+const EPS = EPSILON_DOLLARS;
 
 interface Balance {
   display: string;
@@ -142,7 +128,7 @@ interface Balance {
   amount: number; // dollars; positive = is owed, negative = owes
 }
 
-type Pay = (from: Balance, to: Balance, amount: number, reason: SheetReason) => void;
+type Pay = (from: Balance, to: Balance, amount: number, reason: SettlementReason) => void;
 
 // Balances in the order the C++ std::map visits them: by normalized name, bytes.
 function sortedBalances(balances: Map<string, Balance>): Balance[] {
@@ -203,7 +189,7 @@ function findZeroSubset(
     if (used[i]) continue;
     if (n - i < size - picked.length) break;
     picked.push(i);
-    if (findZeroSubset(cents, used, size, i + 1, running + (cents[i] ?? 0), picked)) return true;
+    if (findZeroSubset(cents, used, size, i + 1, running + itemAt(cents, i), picked)) return true;
     picked.pop();
   }
   return false;
@@ -232,12 +218,12 @@ function splitIntoGroups(people: Balance[]): Balance[][] {
     for (let mask = 1; mask <= full; mask++) {
       let low = 0;
       while (!(mask & (1 << low))) low++;
-      sum[mask] = sum[mask & (mask - 1)]! + cents[low]!;
+      sum[mask] = itemAt(sum, mask & (mask - 1)) + itemAt(cents, low);
       let bestSub = -1;
       let bestVal = -1;
       for (let i = 0; i < n; i++) {
         if (!(mask & (1 << i))) continue;
-        const v = best[mask ^ (1 << i)]!;
+        const v = itemAt(best, mask ^ (1 << i));
         if (v > bestVal) {
           bestVal = v;
           bestSub = i;
@@ -250,8 +236,8 @@ function splitIntoGroups(people: Balance[]): Balance[][] {
     let group: Balance[] = [];
     let cur = full;
     while (cur) {
-      const i = removed[cur]!;
-      group.push(people[i]!);
+      const i = itemAt(removed, cur);
+      group.push(itemAt(people, i));
       cur ^= 1 << i;
       if (sum[cur] === 0 && group.length > 0) {
         groups.push(group);
@@ -271,7 +257,7 @@ function splitIntoGroups(people: Balance[]): Balance[][] {
     while (findZeroSubset(cents, used, size, 0, 0, picked)) {
       const g: Balance[] = [];
       for (const i of picked) {
-        g.push(people[i]!);
+        g.push(itemAt(people, i));
         used[i] = true;
       }
       groups.push(g);
@@ -279,7 +265,7 @@ function splitIntoGroups(people: Balance[]): Balance[][] {
     }
   }
   const rest: Balance[] = [];
-  for (let i = 0; i < n; i++) if (!used[i]) rest.push(people[i]!);
+  for (let i = 0; i < n; i++) if (!used[i]) rest.push(itemAt(people, i));
   if (rest.length > 0) groups.push(rest);
   return groups;
 }
@@ -291,8 +277,8 @@ function splitIntoGroups(people: Balance[]): Balance[][] {
 //      (pinned first, then one-off requests, as the caller lists them).
 //   3. fewest payments for what is left: zero-sum groups, then best-fit pairing.
 export function calculateSheet(
-  players: PlayerStats[],
-  prefs: PaymentPreference[],
+  players: readonly PlayerStats[],
+  prefs: readonly PaymentPreference[],
   bankerNormalized: string,
 ): SheetResult {
   // Balance = poker result + adjustments, in dollars as the C++ holds it. Players
@@ -300,12 +286,15 @@ export function calculateSheet(
   const balances = new Map<string, Balance>();
   for (const p of players) {
     const amount = balanceDollars(p);
+    // Balances are sums of whole cents, so a value that is not finite is a caller's bug.
+    // A NaN would fail both tests below and drop the player with no warning, so refuse it.
+    if (!Number.isFinite(amount)) throw new RangeError("a player's balance is not a finite number");
     if (amount > EPS || amount < -EPS) {
       balances.set(p.normalizedName, { display: p.displayName, normalized: p.normalizedName, amount });
     }
   }
 
-  const entries: SheetEntry[] = [];
+  const entries: SettlementEntry[] = [];
   const pay: Pay = (from, to, amount, reason) => {
     if (amount <= EPS) return;
     entries.push({
@@ -386,418 +375,4 @@ export function calculateSheet(
   if (unpaidCredit > EPS) warn("winners-short", unpaidCredit);
   else warn("debt-unpaid", unpaidDebt);
   return { entries, warnings };
-}
-
-// The entries alone, as the C++ calculate returns them.
-export function calculate(
-  players: PlayerStats[],
-  prefs: PaymentPreference[],
-  bankerNormalized: string,
-): SheetEntry[] {
-  return calculateSheet(players, prefs, bankerNormalized).entries;
-}
-
-// ---------------- libc++ std::sort ----------------
-//
-// The C++ sorts the losers with std::sort. Equal keys can come out in a different
-// order from a different sort routine, and that order decides who pays whom. So
-// this is a step-for-step port of the libc++ introsort that Apple clang uses for
-// pointers with a lambda comparator (the non-branchless path): sorting networks
-// for up to 5 items, insertion sort below 24, a pattern-defeating quicksort above
-// that, and heap sort when the depth limit runs out.
-
-type Less<T> = (a: T, b: T) => boolean;
-
-function at<T>(a: T[], i: number): T {
-  return a[i] as T;
-}
-
-function swapAt<T>(a: T[], i: number, j: number): void {
-  const t = at(a, i);
-  a[i] = at(a, j);
-  a[j] = t;
-}
-
-function sort3<T>(a: T[], x: number, y: number, z: number, c: Less<T>): void {
-  if (!c(at(a, y), at(a, x))) {
-    // x <= y
-    if (!c(at(a, z), at(a, y))) return; // x <= y <= z
-    swapAt(a, y, z);
-    if (c(at(a, y), at(a, x))) swapAt(a, x, y);
-    return;
-  }
-  // x > y
-  if (c(at(a, z), at(a, y))) {
-    swapAt(a, x, z);
-    return;
-  }
-  swapAt(a, x, y);
-  if (c(at(a, z), at(a, y))) swapAt(a, y, z);
-}
-
-function sort4<T>(a: T[], x1: number, x2: number, x3: number, x4: number, c: Less<T>): void {
-  sort3(a, x1, x2, x3, c);
-  if (c(at(a, x4), at(a, x3))) {
-    swapAt(a, x3, x4);
-    if (c(at(a, x3), at(a, x2))) {
-      swapAt(a, x2, x3);
-      if (c(at(a, x2), at(a, x1))) swapAt(a, x1, x2);
-    }
-  }
-}
-
-function sort5<T>(a: T[], x1: number, x2: number, x3: number, x4: number, x5: number, c: Less<T>): void {
-  sort4(a, x1, x2, x3, x4, c);
-  if (c(at(a, x5), at(a, x4))) {
-    swapAt(a, x4, x5);
-    if (c(at(a, x4), at(a, x3))) {
-      swapAt(a, x3, x4);
-      if (c(at(a, x3), at(a, x2))) {
-        swapAt(a, x2, x3);
-        if (c(at(a, x2), at(a, x1))) swapAt(a, x1, x2);
-      }
-    }
-  }
-}
-
-// Insertion sort of [first, last). The inner loop stops at `first`, so it needs no
-// sentinel before the range (the guarded version).
-function insertionSort<T>(a: T[], first: number, last: number, c: Less<T>): void {
-  for (let i = first + 1; i !== last; i++) {
-    let j = i - 1;
-    if (c(at(a, i), at(a, j))) {
-      const t = at(a, i);
-      let k = j;
-      j = i;
-      do {
-        a[j] = at(a, k);
-        j = k;
-      } while (j !== first && c(t, at(a, --k)));
-      a[j] = t;
-    }
-  }
-}
-
-// The same insertion sort for a range with an element before `first` that is no
-// larger than anything in the range, so the inner loop needs no bounds check.
-function insertionSortUnguarded<T>(a: T[], first: number, last: number, c: Less<T>): void {
-  for (let i = first + 1; i !== last; i++) {
-    let j = i - 1;
-    if (c(at(a, i), at(a, j))) {
-      const t = at(a, i);
-      let k = j;
-      j = i;
-      do {
-        a[j] = at(a, k);
-        j = k;
-      } while (c(t, at(a, --k)));
-      a[j] = t;
-    }
-  }
-}
-
-// Insertion sort that gives up after 8 moves (returns false). Used on the two
-// halves after a partition that already split them cleanly.
-function insertionSortIncomplete<T>(a: T[], first: number, last: number, c: Less<T>): boolean {
-  switch (last - first) {
-    case 0:
-    case 1:
-      return true;
-    case 2:
-      if (c(at(a, last - 1), at(a, first))) swapAt(a, first, last - 1);
-      return true;
-    case 3:
-      sort3(a, first, first + 1, last - 1, c);
-      return true;
-    case 4:
-      sort4(a, first, first + 1, first + 2, last - 1, c);
-      return true;
-    case 5:
-      sort5(a, first, first + 1, first + 2, first + 3, last - 1, c);
-      return true;
-  }
-  let j = first + 2;
-  sort3(a, first, first + 1, j, c);
-  const limit = 8;
-  let count = 0;
-  for (let i = j + 1; i !== last; i++) {
-    if (c(at(a, i), at(a, j))) {
-      const t = at(a, i);
-      let k = j;
-      j = i;
-      do {
-        a[j] = at(a, k);
-        j = k;
-      } while (j !== first && c(t, at(a, --k)));
-      a[j] = t;
-      if (++count === limit) {
-        i++;
-        return i === last;
-      }
-    }
-    j = i;
-  }
-  return true;
-}
-
-// Partition with the pivot's equals on the right. Returns the pivot's final
-// position and whether the range was already partitioned.
-function partitionWithEqualsOnRight<T>(
-  a: T[],
-  first0: number,
-  last0: number,
-  c: Less<T>,
-): { pos: number; already: boolean } {
-  const begin = first0;
-  let first = first0;
-  let last = last0;
-  const pivot = at(a, begin);
-  do {
-    first++;
-  } while (c(at(a, first), pivot));
-  if (begin === first - 1) {
-    while (first < last) {
-      last--;
-      if (c(at(a, last), pivot)) break;
-    }
-  } else {
-    do {
-      last--;
-    } while (!c(at(a, last), pivot));
-  }
-  const already = first >= last;
-  while (first < last) {
-    swapAt(a, first, last);
-    do {
-      first++;
-    } while (c(at(a, first), pivot));
-    do {
-      last--;
-    } while (!c(at(a, last), pivot));
-  }
-  const pivotPos = first - 1;
-  if (begin !== pivotPos) a[begin] = at(a, pivotPos);
-  a[pivotPos] = pivot;
-  return { pos: pivotPos, already };
-}
-
-// Partition with the pivot's equals on the left (used when the element before the
-// range equals the pivot). Returns the start of the right-hand part.
-function partitionWithEqualsOnLeft<T>(a: T[], first0: number, last0: number, c: Less<T>): number {
-  const begin = first0;
-  let first = first0;
-  let last = last0;
-  const pivot = at(a, begin);
-  if (c(pivot, at(a, last - 1))) {
-    do {
-      first++;
-    } while (!c(pivot, at(a, first)));
-  } else {
-    first++;
-    while (first < last && !c(pivot, at(a, first))) first++;
-  }
-  if (first < last) {
-    do {
-      last--;
-    } while (c(pivot, at(a, last)));
-  }
-  while (first < last) {
-    swapAt(a, first, last);
-    do {
-      first++;
-    } while (!c(pivot, at(a, first)));
-    do {
-      last--;
-    } while (c(pivot, at(a, last)));
-  }
-  const pivotPos = first - 1;
-  if (begin !== pivotPos) a[begin] = at(a, pivotPos);
-  a[pivotPos] = pivot;
-  return first;
-}
-
-function siftDown<T>(a: T[], first: number, len: number, start0: number, c: Less<T>): void {
-  let start = start0;
-  let child = start - first;
-  if (len < 2 || Math.floor((len - 2) / 2) < child) return;
-  child = 2 * child + 1;
-  let childI = first + child;
-  if (child + 1 < len && c(at(a, childI), at(a, childI + 1))) {
-    childI++;
-    child++;
-  }
-  if (c(at(a, childI), at(a, start))) return;
-  const top = at(a, start);
-  do {
-    a[start] = at(a, childI);
-    start = childI;
-    if (Math.floor((len - 2) / 2) < child) break;
-    child = 2 * child + 1;
-    childI = first + child;
-    if (child + 1 < len && c(at(a, childI), at(a, childI + 1))) {
-      childI++;
-      child++;
-    }
-  } while (!c(at(a, childI), top));
-  a[start] = top;
-}
-
-// Sinks the top of a heap to the bottom along the larger children, then floats the
-// element that was last back up (the libc++ "floyd" pop). Returns the hole.
-function floydSiftDown<T>(a: T[], first: number, len: number, c: Less<T>): number {
-  let hole = first;
-  let childI = first;
-  let child = 0;
-  for (;;) {
-    childI += child + 1;
-    child = 2 * child + 1;
-    if (child + 1 < len && c(at(a, childI), at(a, childI + 1))) {
-      childI++;
-      child++;
-    }
-    a[hole] = at(a, childI);
-    hole = childI;
-    if (child > Math.floor((len - 2) / 2)) return hole;
-  }
-}
-
-function siftUp<T>(a: T[], first: number, last0: number, c: Less<T>, len0: number): void {
-  let last = last0;
-  let len = len0;
-  if (len > 1) {
-    len = Math.floor((len - 2) / 2);
-    let ptr = first + len;
-    last--;
-    if (c(at(a, ptr), at(a, last))) {
-      const t = at(a, last);
-      do {
-        a[last] = at(a, ptr);
-        last = ptr;
-        if (len === 0) break;
-        len = Math.floor((len - 1) / 2);
-        ptr = first + len;
-      } while (c(at(a, ptr), t));
-      a[last] = t;
-    }
-  }
-}
-
-function popHeap<T>(a: T[], first: number, last0: number, c: Less<T>, len: number): void {
-  let last = last0;
-  if (len > 1) {
-    const top = at(a, first);
-    let hole = floydSiftDown(a, first, len, c);
-    last--;
-    if (hole === last) {
-      a[hole] = top;
-    } else {
-      a[hole] = at(a, last);
-      hole++;
-      a[last] = top;
-      siftUp(a, first, hole, c, hole - first);
-    }
-  }
-}
-
-function makeHeap<T>(a: T[], first: number, last: number, c: Less<T>): void {
-  const n = last - first;
-  if (n > 1) {
-    for (let start = Math.floor((n - 2) / 2); start >= 0; start--) siftDown(a, first, n, first + start, c);
-  }
-}
-
-function sortHeap<T>(a: T[], first: number, last0: number, c: Less<T>): void {
-  let last = last0;
-  for (let n = last - first; n > 1; last--, n--) popHeap(a, first, last, c, n);
-}
-
-function introsort<T>(
-  a: T[],
-  first0: number,
-  last0: number,
-  c: Less<T>,
-  depth0: number,
-  leftmost0: boolean,
-): void {
-  let first = first0;
-  let last = last0;
-  let depth = depth0;
-  let leftmost = leftmost0;
-  const limit = 24; // insertion sort below this length
-  const ninther = 128; // median of nine pivots above this length
-  for (;;) {
-    const len = last - first;
-    switch (len) {
-      case 0:
-      case 1:
-        return;
-      case 2:
-        if (c(at(a, last - 1), at(a, first))) swapAt(a, first, last - 1);
-        return;
-      case 3:
-        sort3(a, first, first + 1, last - 1, c);
-        return;
-      case 4:
-        sort4(a, first, first + 1, first + 2, last - 1, c);
-        return;
-      case 5:
-        sort5(a, first, first + 1, first + 2, first + 3, last - 1, c);
-        return;
-    }
-    if (len < limit) {
-      if (leftmost) insertionSort(a, first, last, c);
-      else insertionSortUnguarded(a, first, last, c);
-      return;
-    }
-    if (depth === 0) {
-      // Too many bad splits: heap sort guarantees n log n.
-      makeHeap(a, first, last, c);
-      sortHeap(a, first, last, c);
-      return;
-    }
-    depth--;
-    {
-      const half = Math.floor(len / 2);
-      if (len > ninther) {
-        sort3(a, first, first + half, last - 1, c);
-        sort3(a, first + 1, first + (half - 1), last - 2, c);
-        sort3(a, first + 2, first + (half + 1), last - 3, c);
-        sort3(a, first + (half - 1), first + half, first + (half + 1), c);
-        swapAt(a, first, first + half);
-      } else {
-        sort3(a, first + half, first, last - 1, c);
-      }
-    }
-    // When the element before this range equals the pivot, the equals go left and
-    // the left side is already in place.
-    if (!leftmost && !c(at(a, first - 1), at(a, first))) {
-      first = partitionWithEqualsOnLeft(a, first, last, c);
-      continue;
-    }
-    const part = partitionWithEqualsOnRight(a, first, last, c);
-    let i = part.pos;
-    if (part.already) {
-      const fs = insertionSortIncomplete(a, first, i, c);
-      if (insertionSortIncomplete(a, i + 1, last, c)) {
-        if (fs) return;
-        last = i;
-        continue;
-      } else if (fs) {
-        i++;
-        first = i;
-        continue;
-      }
-    }
-    introsort(a, first, i, c, depth, leftmost);
-    leftmost = false;
-    first = i + 1;
-  }
-}
-
-// std::sort(first, last, comp) on the range [lo, hi) of `a`, in place.
-export function libcppSort<T>(a: T[], lo: number, hi: number, c: Less<T>): void {
-  const len = hi - lo;
-  if (len <= 0) return;
-  const depth = 2 * (31 - Math.clz32(len)); // 2 * floor(log2(len))
-  introsort(a, lo, hi, c, depth, true);
 }

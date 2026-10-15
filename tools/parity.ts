@@ -20,39 +20,16 @@ import { fileURLToPath } from "node:url";
 
 import { loadDataRoot } from "./load.ts";
 import type { DataRootInputs } from "./load.ts";
-import { filter as filterAdjustments, parseAdjustments } from "../packages/core/src/adjustments.ts";
-import { filterGames, listFolders, loadAllGames } from "../packages/core/src/ledger.ts";
-import type { DuplicateNote } from "../packages/core/src/ledger.ts";
-import type {
-  Adjustment,
-  Game,
-  PaymentPreference,
-  PlayerStats,
-  Scope,
-  SeatOwner,
-  Settings,
-} from "../packages/core/src/models.ts";
-import {
-  aggregate,
-  parseMergeRulesCSV,
-  playerSummaryCSV,
-  resolveCanonical,
-  sortedByNet,
-  suggestMergesByPlayerId,
-} from "../packages/core/src/players.ts";
-import type { MergeRules } from "../packages/core/src/players.ts";
-import { apply, findSuspicious, parseSeatOwnersCSV } from "../packages/core/src/seats.ts";
-import { calculate, loadPreferencesCSV, loadSettingsCSV, settlementsCSV } from "../packages/core/src/settlement.ts";
-import type { SheetEntry } from "../packages/core/src/settlement.ts";
-import {
-  addSettlementBatch,
-  parseSessionBalances,
-  recordPayment,
-  serializeSessionBalances,
-  sortedRows,
-} from "../packages/core/src/sessions.ts";
+import { filterGames, listFolders } from "../packages/core/src/ledger.ts";
+import type { Game, PlayerStats, Scope, SettlementEntry } from "../packages/core/src/models.ts";
+import { playerSummaryCSV, suggestMergesByPlayerId } from "../packages/core/src/players.ts";
+import { findSuspicious } from "../packages/core/src/seats.ts";
+import { settlementsCSV } from "../packages/core/src/settlement.ts";
+import { addSettlementBatch, recordPayment, serializeSessionBalances, sortedRows } from "../packages/core/src/sessions.ts";
 import type { Balances } from "../packages/core/src/sessions.ts";
 import { dollarsToCents, formatLocalDate, moneySignedCents, parseLocalDate } from "../packages/core/src/util.ts";
+import { boardFor, loadWorld, sheetFor } from "../packages/core/src/world.ts";
+import type { World } from "../packages/core/src/world.ts";
 
 // ---------------- the report ----------------
 
@@ -91,20 +68,6 @@ interface ScenarioFile {
   name: string;
   tz: string;
   steps: Step[];
-}
-
-// Everything the app holds after startup, for one data root and one time zone.
-interface World {
-  timeZone: string;
-  games: Game[]; // seat owners applied, in the app's order
-  messages: string[]; // loader messages: skipped files, then unbalanced ledgers
-  duplicates: DuplicateNote[];
-  rules: MergeRules;
-  seatOwners: SeatOwner[];
-  prefs: PaymentPreference[]; // names through the merge rules, as refresh() leaves them
-  adjustments: Adjustment[]; // every saved adjustment, unfiltered
-  settings: Settings; // me and banker through the merge rules
-  balances: Balances; // saved session balances, before the run
 }
 
 const ALL_SCOPE: Scope = { folder: "", from: null, to: null };
@@ -181,37 +144,10 @@ function scopeFromArgs(args: readonly string[], timeZone: string): Scope {
 
 // ---------------- building the world ----------------
 
-// What the app holds after startup (main.cpp loadData and refresh), from the data root.
+// What the app holds after startup (main.cpp loadData and refresh): the core facade does the
+// work, so the parity check exercises the same entry point a website would call.
 function buildWorld(inputs: DataRootInputs, timeZone: string): World {
-  const saved = inputs.savedData;
-  const loaded = loadAllGames(inputs.games);
-  const rules = parseMergeRulesCSV(saved["merge_rules.csv"] ?? "");
-  const seatOwners = parseSeatOwnersCSV(saved["seat_owners.csv"] ?? "");
-  // The app applies the saved seat owners on every refresh.
-  const games = apply(loaded.games, seatOwners, rules).games;
-  const prefs = loadPreferencesCSV(saved["payment_preferences.csv"] ?? "").map((p) => ({
-    ...p,
-    payerNormalized: resolveCanonical(rules, p.payerNormalized),
-    payeeNormalized: resolveCanonical(rules, p.payeeNormalized),
-  }));
-  const read = loadSettingsCSV(saved["settings.csv"] ?? "", { me: "", banker: "", simpleDisplay: false });
-  const settings: Settings = {
-    ...read,
-    me: resolveCanonical(rules, read.me),
-    banker: resolveCanonical(rules, read.banker),
-  };
-  return {
-    timeZone,
-    games,
-    messages: loaded.messages,
-    duplicates: loaded.duplicates,
-    rules,
-    seatOwners,
-    prefs,
-    adjustments: parseAdjustments(saved["adjustments.csv"] ?? "", timeZone),
-    settings,
-    balances: parseSessionBalances(saved["session_balances.csv"] ?? ""),
-  };
+  return loadWorld({ timeZone, ledgers: inputs.games, saved: inputs.savedData });
 }
 
 // The first player on the all-data board with the most games: reference/run.sh's
@@ -219,7 +155,7 @@ function buildWorld(inputs: DataRootInputs, timeZone: string): World {
 function topGamesPlayer(world: World): string {
   let best = "";
   let bestGames = -1;
-  const board = sortedByNet(aggregate(world.games, world.rules, filterAdjustments(world.adjustments, ALL_SCOPE)));
+  const board = boardFor(world, world.games, ALL_SCOPE);
   for (const p of board) {
     if (p.games > bestGames) {
       best = p.normalizedName;
@@ -250,7 +186,7 @@ function dayScope(game: Game, timeZone: string): Scope {
 }
 
 interface SheetRun {
-  entries: SheetEntry[];
+  entries: SettlementEntry[];
   next: number; // where the menu continues, after the sheet's own answers
 }
 
@@ -282,14 +218,13 @@ function runSettle(menu: readonly string[], world: World, scope: Scope): SheetRu
     if (menu[next] !== "n") throw new Error("a one-off request is not supported by the parity check");
     next++;
   }
-  const board = sortedByNet(aggregate(games, world.rules, filterAdjustments(world.adjustments, target)));
-  const entries = board.length === 0 ? [] : calculate(board, world.prefs, world.settings.banker);
+  const entries = sheetFor(world, games, target).entries;
   return { entries, next };
 }
 
 // menu 7: saves the sheet under a session id, after asking before it adds on top of an
 // existing one.
-function saveSheet(menu: readonly string[], next: number, balances: Balances, entries: SheetEntry[]): Balances {
+function saveSheet(menu: readonly string[], next: number, balances: Balances, entries: SettlementEntry[]): Balances {
   const at = menu.indexOf("7", next);
   if (at === -1) throw new Error("a save step has no menu 7");
   const sessionId = menu[at + 1] ?? "";
@@ -428,9 +363,7 @@ async function checkSummary(dir: string, world: World, scope: Scope): Promise<Ch
   const name = "player_summary.csv";
   const cpp = await readText(join(dir, name));
   if (cpp === null) return { name, detail: "", mismatches: ["missing from the reference"] };
-  const board = sortedByNet(
-    aggregate(filterGames(world.games, scope), world.rules, filterAdjustments(world.adjustments, scope)),
-  );
+  const board = boardFor(world, filterGames(world.games, scope), scope);
   return {
     name,
     detail: `${board.length} players; ledger columns only, the hand-log columns are not compared`,
@@ -438,7 +371,7 @@ async function checkSummary(dir: string, world: World, scope: Scope): Promise<Ch
   };
 }
 
-async function checkSettlementsFile(dir: string, entries: SheetEntry[]): Promise<Check> {
+async function checkSettlementsFile(dir: string, entries: SettlementEntry[]): Promise<Check> {
   const name = "settlements.csv";
   const cpp = await readText(join(dir, name));
   if (cpp === null) return { name, detail: "", mismatches: ["missing from the reference"] };
@@ -481,7 +414,7 @@ async function checkHistory(dir: string, step: Step, world: World): Promise<Chec
   const text = await readText(join(dir, step.log));
   if (text === null) return { name, detail: "", mismatches: ["missing from the reference"] };
   const number = Number(step.menu[1]);
-  const board = sortedByNet(aggregate(world.games, world.rules, filterAdjustments(world.adjustments, ALL_SCOPE)));
+  const board = boardFor(world, world.games, ALL_SCOPE);
   const player = board[number - 1];
   if (player === undefined) return { name, detail: "", mismatches: [`no player ${number} on the all-data board`] };
 
@@ -581,7 +514,7 @@ async function checkStartup(dir: string, step: Step, world: World): Promise<Chec
   if (boxGames === null || boxPlayers === null || boxPinned === null) {
     mismatches.push("the summary box is not in the expected form");
   } else {
-    const players = aggregate(world.games, world.rules, filterAdjustments(world.adjustments, ALL_SCOPE)).size;
+    const players = boardFor(world, world.games, ALL_SCOPE).length;
     countMismatch(mismatches, "box games", boxGames[1] ?? "", world.games.length);
     countMismatch(mismatches, "box players", boxPlayers[1] ?? "", players);
     countMismatch(mismatches, "box pinned payments", boxPinned[1] ?? "", world.prefs.length);
@@ -611,7 +544,7 @@ async function checkScenario(dir: string, scenario: ScenarioFile, base: World): 
   const checks: Check[] = [];
   const notCompared: string[] = [];
   let world = scenarioWorld(base, scenario.name);
-  let sheet: SheetEntry[] | null = null;
+  let sheet: SettlementEntry[] | null = null;
   let summaryChecked = false;
 
   for (const step of scenario.steps) {
@@ -683,6 +616,43 @@ async function checkScenario(dir: string, scenario: ScenarioFile, base: World): 
   return { name: scenario.name, checks, notCompared, mismatchCount };
 }
 
+function isStep(value: unknown): value is Step {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "kind" in value &&
+    typeof value.kind === "string" &&
+    "log" in value &&
+    typeof value.log === "string" &&
+    "exit" in value &&
+    typeof value.exit === "number" &&
+    "args" in value &&
+    Array.isArray(value.args) &&
+    "menu" in value &&
+    Array.isArray(value.menu)
+  );
+}
+
+// Reads a scenario.json, checking the shape reference/run.sh writes. A damaged file fails
+// here, named by its folder, rather than later with an unrelated TypeError.
+function parseScenario(text: string, folder: string): ScenarioFile {
+  const value: unknown = JSON.parse(text);
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("name" in value) ||
+    typeof value.name !== "string" ||
+    !("tz" in value) ||
+    typeof value.tz !== "string" ||
+    !("steps" in value) ||
+    !Array.isArray(value.steps) ||
+    !value.steps.every(isStep)
+  ) {
+    throw new Error(`${folder}: scenario.json does not have the shape the reference writes`);
+  }
+  return { name: value.name, tz: value.tz, steps: value.steps };
+}
+
 // Recomputes and compares every scenario under <referenceDir>/scenarios with the data root.
 export async function runParity(referenceDir: string, dataRoot: string): Promise<ParityReport> {
   const scenariosDir = join(referenceDir, "scenarios");
@@ -691,13 +661,14 @@ export async function runParity(referenceDir: string, dataRoot: string): Promise
     .map((e) => e.name)
     .sort();
   const inputs = await loadDataRoot(dataRoot);
+  if (inputs.games.length === 0) throw new Error("the data root has no .csv files in its game folder");
   const worlds = new Map<string, World>();
   const scenarios: ScenarioReport[] = [];
   for (const folder of folders) {
     const dir = join(scenariosDir, folder);
     const text = await readText(join(dir, "scenario.json"));
     if (text === null) continue;
-    const scenario = JSON.parse(text) as ScenarioFile;
+    const scenario = parseScenario(text, folder);
     let base = worlds.get(scenario.tz);
     if (base === undefined) {
       base = buildWorld(inputs, scenario.tz);

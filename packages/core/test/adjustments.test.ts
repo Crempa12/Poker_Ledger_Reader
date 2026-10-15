@@ -5,9 +5,6 @@ import {
   correctionRow,
   chooseDate,
   filter,
-  folderLabel,
-  folderTag,
-  newGroup,
   parseAdjustments,
   paymentRows,
   removeGroup,
@@ -169,15 +166,6 @@ describe("which entries count in a scope", () => {
   });
 });
 
-describe("folder tag", () => {
-  it("is the folder being viewed, and reads as all folders when none is", () => {
-    expect(folderTag({ folder: "May", from: null, to: null })).toBe("May");
-    expect(folderTag(ALL_FOLDERS)).toBe("");
-    expect(folderLabel("")).toBe("(all folders)");
-    expect(folderLabel("May")).toBe("May");
-  });
-});
-
 describe("entry date", () => {
   // 2026-05-07 02:30 UTC is 2026-05-06 22:30 in New York: still the 6th there.
   const lateEveningNewYork = Date.UTC(2026, 4, 7, 2, 30) / 1000;
@@ -195,21 +183,6 @@ describe("entry date", () => {
   it("refuses text that is not a date", () => {
     expect(chooseDate("2026-13-01", 0, NEW_YORK)).toEqual({ ok: false, error: "Could not read that date." });
     expect(chooseDate("soon", 0, NEW_YORK).ok).toBe(false);
-  });
-});
-
-describe("group ids", () => {
-  it("uses adj<seconds>-<n> and counts up from the counter it is given", () => {
-    expect(newGroup([], 1000, 0)).toEqual({ group: "adj1000-1", counter: 1 });
-    expect(newGroup([], 1000, 2)).toEqual({ group: "adj1000-3", counter: 3 });
-  });
-
-  it("skips ids already in the list, so ids stay unique", () => {
-    const list: Adjustment[] = [
-      { group: "adj1000-1", date: null, playerNormalized: "ada", amountCents: 1, folder: "", note: "" },
-      { group: "adj1000-2", date: null, playerNormalized: "ben", amountCents: -1, folder: "", note: "" },
-    ];
-    expect(newGroup(list, 1000, 0)).toEqual({ group: "adj1000-3", counter: 3 });
   });
 });
 
@@ -260,7 +233,7 @@ describe("payment rows", () => {
   });
 
   it("tags the rows with the folder being viewed, or nothing for all folders", () => {
-    const everything = paymentRows({ ...base, folder: folderTag(ALL_FOLDERS) });
+    const everything = paymentRows({ ...base, folder: ALL_FOLDERS.folder });
     expect(everything.ok && everything.value.map((a) => a.folder)).toEqual(["", ""]);
   });
 

@@ -6,9 +6,20 @@
 // dollars and wrote them out, so playerDollars replays those double sums in the
 // same order. That is what makes a "-0.00" or an average's last cent match.
 
-import type { Adjustment, Epoch, Game, GameResult, LedgerRow, PlayerStats, PlayTime } from "./models.ts";
+import type {
+  Adjustment,
+  Epoch,
+  Game,
+  GameResult,
+  LedgerRow,
+  PlayerReplay,
+  PlayerStats,
+  PlayTime,
+  WarnFn,
+} from "./models.ts";
 import { averagePerGameDollars, playTimeHours, playTimeSeconds } from "./models.ts";
 import { compareBytes, escapeCSV, fixed2, normalizeName, parseCSV, sumCentsAsDollars } from "./util.ts";
+import { libcppSort } from "./libcpp-sort.ts";
 
 // alias (normalized) -> canonical (normalized). Read it as a snapshot: every
 // change returns a new map.
@@ -69,15 +80,40 @@ export function removeMergeRule(rules: ReadonlyMap<string, string>, alias: strin
   return out;
 }
 
+// True when following the rules from some alias comes back to a name already seen.
+function hasCycle(rules: ReadonlyMap<string, string>): boolean {
+  for (const start of rules.keys()) {
+    const seen = new Set<string>();
+    let current: string | undefined = start;
+    while (current !== undefined && rules.has(current)) {
+      if (seen.has(current)) return true;
+      seen.add(current);
+      current = rules.get(current);
+    }
+  }
+  return false;
+}
+
 // The rows of merge_rules.csv (header skipped). Blank or one-column rows are ignored.
-export function parseMergeRulesCSV(text: string): MergeRules {
+// Cycles (a to b, b to a) are reported, not resolved: the C++ app's result for them
+// depends on its hash-map order, so no single answer is the right one.
+export function parseMergeRulesCSV(text: string, warn?: WarnFn): MergeRules {
   const rules: MergeRules = new Map();
-  for (const row of parseCSV(text)) {
-    if (row.length < 2) continue;
+  parseCSV(text).forEach((row, k) => {
+    const at = { source: "merge_rules.csv", row: k + 1, field: null };
+    if (row.length < 2) {
+      warn?.({ code: "short-row", ...at });
+      return;
+    }
     const alias = normalizeName(row[0] ?? "");
     const canonical = normalizeName(row[1] ?? "");
-    if (alias !== "" && canonical !== "" && alias !== canonical) rules.set(alias, canonical);
-  }
+    if (alias === "" || canonical === "") {
+      warn?.({ code: "dropped-row", ...at });
+      return;
+    }
+    if (alias !== canonical) rules.set(alias, canonical);
+  });
+  if (hasCycle(rules)) warn?.({ code: "merge-cycle", source: "merge_rules.csv", row: 0, field: null });
   return flattenMergeRules(rules);
 }
 
@@ -94,26 +130,6 @@ export function serializeMergeRulesCSV(rules: ReadonlyMap<string, string>): stri
 }
 
 // ---------------- aggregation ----------------
-
-// What playerDollars replays: the row nets as the C++ app added them, and the
-// adjustments in input order. Kept beside each PlayerStats that aggregate builds.
-interface Replay {
-  gameRowNetsCents: number[][]; // one list per game, rows in row order, games in input order
-  adjustmentCents: number[];
-}
-
-const replays = new WeakMap<PlayerStats, Replay>();
-
-function replayOf(p: PlayerStats): Replay {
-  const known = replays.get(p);
-  if (known !== undefined) return known;
-  // A copy of a PlayerStats has no row-level record, so use its per-game totals.
-  // These can differ from the C++ doubles in the last binary digit.
-  return {
-    gameRowNetsCents: p.history.filter((r) => !r.adjustment).map((r) => [r.netCents]),
-    adjustmentCents: p.history.filter((r) => r.adjustment).map((r) => r.netCents),
-  };
-}
 
 // Bytes a string takes in UTF-8, as the C++ string size. A lone surrogate counts
 // as U+FFFD, which is 3 bytes.
@@ -283,13 +299,13 @@ export function aggregate(
   const out = new Map<string, PlayerStats>();
   const accs = [...people.values()].sort((a, b) => compareBytes(a.canonical, b.canonical));
   for (const acc of accs) {
-    // C++ std::sort: by date, then game id. Two adjustments on one date tie; the C++
-    // order for those is not defined, so they keep their input order here.
-    acc.history.sort((a, b) => {
+    // The C++ std::sort: by date, then game id. Two adjustments on one date tie, and
+    // which one comes first is set by libc++'s algorithm, so that sort is ported.
+    libcppSort(acc.history, 0, acc.history.length, (a, b) => {
       const da = epochKey(a.date);
       const db = epochKey(b.date);
-      if (da !== db) return da < db ? -1 : 1;
-      return compareBytes(a.gameId, b.gameId);
+      if (da !== db) return da < db;
+      return compareBytes(a.gameId, b.gameId) < 0;
     });
     const stats: PlayerStats = {
       displayName: displayNameFor(acc),
@@ -305,8 +321,8 @@ export function aggregate(
       history: acc.history,
       aliases: [...acc.aliases].sort(compareBytes),
       playerIds: [...acc.playerIds].sort(compareBytes),
+      replay: { gameRowNetsCents: acc.gameRowNets, adjustmentCents: acc.adjustmentCents },
     };
-    replays.set(stats, { gameRowNetsCents: acc.gameRowNets, adjustmentCents: acc.adjustmentCents });
     out.set(acc.canonical, stats);
   }
   return out;
@@ -324,7 +340,7 @@ export interface PlayerDollars {
 }
 
 export function playerDollars(p: PlayerStats): PlayerDollars {
-  const replay = replayOf(p);
+  const replay: PlayerReplay = p.replay;
   const rowsInOrder = replay.gameRowNetsCents.flat();
   let totalWon = 0;
   let totalLost = 0;
@@ -358,10 +374,9 @@ export function playerDollars(p: PlayerStats): PlayerDollars {
 
 // The balance a settlement sheet uses, in dollars: the poker result plus payments and
 // corrections, added as the C++ balance() adds them (two double sums, then one add).
-// From aggregate() this replays the row nets, so an exact tie between two balances
-// comes out as in the C++. A copy with no replay record uses its whole-cent balance.
+// This replays the row nets, so an exact tie between two balances comes out as in the
+// C++. A copy of the PlayerStats replays to the same value.
 export function balanceDollars(p: PlayerStats): number {
-  if (!replays.has(p)) return p.totalNetCents / 100 + p.adjustmentsCents / 100;
   const dollars = playerDollars(p);
   return dollars.totalNet + dollars.adjustments;
 }
