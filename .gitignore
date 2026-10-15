@@ -16,3 +16,6 @@ Saved_Data/
 ledger_*.csv
 poker_now_log_*.csv
 !fixtures/**
+
+# Local tool settings.
+.claude/
