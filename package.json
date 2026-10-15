@@ -20,7 +20,8 @@
     "parity:real": "PARITY_REAL=1 vitest run packages/core/test/parity.test.ts -t 'real data'",
     "web": "npm run dev -w @plr/web",
     "typecheck:web": "npm run typecheck -w @plr/web",
-    "web:quiet": "npm run dev:quiet -w @plr/web"
+    "web:quiet": "npm run dev:quiet -w @plr/web",
+    "verify": "npm run typecheck && npm run typecheck:web && vitest run && npm run check:privacy"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

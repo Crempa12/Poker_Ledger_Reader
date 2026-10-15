@@ -9,7 +9,9 @@ export interface Payload {
   timeZone: string;
   loadedAt: number; // ms since the epoch
   ledgers: ledger.LedgerInput[];
+  logs: string[]; // paths of the hand logs under the game folder (their text is not sent)
   saved: Record<string, string>;
+  canWrite: boolean; // the server can file new game files (local mode)
 }
 
 export interface Loaded {
@@ -62,4 +64,17 @@ export function saveScope(choice: ScopeChoice): void {
   } catch {
     // Private windows can refuse storage; the scope then lasts for this visit only.
   }
+}
+
+// Calls to the local server that change files. The custom header lets the server
+// refuse anything that did not come from this page.
+export async function postJSON<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-PLR": "1" },
+    body: JSON.stringify(body),
+  });
+  const data = (await res.json().catch(() => ({}))) as T & { error?: string };
+  if (!res.ok) throw new Error(data.error ?? `the server answered ${res.status}`);
+  return data;
 }

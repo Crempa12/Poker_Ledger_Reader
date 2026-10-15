@@ -7,6 +7,7 @@ import { clockTime, plural, shortDate } from "./format.ts";
 import { href, useRoute } from "./router.ts";
 import { Check, checkCount } from "./pages/Check.tsx";
 import { GamePage } from "./pages/Game.tsx";
+import { AddGame } from "./pages/AddGame.tsx";
 import { Games } from "./pages/Games.tsx";
 import { Overview } from "./pages/Overview.tsx";
 import { Owed } from "./pages/Owed.tsx";
@@ -58,7 +59,7 @@ export function App() {
   return (
     <Shell ctx={ctx} onRefresh={refresh} route={route}>
       <ScopeBar ctx={ctx} onChange={changeScope} />
-      <Page ctx={ctx} route={route} />
+      <Page ctx={ctx} route={route} onSaved={refresh} />
       <footer className="footer muted">
         Reading <code>{folderName(ctx.payload.dataRoot)}</code> on this computer · loaded {clockTime(Math.floor(ctx.payload.loadedAt / 1000), ctx.tz)} ·
         times in {ctx.tz}
@@ -71,7 +72,7 @@ function folderName(path: string): string {
   return path.split("/").filter(Boolean).pop() ?? path;
 }
 
-function Page({ ctx, route }: { ctx: Ctx; route: string[] }) {
+function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () => void }) {
   const [first, second] = route;
   switch (first) {
     case undefined:
@@ -88,6 +89,8 @@ function Page({ ctx, route }: { ctx: Ctx; route: string[] }) {
       return <Owed ctx={ctx} />;
     case "check":
       return <Check ctx={ctx} />;
+    case "add":
+      return <AddGame ctx={ctx} onSaved={onSaved} />;
     default:
       return (
         <div className="card pad">
@@ -104,6 +107,7 @@ const TABS: { path: string; label: string }[] = [
   { path: "settle", label: "Settle up" },
   { path: "owed", label: "Who owes" },
   { path: "check", label: "Checks" },
+  { path: "add", label: "+ Add game" },
 ];
 
 function Shell({ ctx, onRefresh, route, children }: { ctx?: Ctx; onRefresh?: () => void; route?: string[]; children: React.ReactNode }) {

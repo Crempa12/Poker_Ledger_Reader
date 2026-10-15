@@ -471,3 +471,40 @@ tr.dim td {
     margin-left: auto;
   }
 }
+
+textarea.links,
+input[type="text"] {
+  font: inherit;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+}
+textarea.links {
+  width: 100%;
+  resize: vertical;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  margin-top: 10px;
+}
+.row.tight {
+  margin-top: 0;
+  align-items: center;
+}
+.row label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.additem {
+  padding: 12px 0;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
