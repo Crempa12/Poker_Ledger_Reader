@@ -69,13 +69,13 @@ function safeFolder(name: unknown): string | null {
   return n;
 }
 
-export async function handleData(cfg: ApiConfig, res: ServerResponse): Promise<void> {
+export async function handleData(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
   const inputs = await loadDataRoot(cfg.dataRoot);
   // Hand logs are large and not used by the pages yet; only ledgers go to the page,
   // plus the names of the logs so the page can tell which games have one.
   const ledgers = inputs.games.filter((g) => looksLikeLedger(g.text));
   const logs = inputs.games.filter((g) => /(^|\/)poker_now_log_[^/]*\.csv$/i.test(g.relativePath)).map((g) => g.relativePath);
-  send(res, 200, { source: "local", dataRoot: cfg.dataRoot, timeZone: cfg.timeZone, loadedAt: Date.now(), ledgers, logs, saved: inputs.savedData, canWrite: true });
+  send(res, 200, { source: "local", dataRoot: cfg.dataRoot, timeZone: cfg.timeZone, loadedAt: Date.now(), ledgers, logs, saved: inputs.savedData, canWrite: isLoopback(req) });
 }
 
 // Fetches one game's ledger from PokerNow by its link or id. PokerNow serves the
@@ -122,7 +122,7 @@ export function apiMiddleware(cfg: ApiConfig) {
     const url = (req.url ?? "").split("?")[0];
     const route =
       req.method === "GET" && url === "/api/data"
-        ? handleData(cfg, res)
+        ? handleData(cfg, req, res)
         : req.method === "POST" && url === "/api/pokernow"
           ? handlePokerNow(req, res)
           : req.method === "POST" && url === "/api/save"

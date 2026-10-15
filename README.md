@@ -1,75 +1,62 @@
 # Poker Ledger Web
 
-The web version of the Poker Ledger Reader, so the group can open it on any phone or laptop.
+The web version of the Poker Ledger Reader. This is the `web-app` branch: it has
+its own history and holds no game data. The console app lives on `master`,
+unchanged, and keeps working as before.
 
-This is the `web-app` branch. It has its own history and holds no game data. The console app
-lives on `master` and is unchanged. Step 2 (the ledger math in TypeScript, matched to the console
-app to the cent) is what this branch holds now. The website itself is step 3.
+## Open it
 
-## What is here
+Double-click **Start Poker Ledger.command** in this folder (the first run installs
+what it needs, which takes a minute). Your browser opens at
+<http://127.0.0.1:5173>. Or, from a terminal in this folder:
 
-- `packages/core/src` is the ledger math in plain TypeScript. It reads no files, no clock and no
-  machine time zone. Money is whole cents and times are epoch seconds.
-- `packages/core/src/world.ts` is the entry point for a caller. `loadWorld` takes the raw texts
-  (ledger CSVs, Saved_Data CSVs and an IANA time zone) and returns what the app computes. `viewOf`
-  gives one scope's board, settlement sheet, what is owed, merge suggestions and seats to check.
-- `tools/` holds the parity check, the privacy check, the made-up data generator and a loader that
-  reads a data folder from disk (Node only).
-- `reference/` runs the C++ app to produce the expected output. `fixtures/` holds the made-up data
-  and that output.
+```bash
+npm run web
+```
 
-## Requirements
+It reads `Games/` and `Saved_Data/` from the console app's folder next to this one
+(`../Poker_Ledger_Reader`), every time the page loads or you press **Refresh**, so
+it always shows the same numbers as the console app. Set `PLR_DATA_ROOT` to read
+another folder.
 
-Node 22.18 or newer. Run `npm install` once. TypeScript runs directly, with no build step.
+| Page | What it shows |
+|---|---|
+| Overview | games, players, money in play, whether the books balance, your running total, the leaderboard |
+| Player | every night with the running total and its chart, best and worst nights, nicknames |
+| Games | every game, newest first; one game's results per player |
+| Settle up | who pays whom for the scope or one game, with your pinned payments and banker mode; copy it for the group chat |
+| Who owes | saved sheets (console menu 7) and what is still owed between each pair |
+| Checks | what the console app flags at startup: new names, shared seats, duplicates |
+| + Add game | paste a PokerNow game link to file its ledger; pick a downloaded hand log to file it |
 
-## Run the tests
+The folder and date range at the top work like the console app's scope (menu 1).
 
-    npm run typecheck
-    npm test
+### Adding games
 
-## Parity with the console app
+Paste the game's link on **+ Add game**. The ledger is fetched from PokerNow and saved
+into `Games/<folder>/` in the console app's folder, the same place menu 19 puts it,
+so the console app sees it too. PokerNow puts a captcha on hand logs, so download
+the log yourself (the page links to each game missing one) and pick the file there.
+Commit the new files on `master` as usual.
 
-Made-up data, which runs anywhere:
+### On your phone (same Wi-Fi)
 
-    npm run parity
+```bash
+npm run web:phone
+```
 
-The last line should read `PASS: 0 mismatch(es)`. The TypeScript core recomputes every committed
-export and printed total from the made-up data, and compares it with what the C++ app wrote.
+The terminal prints a `Network:` address; open it on your phone. Anyone on that
+Wi-Fi can then read the page, so use it at home, not on public Wi-Fi. Adding games
+works only on this computer.
 
-Real data, which stays on this machine:
+## Checks
 
-1. Run the C++ reference on your own data, writing into `local/` (git ignores it). The C++ repo
-   sits beside this one; the harness reads the data and never writes to it.
+```bash
+npm run verify
+```
 
-       npm run reference -- --code ../Poker_Ledger_Reader --data ../Poker_Ledger_Reader --out local/reference-real
-
-2. Compare:
-
-       npm run parity:real
-
-A `MISMATCH` line names the file or step that differs. Players are named by their normalized name,
-never by their display name, and no file name is shown. Nothing is written to a file.
-
-## Privacy check
-
-    npm run check:privacy
-
-It reads the real data at run time, in memory only, and checks every file git would commit, and the
-history of the checked-out branch, for real names, ids, timestamps and notes. It prints counts only.
-It exits non-zero on any hit, and when it cannot check (no real values, or a game file it cannot
-read). It takes a few minutes. Run it before every push to the public repo.
-
-Ordinary words that happen to be someone's nickname, and text the app itself writes, are
-allow-listed by their SHA-256 only, in `tools/check-privacy.ts`. The words themselves are never
-stored.
-
-## Made-up data
-
-    npm run fixtures
-
-regenerates `fixtures/synthetic`. Do not edit those files by hand. To rerun the C++ reference on
-the made-up data into a new folder:
-
-    npm run reference -- --code ../Poker_Ledger_Reader --data fixtures/synthetic --out <a new folder>
-
-The committed reference is `fixtures/synthetic-reference`. Change it only when the fixtures change.
+Type checks, the tests, and the privacy check (nothing git would commit may hold a
+real name, id, timestamp or note). `npm run parity` compares every number with the
+console app on made-up data; `npm run parity:real` does it on your real games
+(results stay on this computer). `reference/README.md` explains how the console
+app's numbers are produced for that.
