@@ -167,7 +167,12 @@ function Pins({ ctx, onSaved, people, canWrite }: { ctx: Ctx; onSaved: () => voi
                 {p.note !== "" ? <span className="muted"> · {p.note}</span> : null}
               </span>
               {canWrite ? (
-                <button className="ghost small" disabled={busy} onClick={() => remove(i)}>
+                <button
+                  className="ghost small"
+                  disabled={busy}
+                  onClick={() => remove(i)}
+                  aria-label={`Remove the pinned payment from ${ctx.nameOf(p.payerNormalized)} to ${ctx.nameOf(p.payeeNormalized)}`}
+                >
                   Remove
                 </button>
               ) : null}
@@ -245,7 +250,7 @@ function PersonSetting(props: {
           ))}
         </select>
         {canWrite ? (
-          <button disabled={busy || pick === value} onClick={save}>
+          <button disabled={busy || pick === value} onClick={save} aria-label={`Save: ${props.title}`}>
             Save
           </button>
         ) : null}

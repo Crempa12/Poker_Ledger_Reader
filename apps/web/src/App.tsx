@@ -50,6 +50,12 @@ export function App() {
     return buildCtx(payload, world, safe);
   }, [state, choice]);
 
+  // The browser tab and the window's title follow the page, so the pages can be told apart.
+  const routeKey = route.join("/");
+  useEffect(() => {
+    document.title = `${pageName(routeKey === "" ? [] : routeKey.split("/"))} · Poker Ledger`;
+  }, [routeKey]);
+
   const changeScope = (next: ScopeChoice): void => {
     setChoice(next);
     saveScope(next);
@@ -92,6 +98,8 @@ export function App() {
       ) : null}
       <ScopeBar ctx={ctx} onChange={changeScope} />
       <PageBoundary key={route.join("/")}>
+        {/* The pages that have no heading of their own still name themselves to a screen reader. */}
+        {PAGES_WITH_OWN_HEADING.has(route[0] ?? "") ? null : <h1 className="sr-only">{pageName(route)}</h1>}
         <Page ctx={ctx} route={route} onSaved={refresh} />
       </PageBoundary>
       <footer className="footer muted">
@@ -189,6 +197,18 @@ const TABS: { path: string; label: string }[] = [
   { path: "help", label: "Help" },
 ];
 
+// The pages that show a heading of their own (their h1), and the names of the others that are not tabs.
+const PAGES_WITH_OWN_HEADING = new Set(["player", "game", "help"]);
+const OTHER_PAGE_NAMES: Record<string, string> = { player: "Player", game: "Game", adjust: "Payments & corrections" };
+
+// The page's name, as the tab bar words it (the browser tab and the page heading use it too).
+export function pageName(route: string[]): string {
+  const first = route[0] ?? "";
+  if (first === "") return "Overview";
+  const tab = TABS.find((t) => t.path === first);
+  return tab?.label ?? OTHER_PAGE_NAMES[first] ?? "Page not found";
+}
+
 function Shell({ ctx, onRefresh, route, children }: { ctx?: Ctx; onRefresh?: () => void; route?: string[]; children: React.ReactNode }) {
   const active = route?.[0] === "player" ? "" : route?.[0] === "game" ? "games" : (route?.[0] ?? "");
   const checks = ctx === undefined ? 0 : checkCount(ctx);
@@ -206,9 +226,21 @@ function Shell({ ctx, onRefresh, route, children }: { ctx?: Ctx; onRefresh?: () 
         {ctx !== undefined ? (
           <nav className="tabs" aria-label="Pages">
             {TABS.filter((t) => !(isSnapshot(ctx.payload) && (t.path === "add" || t.path === "settings"))).map((t) => (
-              <a key={t.path} href={t.path === "" ? href() : href(t.path)} className={active === t.path ? "active" : ""}>
+              <a
+                key={t.path}
+                href={t.path === "" ? href() : href(t.path)}
+                className={active === t.path ? "active" : ""}
+                aria-current={active === t.path ? "page" : undefined}
+              >
                 {t.label}
-                {t.path === "check" && checks > 0 ? <span className="badge">{checks}</span> : null}
+                {t.path === "check" && checks > 0 ? (
+                  <>
+                    <span className="badge" aria-hidden="true">
+                      {checks}
+                    </span>
+                    <span className="sr-only"> ({plural(checks, "item")} to check)</span>
+                  </>
+                ) : null}
               </a>
             ))}
           </nav>

@@ -39,8 +39,16 @@ function folderOfPath(path: string): string {
   return parts.length > 1 ? parts.slice(0, -1).join("/") : "";
 }
 
+// Where a saved game's folder is, for the page's words: under Games/ when the data has a Games
+// folder, else at the top of the data folder (the console app reads games there then too).
+export function savedLabel(folder: string, gamesFolder: boolean): string {
+  return gamesFolder ? `Games/${folder}` : folder;
+}
+
 export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   const { world, tz } = ctx;
+  // Older payloads (and a snapshot, which never saves) do not say: the Games folder is assumed.
+  const gamesFolder = ctx.payload.gamesFolder ?? true;
   const folders = ledger.listFolders(world.games).filter((f) => f !== "(root)");
   const newest = world.games[world.games.length - 1];
   const defaultFolder = newest !== undefined && newest.folder !== "(root)" ? newest.folder : (folders[folders.length - 1] ?? "");
@@ -113,7 +121,7 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         basis: basis.current,
       });
       basis.current = r.basis;
-      setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saved", message: `saved as Games/${r.saved}` } : x)));
+      setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saved", message: `saved as ${savedLabel(r.saved, gamesFolder)}` } : x)));
       onSaved();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -136,7 +144,16 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         <h2>Add a game from PokerNow</h2>
         <p className="muted small">
           Paste the game's link (or several, one per line). The ledger is fetched straight from PokerNow and filed into your{" "}
-          <code>Games</code> folder, the same place the console app's menu 19 puts it.
+          {gamesFolder ? (
+            <>
+              <code>Games</code> folder, the same place the console app's menu 19 puts it.
+            </>
+          ) : (
+            <>
+              data folder, in a folder of its own at the top level (there is no <code>Games</code> folder yet, so the console app
+              reads games from there too).
+            </>
+          )}
         </p>
         {ctx.payload.consoleOpen > 0 ? (
           <p className="banner" role="status">
@@ -149,6 +166,7 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
           placeholder="https://www.pokernow.com/games/pgl…"
           value={links}
           onChange={(e) => setLinks(e.target.value)}
+          aria-label="PokerNow links, one per line"
         />
         <div className="row">
           <button onClick={() => void fetchLinks()} disabled={busy || links.trim() === ""}>
@@ -163,7 +181,7 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
           Hand logs can only be downloaded by a person (PokerNow puts a captcha on them): open the game on PokerNow, choose{" "}
           <em>Download log</em>, then pick the file here. Ledger files from your Downloads work too.
         </p>
-        <input type="file" accept=".csv,text/csv" multiple onChange={(e) => void pickFiles(e)} />
+        <input type="file" accept=".csv,text/csv" multiple onChange={(e) => void pickFiles(e)} aria-label="Downloaded game files to add" />
       </section>
 
       {problem !== "" ? <p className="card pad down">{problem}</p> : null}
@@ -182,7 +200,7 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                   </label>
                   {item.status === "ready" || item.status === "error" ? (
                     <button onClick={() => void save(item)} disabled={item.folder.trim() === ""}>
-                      Save to Games/{item.folder}
+                      Save to {savedLabel(item.folder, gamesFolder)}
                     </button>
                   ) : null}
                   {item.status === "saving" ? <span className="muted">Saving…</span> : null}
@@ -194,8 +212,8 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
             ))}
           </ul>
           <p className="muted small">
-            After saving, the game shows here at once; the console app lists it after it is restarted. Commit the new files to git as you
-            usually do.
+            After saving, the game shows here at once; the console app lists it after it is restarted. Game files hold everyone&apos;s
+            names and results: keep them out of git, or keep that repository private.
           </p>
         </section>
       ) : null}
@@ -254,16 +272,31 @@ function Preview({ ctx, item }: { ctx: Ctx; item: Item }) {
   );
 }
 
-function FolderPicker({ folders, value, onChange, disabled }: { folders: string[]; value: string; onChange: (f: string) => void; disabled: boolean }) {
+// The folder to file a game in: an existing one picked from the list, or a new name typed. With no
+// folder yet the name is typed from the start (a list holding only "New folder…" cannot be picked
+// from: choosing that option is no change for the browser, so nothing would open).
+export function FolderPicker({
+  folders,
+  value,
+  onChange,
+  disabled,
+}: {
+  folders: string[];
+  value: string;
+  onChange: (f: string) => void;
+  disabled: boolean;
+}) {
   const isNew = value !== "" && !folders.includes(value);
-  const [typing, setTyping] = useState(isNew);
+  const [typing, setTyping] = useState(isNew || folders.length === 0);
   if (typing) {
     return (
       <span className="row tight">
         <input type="text" value={value} placeholder="e.g. Nov 2026" onChange={(e) => onChange(e.target.value)} disabled={disabled} />
-        <button className="link" onClick={() => setTyping(false)} disabled={disabled}>
-          pick existing
-        </button>
+        {folders.length > 0 ? (
+          <button className="link" onClick={() => setTyping(false)} disabled={disabled}>
+            pick existing
+          </button>
+        ) : null}
       </span>
     );
   }

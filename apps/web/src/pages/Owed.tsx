@@ -30,7 +30,8 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
             {view.owed.map((d) => (
               <li key={`${d.fromNormalized}->${d.toNormalized}`}>
                 <a href={href("player", d.fromNormalized)}>{d.fromDisplay}</a>
-                <span className="arrow" aria-label="owes">→</span>
+                <span className="arrow" aria-hidden="true">→</span>
+                <span className="sr-only"> owes </span>
                 <a href={href("player", d.toNormalized)}>{d.toDisplay}</a>
                 <strong className="amount">{moneyCents(d.totalCents)}</strong>
               </li>
@@ -76,14 +77,22 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                             <td>{b.fromDisplay}</td>
                             <td>{b.toDisplay}</td>
                             <td className="num hide-xs">{moneyCents(b.originalCents)}</td>
-                            <td className="num">{moneyCents(b.remainingCents)}</td>
+                            {/* On a phone the Status column is hidden: CSS shows the word under the amount (see .status-xs). */}
+                            <td className="num status-xs" data-status={b.status}>
+                              {moneyCents(b.remainingCents)}
+                            </td>
                             <td className="hide-xs">
                               <span className={`tag ${b.status}`}>{b.status}</span>
                             </td>
                             {ctx.payload.canWrite ? (
                               <td className="num">
                                 {owing ? (
-                                  <button className="small" onClick={() => setPaying(paying === key ? null : key)} aria-expanded={paying === key}>
+                                  <button
+                                    className="small"
+                                    onClick={() => setPaying(paying === key ? null : key)}
+                                    aria-expanded={paying === key}
+                                    aria-label={`${paying === key ? "Close" : "Paid…"} the payment from ${b.fromDisplay} to ${b.toDisplay}`}
+                                  >
                                     {paying === key ? "Close" : "Paid…"}
                                   </button>
                                 ) : null}
@@ -160,7 +169,13 @@ function PaymentForm({ ctx, balance, onRecorded }: { ctx: Ctx; balance: SessionB
         <span className="muted">
           {balance.fromDisplay} paid {balance.toDisplay}
         </span>
-        <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Amount paid" autoFocus />
+        <input
+          inputMode="decimal"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          aria-label={`${balance.fromDisplay} paid ${balance.toDisplay}, amount`}
+          autoFocus
+        />
       </label>
       <button type="submit" disabled={busy || cents === null}>
         {busy ? "Saving…" : cents === balance.remainingCents ? "Paid in full" : "Record payment"}

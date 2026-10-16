@@ -1,17 +1,20 @@
 // Small SVG charts, drawn by hand so the page needs no chart library. Green is money
 // won and red is money lost, as in the console app.
-import { useMemo, useState, type PointerEvent } from "react";
+import { useMemo, useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import { moneySigned, toneOf } from "../format.ts";
 
-// One bar per night, oldest first: taller means a bigger night.
-export function Sparkbars({ values }: { values: number[] }) {
+// One bar per night, oldest first: taller means a bigger night. A screen reader hears whose nights they
+// are (subject, when given) and each night's amount in dollars.
+export function Sparkbars({ values, subject }: { values: number[]; subject?: string }) {
   const w = 7;
   const gap = 2;
   const h = 22;
   const max = Math.max(1, ...values.map((v) => Math.abs(v)));
+  const nights = values.length === 1 ? "night" : "nights";
+  const described = `${subject === undefined ? "" : `${subject}, `}last ${values.length} ${nights}: ${values.map((v) => moneySigned(v)).join(", ")}`;
   return (
-    <svg className="sparkbars" width={values.length * (w + gap)} height={h} role="img" aria-label="last nights">
+    <svg className="sparkbars" width={values.length * (w + gap)} height={h} role="img" aria-label={described}>
       <line x1={0} x2={values.length * (w + gap)} y1={h / 2} y2={h / 2} className="axis" />
       {values.map((v, i) => {
         const len = Math.max(1, (Math.abs(v) / max) * (h / 2 - 1));
@@ -27,8 +30,10 @@ export interface LinePoint {
   value: number; // dollars
 }
 
-// A running total with the $0 line marked. Hover (or touch) reads the value at a point.
-export function LineChart({ points, height = 200 }: { points: LinePoint[]; height?: number }) {
+// A running total with the $0 line marked. Hover (or touch) reads the value at a point. With the keyboard
+// (the chart takes focus): the arrow keys move the reading along the nights, Home goes to the first night,
+// and End or Escape goes back to the latest one.
+export function LineChart({ points, height = 200, label = "Running total" }: { points: LinePoint[]; height?: number; label?: string }) {
   const [hover, setHover] = useState<number | null>(null);
   const width = 640;
   const pad = { top: 16, right: 12, bottom: 18, left: 12 };
@@ -55,6 +60,17 @@ export function LineChart({ points, height = 200 }: { points: LinePoint[]; heigh
     setHover(Math.max(0, Math.min(points.length - 1, Math.round(t * (points.length - 1)))));
   };
 
+  const onKey = (e: KeyboardEvent<SVGSVGElement>): void => {
+    const at = hover ?? points.length - 1;
+    if (e.key === "ArrowLeft") setHover(Math.max(0, at - 1));
+    else if (e.key === "ArrowRight") setHover(Math.min(points.length - 1, at + 1));
+    else if (e.key === "Home") setHover(0);
+    else if (e.key === "End" || e.key === "Escape") setHover(null);
+    else return;
+    e.preventDefault();
+  };
+  const summary = last === undefined ? "no nights" : `now ${moneySigned(last.value)} after ${points.length} ${points.length === 1 ? "night" : "nights"}`;
+
   return (
     <figure className="linechart">
       <figcaption>
@@ -74,8 +90,10 @@ export function LineChart({ points, height = 200 }: { points: LinePoint[]; heigh
         onPointerMove={onMove}
         onPointerDown={onMove}
         onPointerLeave={() => setHover(null)}
+        onKeyDown={onKey}
+        tabIndex={0}
         role="img"
-        aria-label="running total"
+        aria-label={`${label}: ${summary}`}
       >
         <line x1={pad.left} x2={width - pad.right} y1={geo.y(0)} y2={geo.y(0)} className="zero" />
         <path d={path} className={`line ${toneOf(last?.value ?? 0)}`} vectorEffect="non-scaling-stroke" />

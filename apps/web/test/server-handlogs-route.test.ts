@@ -176,6 +176,7 @@ describe("the data basis", () => {
         return real.payloadFor(dataRoot, timeZone, basis, scope);
       },
       status: () => real.status(),
+      parses: () => real.parses(),
       close: () => real.close(),
     };
     const a = await answer((res) => handleHandLogs(configFor(root, cache), make("/api/handlogs", readHeaders()), res));

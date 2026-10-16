@@ -92,12 +92,12 @@ export function Overview({ ctx }: { ctx: Ctx }) {
               <span className="muted small">
                 {" "}
                 {me === ""
-                  ? '(top earner; set "me" in the console app, menu 6)'
+                  ? '(top earner; set "me" in Settings)'
                   : `(${meName} has no games in this scope, so the top earner is shown)`}
               </span>
             ) : null}
           </h2>
-          <LineChart points={runningTotal(focus, tz)} />
+          <LineChart points={runningTotal(focus, tz)} label={`Running total for ${focus.displayName}`} />
         </section>
       ) : null}
 
@@ -141,7 +141,7 @@ export function Overview({ ctx }: { ctx: Ctx }) {
                     <td className={`num hide-sm ${toneOf(d?.biggestWin ?? 0)}`}>{moneySigned(d?.biggestWin ?? 0)}</td>
                     <td className={`num hide-sm ${toneOf(d?.biggestLoss ?? 0)}`}>{moneySigned(d?.biggestLoss ?? 0)}</td>
                     <td className="hide-xs">
-                      <Sparkbars values={last} />
+                      <Sparkbars values={last} subject={p.displayName} />
                     </td>
                   </tr>
                 );

@@ -60,7 +60,12 @@ export function Adjust({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                   <td className="hide-xs muted">{a.note}</td>
                   {canWrite ? (
                     <td className="num">
-                      <button className="ghost small" disabled={saver.busy} onClick={() => remove(a.group)}>
+                      <button
+                        className="ghost small"
+                        disabled={saver.busy}
+                        onClick={() => remove(a.group)}
+                        aria-label={`Remove the ${moneySignedCents(a.amountCents)} entry for ${ctx.nameOf(a.playerNormalized)}`}
+                      >
                         Remove
                       </button>
                     </td>

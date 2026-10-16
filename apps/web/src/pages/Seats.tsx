@@ -81,7 +81,12 @@ function OwnerQuestion({ ctx, rows, usual, busy, onPick }: { ctx: Ctx; rows: rea
             size={12}
             disabled={busy}
           />
-          <button className="ghost" disabled={busy || (other === "" && typed.trim() === "")} onClick={someoneElse}>
+          <button
+            className="ghost"
+            disabled={busy || (other === "" && typed.trim() === "")}
+            onClick={someoneElse}
+            aria-label={`Theirs: ${other !== "" ? ctx.nameOf(other) : typed.trim()}`}
+          >
             Theirs
           </button>
         </span>
@@ -232,7 +237,12 @@ export function SavedSeatOwners({ ctx, onSaved }: { ctx: Ctx; onSaved: () => voi
                     <td className="hide-sm muted">{s.note}</td>
                     {ctx.payload.canWrite ? (
                       <td className="num">
-                        <button className="link" disabled={saver.busy} onClick={() => undo(i)}>
+                        <button
+                          className="link"
+                          disabled={saver.busy}
+                          onClick={() => undo(i)}
+                          aria-label={`undo the saved answer for ${s.nickname}`}
+                        >
                           undo
                         </button>
                       </td>

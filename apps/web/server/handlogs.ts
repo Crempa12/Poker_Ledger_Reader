@@ -3,10 +3,19 @@
 // logs and the ledgers, and handed out as plain JSON (GET /api/handlogs). A snapshot carries
 // them ready-made (snapshot.ts). The hand logs are tens of megabytes, so the work is done once
 // per data basis and kept for a while (createHandLogCache). Nothing here writes a file.
+import { createHash } from "node:crypto";
+
 import { looksLikeLedger, listFolders } from "../../../packages/core/src/ledger.ts";
 import type { Scope } from "../../../packages/core/src/models.ts";
-import { displayNameAt, loadAllLogs, logIdOf, pairWithLedger } from "../../../packages/core/src/handlog.ts";
-import type { HandLogInput } from "../../../packages/core/src/handlog.ts";
+import {
+  discoverHandLogFiles,
+  displayNameAt,
+  logIdOf,
+  pairWithLedger,
+  parseHandLog,
+} from "../../../packages/core/src/handlog.ts";
+import type { HandLog, HandLogInput, LoadLogsResult, ParseHandLogResult } from "../../../packages/core/src/handlog.ts";
+import { compareBytes } from "../../../packages/core/src/util.ts";
 import { hitRunFacts } from "../../../packages/core/src/hitrun.ts";
 import { poolAverages } from "../../../packages/core/src/playstyle.ts";
 import type { HitRunFacts, Profile } from "../../../packages/core/src/playstyle.ts";
@@ -42,11 +51,69 @@ export function handWorldFromInputs(inputs: DataRootInputs, timeZone: string): H
   return loadHandWorld(world, logs);
 }
 
-// The same hand logs as handWorldFromInputs, loaded the way loadHandWorld loads them, with a turn
-// after each game is paired. Pairing is most of a load, so the server answers other requests in between.
-export async function handWorldInTurns(inputs: DataRootInputs, timeZone: string): Promise<HandWorld> {
-  const { world, logs } = worldAndLogs(inputs, timeZone);
-  const loaded = loadAllLogs(logs);
+// The hand-log files a cache has parsed. A file is keyed by its name and the hash of its text, so a
+// file that is the same text is never parsed twice (the parse is most of a cold read; pairing with a
+// ledger is quick and is worked out again for each read).
+export interface ParsedFiles {
+  byKey: Map<string, ParseHandLogResult>;
+  parses: number; // how many files were parsed (a file already in byKey is not)
+}
+
+export function newParsedFiles(): ParsedFiles {
+  return { byKey: new Map(), parses: 0 };
+}
+
+// The same logs core's loadAllLogs reads: the same files in the same order, the same skipped and
+// duplicate messages, the same rule for a game read twice (the more complete export is kept), and the
+// same order of game ids. It differs in two ways: each parse is kept in `parsed` (see ParsedFiles), and
+// it yields after each file, so the server answers other requests while a cold read parses.
+async function loadLogsInTurns(files: readonly HandLogInput[], parsed: ParsedFiles): Promise<LoadLogsResult> {
+  const messages: string[] = [];
+  const byId = new Map<string, HandLog>();
+  for (const file of discoverHandLogFiles(files)) {
+    await turn();
+    const key = `${file.relativePath}\n${createHash("sha256").update(file.text).digest("hex")}`;
+    let result = parsed.byKey.get(key);
+    if (result === undefined) {
+      result = parseHandLog(file);
+      parsed.byKey.set(key, result);
+      parsed.parses++;
+    }
+    if (!result.ok) {
+      messages.push("Skipped hand log: " + result.error);
+      continue;
+    }
+    const log = result.log;
+    const existing = byId.get(log.gameId);
+    // Keep the more complete export of the same game.
+    if (existing !== undefined) {
+      if (log.hands.length <= existing.hands.length) {
+        messages.push("Duplicate hand log ignored: " + log.path);
+        continue;
+      }
+      messages.push("Duplicate hand log ignored: " + existing.path);
+    }
+    byId.set(log.gameId, log);
+  }
+  const logs = new Map<string, HandLog>();
+  for (const id of [...byId.keys()].sort(compareBytes)) {
+    const log = byId.get(id);
+    // A copy with its own seats: pairing changes the seats, and never the parse kept for the next read.
+    if (log !== undefined) logs.set(id, { ...log, seats: new Map() });
+  }
+  return { logs, messages };
+}
+
+// The same hand logs as handWorldFromInputs, loaded the way loadHandWorld loads them: each file is
+// parsed (or taken from `parsed`), then each game is paired with its ledger, with a turn after each one.
+// Parsing is most of a cold load, so the server answers other requests in between.
+export async function handWorldInTurns(
+  inputs: DataRootInputs,
+  timeZone: string,
+  parsed: ParsedFiles = newParsedFiles(),
+): Promise<HandWorld> {
+  const { world, logs: files } = worldAndLogs(inputs, timeZone);
+  const loaded = await loadLogsInTurns(files, parsed);
   for (const game of world.games) {
     const log = loaded.logs.get(logIdOf(game));
     if (log !== undefined) pairWithLedger(log, game, world.rules);
@@ -213,6 +280,7 @@ export interface HandLogCache {
   // The results for one scope under one basis (the data's fingerprint, see dataBasis in api.ts).
   payloadFor(dataRoot: string, timeZone: string, basis: string, scope: Scope): Promise<HandScopePayload>;
   status(): HandLogCacheStatus;
+  parses(): number; // hand-log files parsed since the cache was made (kept parses are not parsed again)
   close(): void; // drops everything and stops the idle timer
 }
 
@@ -230,6 +298,9 @@ export function createHandLogCache(options: { idleMs?: number } = {}): HandLogCa
   let loads = 0;
   let active = 0; // requests still working: nothing is dropped under them
   let timer: ReturnType<typeof setTimeout> | undefined;
+  // The parses of the hand-log files. They outlive a basis change (a merge rule saved does not change
+  // a hand log's text), and go with the loaded logs when the idle time runs out.
+  const parsed = newParsedFiles();
 
   // Starts the countdown again. When it runs out, everything is dropped, unless a request is
   // still working (its end starts the countdown again).
@@ -237,7 +308,10 @@ export function createHandLogCache(options: { idleMs?: number } = {}): HandLogCa
     if (timer !== undefined) clearTimeout(timer);
     timer = setTimeout(() => {
       timer = undefined;
-      if (active === 0) slot = undefined;
+      if (active === 0) {
+        slot = undefined;
+        parsed.byKey.clear();
+      }
     }, idleMs);
     timer.unref();
   }
@@ -248,7 +322,7 @@ export function createHandLogCache(options: { idleMs?: number } = {}): HandLogCa
     if (s.loading === undefined) {
       s.loading = (async () => {
         const inputs = await loadDataRoot(dataRoot);
-        return handWorldInTurns(inputs, timeZone);
+        return handWorldInTurns(inputs, timeZone, parsed);
       })().then(
         (hw) => {
           s.hw = hw;
@@ -304,8 +378,12 @@ export function createHandLogCache(options: { idleMs?: number } = {}): HandLogCa
     status() {
       return { loads, held: slot?.hw !== undefined, scopes: slot?.scopes.size ?? 0 };
     },
+    parses() {
+      return parsed.parses;
+    },
     close() {
       slot = undefined;
+      parsed.byKey.clear();
       if (timer !== undefined) clearTimeout(timer);
       timer = undefined;
     },

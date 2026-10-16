@@ -274,7 +274,13 @@ function Names({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                 <span key={a} className="alias">
                   {a}
                   {ctx.payload.canWrite ? (
-                    <button className="link" disabled={busy} onClick={() => split(a, g.canonical)} title={`Count "${a}" as its own player again`}>
+                    <button
+                      className="link"
+                      disabled={busy}
+                      onClick={() => split(a, g.canonical)}
+                      title={`Count "${a}" as its own player again`}
+                      aria-label={`split "${a}" from ${g.display}`}
+                    >
                       split
                     </button>
                   ) : null}

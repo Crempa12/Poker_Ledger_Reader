@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { boardFor, sessions, settlement, type PaymentPreference, type PlayerStats, type SettlementEntry, type SettlementReason } from "@plr/core";
 
 import { copyToClipboard } from "../clipboard.ts";
@@ -64,17 +64,24 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
   const suggested = game !== undefined ? gameSessionId(game, tz) : defaultSessionId(scope, tz, Math.floor(Date.now() / 1000));
   const requests = forSheet(asked, suggested);
 
-  const board = boardFor(world, games, target);
+  // The board and the sheet are worked out again only when one of their inputs changes, not on every
+  // render: a whole folder's sheet takes tens of milliseconds, and the page renders on each small change.
+  const { board, sheet } = useMemo(() => {
+    const sheetGames = game !== undefined ? [game] : view.games;
+    const sheetTarget = game !== undefined ? dayScope(game, tz) : scope;
+    const b = boardFor(world, sheetGames, sheetTarget);
+    const req = forSheet(asked, suggested);
+    // As menu 5 does it: the pins saved when the sheet was started, then this sheet's
+    // requests. A pair pinned from here counts as a request, as the console keeps it.
+    // With a banker there are no requests.
+    const pr = banker !== "" ? world.prefs : [...world.prefs.filter((p) => !req.pinnedHere.includes(pairOf(p))), ...req.list];
+    return { board: b, sheet: settlement.calculateSheet(b, pr, banker) };
+  }, [world, game, view, scope, tz, banker, asked, suggested]);
   // Menu 5's balances: every player, highest balance first. Who owes and who is owed here are the
   // only choices for a request, in that order.
   const balances = balanceRows(board);
   const losers = balances.filter((b) => b.owes).map((b) => b.p);
   const winners = balances.filter((b) => b.owed).map((b) => b.p);
-  // As menu 5 does it: the pins saved when the sheet was started, then this sheet's
-  // requests. A pair pinned from here counts as a request, as the console keeps it.
-  // With a banker there are no requests.
-  const prefs = banker !== "" ? world.prefs : [...world.prefs.filter((p) => !requests.pinnedHere.includes(pairOf(p))), ...requests.list];
-  const sheet = settlement.calculateSheet(board, prefs, banker);
   // The transfers as menu 5 prints them: grouped by payer, the biggest payers first, each payer's total under their last line.
   const entries = printOrder(sheet.entries);
   const rows = sheetRows(sheet.entries);
@@ -177,7 +184,8 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
                 ) : (
                   <li key={i}>
                     <a href={href("player", row.entry.fromNormalized)}>{row.entry.fromDisplay}</a>
-                    <span className="arrow" aria-label="pays">→</span>
+                    <span className="arrow" aria-hidden="true">→</span>
+                    <span className="sr-only"> pays </span>
                     <a href={href("player", row.entry.toNormalized)}>{row.entry.toDisplay}</a>
                     <strong className="amount">{moneyCents(row.entry.amountCents)}</strong>
                     {TAG[row.entry.reason] !== "" ? <span className="tag">{TAG[row.entry.reason]}</span> : null}
@@ -194,7 +202,14 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
             {copyFailed ? (
               <>
                 <p className="down small">This browser would not copy it. Select the text below and copy it by hand.</p>
-                <textarea className="links" readOnly rows={8} value={copyBody} onFocus={(e) => e.currentTarget.select()} />
+                <textarea
+                  className="links"
+                  readOnly
+                  rows={8}
+                  value={copyBody}
+                  onFocus={(e) => e.currentTarget.select()}
+                  aria-label="Sheet text to copy"
+                />
               </>
             ) : null}
             <h3>Who receives what</h3>
@@ -350,7 +365,12 @@ function RequestCard({
                 <strong>{ctx.nameOf(r.payerNormalized)}</strong> sends to <strong>{ctx.nameOf(r.payeeNormalized)}</strong> first
                 {requests.pinnedHere.includes(pairOf(r)) ? <span className="muted"> · pinned</span> : <span className="muted"> · this sheet only</span>}
               </span>
-              <button className="ghost small" disabled={busy} onClick={() => remove(r)}>
+              <button
+                className="ghost small"
+                disabled={busy}
+                onClick={() => remove(r)}
+                aria-label={`Remove the request from ${ctx.nameOf(r.payerNormalized)} to ${ctx.nameOf(r.payeeNormalized)}`}
+              >
                 Remove
               </button>
             </li>

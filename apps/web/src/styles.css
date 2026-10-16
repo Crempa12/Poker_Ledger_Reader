@@ -5,7 +5,8 @@
   --muted: #646b78;
   --line: #e3e6eb;
   --accent: #2f5bd3;
-  --up: #128a4a;
+  --on-accent: #fff; /* the label on a button (accent background) */
+  --up: #0f7a41; /* 5.4:1 on white, so the green text passes AA on every card and row */
   --down: #c62f3a;
   --up-soft: #d9f2e4;
   --down-soft: #f8dcdf;
@@ -24,6 +25,7 @@
     --muted: #98a0ad;
     --line: #2a2f38;
     --accent: #7b9cff;
+    --on-accent: #0f1115; /* white on this blue is 2.6:1; the dark label is 7.2:1 */
     --up: #3fcf7f;
     --down: #ff6b74;
     --up-soft: #12301f;
@@ -82,7 +84,7 @@ button,
   font: inherit;
   border: 1px solid var(--accent);
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   padding: 0.45rem 0.9rem;
   border-radius: 8px;
   cursor: pointer;
@@ -164,7 +166,7 @@ input[type="date"] {
   padding: 0 0.35em;
   border-radius: 999px;
   background: #e8a33c;
-  color: #fff;
+  color: #16181d; /* 8.2:1 on the amber (white was 2.2:1) */
   font-size: 0.75rem;
   text-align: center;
 }
@@ -251,8 +253,10 @@ th {
 tr.me td {
   background: var(--me);
 }
+/* A settled or even row is muted by its text colour, not by opacity: opacity would fade the words
+   below 4.5:1 on the card. The up, down and status colours keep their full strength (see .up). */
 tr.dim td {
-  opacity: 0.6;
+  color: var(--muted);
 }
 
 .up {
@@ -318,6 +322,10 @@ tr.dim td {
   height: 200px;
   display: block;
   touch-action: pan-y;
+}
+.linechart svg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .linechart .zero {
   stroke: var(--muted);
@@ -511,6 +519,40 @@ button:disabled {
   cursor: default;
 }
 
+/* On a phone, where the Status column is hidden, the status word shows under the amount. It is drawn
+   by CSS (not written into the cell), so the row's text is the same on every screen. */
+.status-xs::after {
+  content: attr(data-status);
+  display: none;
+}
+@media (max-width: 460px) {
+  .status-xs::after {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .status-xs[data-status="paid"]::after {
+    color: var(--up);
+  }
+  .status-xs[data-status="open"]::after,
+  .status-xs[data-status="partial"]::after {
+    color: var(--down);
+  }
+}
+
+/* Text for screen readers only: visually hidden, still read out. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Changing Saved_Data: sheet names, payments, name questions. */
 input:not([type]),
 input[inputmode] {
@@ -562,7 +604,6 @@ button.small {
 }
 .choices .muted {
   color: inherit;
-  opacity: 0.75;
 }
 details summary {
   cursor: pointer;

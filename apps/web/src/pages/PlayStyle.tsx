@@ -39,6 +39,7 @@ function SectionNav({ section }: { section: string }) {
           key={s.path}
           href={s.path === "" ? href("style") : href("style", s.path)}
           className={section === s.path ? "active" : ""}
+          aria-current={section === s.path ? "page" : undefined}
         >
           {s.label}
         </a>

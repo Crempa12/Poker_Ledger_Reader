@@ -30,6 +30,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { isIP } from "node:net";
 import { basename, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { gzipSync } from "node:zlib";
 
 import type { WarnFn } from "../../../packages/core/src/models.ts";
 import { parseAdjustments, serializeAdjustments } from "../../../packages/core/src/adjustments.ts";
@@ -193,8 +194,9 @@ async function dataRootReady(root: string): Promise<boolean> {
 
 function notADataFolder(root: string): string {
   return (
-    `The data folder ${root} is not there, or holds no console app data (no Games or Saved_Data folder). ` +
-    "Nothing was changed. Set PLR_DATA_ROOT to the console app's folder, then restart the site."
+    `The data folder ${root} is not there, or holds no console app data (no Games or Saved_Data folder, no game files). ` +
+    "Nothing was changed. If it is the console app's folder, run the console app once in it (it creates Saved_Data), " +
+    "then press Refresh. If it is not, set PLR_DATA_ROOT to the console app's folder and restart the site."
   );
 }
 
@@ -319,7 +321,7 @@ export async function handleData(cfg: ApiConfig, req: IncomingMessage, res: Serv
   // plus the names of the logs so the page can tell which games have one.
   const ledgers = inputs.games.filter((g) => looksLikeLedger(g.text));
   const logs = inputs.games.filter((g) => /(^|\/)poker_now_log_[^/]*\.csv$/i.test(g.relativePath)).map((g) => g.relativePath);
-  const check = await consoleCheckOf(cfg);
+  const check = await consoleCheckForPage(cfg);
   const canWrite = canWriteHere(req);
   send(res, 200, {
     source: "local",
@@ -333,6 +335,8 @@ export async function handleData(cfg: ApiConfig, req: IncomingMessage, res: Serv
     saved: savedForPage(inputs.savedData),
     canWrite,
     consoleOpen: "open" in check ? check.open : -1,
+    // Whether the data has a Games folder: a new game is filed there, or at the top of the data folder.
+    gamesFolder: existsSync(join(cfg.dataRoot, "Games")),
     basis,
   });
 }
@@ -354,7 +358,7 @@ export async function handleHandLogs(cfg: ApiConfig, req: IncomingMessage, res: 
   for (let attempt = 1; ; attempt++) {
     const payload = await cache.payloadFor(cfg.dataRoot, cfg.timeZone, parts.handLogs, parsed.scope);
     const after = await basisParts(cfg.dataRoot);
-    if (after.basis === parts.basis) return send(res, 200, { ...payload, basis: parts.basis });
+    if (after.basis === parts.basis) return sendLarge(req, res, 200, { ...payload, basis: parts.basis });
     if (attempt === 3) return send(res, 503, { error: "the data changed while the hand logs were read; try again" });
     parts = after;
   }
@@ -397,6 +401,31 @@ export async function probeConsoleApps(
 async function consoleCheckOf(cfg: ApiConfig): Promise<ConsoleCheck> {
   if (cfg.consoleCheck === false) return { open: 0 };
   return (cfg.consoleProbe ?? probeConsoleApps)();
+}
+
+// The page's own check is kept for a few seconds: a page load, a Refresh and the refresh after a save
+// each ask, and each one lists the computer's processes. A save never uses this (it checks at once).
+const PAGE_CHECK_MS = 5_000;
+const pageChecks = new WeakMap<ApiConfig, { at: number; check: ConsoleCheck }>();
+
+async function consoleCheckForPage(cfg: ApiConfig): Promise<ConsoleCheck> {
+  const kept = pageChecks.get(cfg);
+  if (kept !== undefined && Date.now() - kept.at < PAGE_CHECK_MS) return kept.check;
+  const check = await consoleCheckOf(cfg);
+  pageChecks.set(cfg, { at: Date.now(), check });
+  return check;
+}
+
+// A large answer goes out gzipped when the browser takes gzip (the hand-log results repeat their text,
+// and are about five times smaller that way). Any other browser gets the same JSON as send() gives.
+function sendLarge(req: IncomingMessage, res: ServerResponse, status: number, body: unknown): void {
+  if (!/\bgzip\b/.test(String(req.headers["accept-encoding"] ?? ""))) return send(res, status, body);
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Content-Encoding", "gzip");
+  res.setHeader("Vary", "Accept-Encoding");
+  res.setHeader("Cache-Control", "no-store");
+  res.end(gzipSync(JSON.stringify(body)));
 }
 
 // The console app windows in `ps -axo comm=` output: one executable path per line. Linux
