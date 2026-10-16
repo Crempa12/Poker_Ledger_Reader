@@ -40,47 +40,49 @@ export function Adjust({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         {world.adjustments.length === 0 ? (
           <p className="sub">None yet.</p>
         ) : (
-          <table className="adjlist">
-            <thead>
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Player</th>
-                <th scope="col" className="num">
-                  Amount
-                </th>
-                <th scope="col" className="hide-sm">
-                  Folder
-                </th>
-                <th scope="col" className="hide-xs">
-                  Note
-                </th>
-                {canWrite ? <th aria-label="Remove" /> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {world.adjustments.map((a, i) => (
-                <tr key={`${a.group}-${i}`}>
-                  <td className="mono nowrap">{a.date === null ? "?" : formatLocalDate(a.date, tz)}</td>
-                  <td>{ctx.nameOf(a.playerNormalized)}</td>
-                  <td className={`num ${toneOfCents(a.amountCents)}`}>{moneySignedCents(a.amountCents)}</td>
-                  <td className="hide-sm">{a.folder === "" ? <span className="muted">(all folders)</span> : a.folder}</td>
-                  <td className="hide-xs muted">{a.note}</td>
-                  {canWrite ? (
-                    <td className="num">
-                      <button
-                        className="link small"
-                        disabled={saver.busy}
-                        onClick={() => remove(a.group)}
-                        aria-label={`Remove the ${moneySignedCents(a.amountCents)} entry for ${ctx.nameOf(a.playerNormalized)}`}
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  ) : null}
+          <div className="tablewrap">
+            <table className="adjlist">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Player</th>
+                  <th scope="col" className="num">
+                    Amount
+                  </th>
+                  <th scope="col" className="hide-sm">
+                    Folder
+                  </th>
+                  <th scope="col" className="hide-xs">
+                    Note
+                  </th>
+                  {canWrite ? <th aria-label="Remove" /> : null}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {world.adjustments.map((a, i) => (
+                  <tr key={`${a.group}-${i}`}>
+                    <td className="mono nowrap">{a.date === null ? "?" : formatLocalDate(a.date, tz)}</td>
+                    <td>{ctx.nameOf(a.playerNormalized)}</td>
+                    <td className={`num ${toneOfCents(a.amountCents)}`}>{moneySignedCents(a.amountCents)}</td>
+                    <td className="hide-sm">{a.folder === "" ? <span className="muted">(all folders)</span> : a.folder}</td>
+                    <td className="hide-xs muted">{a.note}</td>
+                    {canWrite ? (
+                      <td className="num">
+                        <button
+                          className="link small"
+                          disabled={saver.busy}
+                          onClick={() => remove(a.group)}
+                          aria-label={`Remove the ${moneySignedCents(a.amountCents)} entry for ${ctx.nameOf(a.playerNormalized)}`}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
         {saver.shown}
       </section>
