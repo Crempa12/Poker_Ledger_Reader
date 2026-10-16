@@ -591,3 +591,6 @@ details summary {
 .pins li:first-child {
   border-top: 0;
 }
+.banner.snapshot {
+  background: var(--me);
+}

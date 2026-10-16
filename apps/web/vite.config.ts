@@ -21,7 +21,7 @@ function localData(): Plugin {
   return {
     name: "plr-local-data",
     configureServer(server) {
-      server.middlewares.use(apiMiddleware({ dataRoot, timeZone, consoleCheck }));
+      server.middlewares.use(apiMiddleware({ dataRoot, timeZone, consoleCheck, snapshotDir: process.env.PLR_SNAPSHOT_DIR }));
     },
   };
 }

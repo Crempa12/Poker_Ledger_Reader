@@ -56,6 +56,15 @@ so the console app sees it too. PokerNow puts a captcha on hand logs, so downloa
 the log yourself (the page links to each game missing one) and pick the file there.
 Commit the new files on `master` as usual.
 
+### Share it with the group (any phone, anywhere)
+
+**Settings → Make a snapshot** (or `npm run snapshot`) makes one file,
+`local/snapshots/poker-ledger-<date>.html`, with every page of the site and the
+results up to now inside it. It opens on any phone or computer, even offline, with
+nothing to install: send it by AirDrop, a message or a shared drive. It is
+read-only and does not update, so make a new one after each game. It holds
+everyone's results and names: send it only to people who may see them.
+
 ### On your phone (same Wi-Fi)
 
 ```bash

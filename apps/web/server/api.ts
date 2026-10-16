@@ -29,12 +29,14 @@ import {
 } from "../../../packages/core/src/settlement.ts";
 import { isExcludedDir } from "../../../packages/core/src/util.ts";
 import { loadDataRoot } from "../../../tools/load.ts";
+import { SNAPSHOT_NAME, SNAPSHOTS } from "./snapshot.ts";
 
 export interface ApiConfig {
   dataRoot: string;
   timeZone: string;
   consoleCheck?: boolean; // false only for a test server on a scratch copy (see vite.config.ts)
   backupDir?: string; // where old Saved_Data versions go; default: the web project's local/backups/
+  snapshotDir?: string; // where snapshot files go; default: the web project's local/snapshots/
 }
 
 const GAME_ID = /pgl[A-Za-z0-9_-]{10,40}/;
@@ -213,9 +215,45 @@ export async function handleSave(cfg: ApiConfig, req: IncomingMessage, res: Serv
   send(res, 200, { saved: `${folder}/${kind}_${id}.csv` });
 }
 
+const SNAPSHOT_SCRIPT = fileURLToPath(new URL("./snapshot.ts", import.meta.url));
+
+// Makes a snapshot file of the data as it is now (server/snapshot.ts). It is built in
+// a process of its own, in production mode: the dev server's own settings (a
+// development build of React, among them) must not reach the file people are sent.
+export async function handleSnapshot(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!writeAllowed(req)) return send(res, 403, { error: "only this page on this computer can do that" });
+  const env = {
+    ...process.env,
+    NODE_ENV: "production",
+    PLR_DATA_ROOT: cfg.dataRoot,
+    PLR_TZ: cfg.timeZone,
+    PLR_SNAPSHOT_DIR: cfg.snapshotDir ?? SNAPSHOTS,
+  };
+  const out = await new Promise<string>((done, fail) => {
+    execFile(process.execPath, [SNAPSHOT_SCRIPT, "--json"], { env, timeout: 180_000, maxBuffer: 4 * 1024 * 1024 }, (err, stdout, stderr) =>
+      err !== null ? fail(new Error(`could not make the snapshot: ${(stderr || err.message).trim().split("\n").pop() ?? ""}`)) : done(stdout),
+    );
+  });
+  const r = JSON.parse(out.trim().split("\n").pop() ?? "{}") as { name: string; bytes: number; games: number; file: string };
+  send(res, 200, { name: r.name, bytes: r.bytes, games: r.games, file: r.file });
+}
+
+// Hands a snapshot file to the browser as a download, to this computer only.
+export async function handleSnapshotFile(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse, name: string): Promise<void> {
+  if (!isLoopback(req)) return send(res, 403, { error: "only this computer can do that" });
+  const file = join(cfg.snapshotDir ?? SNAPSHOTS, name);
+  if (!SNAPSHOT_NAME.test(name) || !existsSync(file)) return send(res, 404, { error: "no such snapshot" });
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
+  res.setHeader("Cache-Control", "no-store");
+  res.end(await readFile(file));
+}
+
 export function apiMiddleware(cfg: ApiConfig) {
   return (req: IncomingMessage, res: ServerResponse, next: () => void): void => {
-    const url = (req.url ?? "").split("?")[0];
+    const url = (req.url ?? "").split("?")[0] ?? "";
+    const snapshotFile = req.method === "GET" ? /^\/api\/snapshot\/([^/]+)$/.exec(url)?.[1] : undefined;
     const route =
       req.method === "GET" && url === "/api/data"
         ? handleData(cfg, req, res)
@@ -225,7 +263,11 @@ export function apiMiddleware(cfg: ApiConfig) {
             ? handleSave(cfg, req, res)
             : req.method === "POST" && url === "/api/saved-file"
               ? handleSavedFile(cfg, req, res)
-              : null;
+              : req.method === "POST" && url === "/api/snapshot"
+                ? handleSnapshot(cfg, req, res)
+                : snapshotFile !== undefined
+                  ? handleSnapshotFile(cfg, req, res, decodeURIComponent(snapshotFile))
+                  : null;
     if (route === null) {
       if (url?.startsWith("/api/") === true) send(res, 404, { error: "no such endpoint" });
       else next();
@@ -233,7 +275,7 @@ export function apiMiddleware(cfg: ApiConfig) {
     }
     route.catch((err: unknown) => {
       // A body that is not JSON (or too big) is the caller's mistake, not the server's.
-      const bad = err instanceof SyntaxError || (err instanceof Error && err.message === "file too large");
+      const bad = err instanceof SyntaxError || err instanceof URIError || (err instanceof Error && err.message === "file too large");
       send(res, bad ? 400 : 500, { error: err instanceof Error ? err.message : String(err) });
     });
   };

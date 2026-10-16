@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ledger } from "@plr/core";
 
 import { buildCtx, type Ctx } from "./context.ts";
-import { EVERYTHING, loadData, readSavedScope, saveScope, type Loaded, type ScopeChoice } from "./data.ts";
+import { EVERYTHING, isSnapshot, loadData, readSavedScope, saveScope, type Loaded, type ScopeChoice } from "./data.ts";
 import { clockTime, plural, shortDate } from "./format.ts";
 import { href, useRoute } from "./router.ts";
 import { Check, checkCount } from "./pages/Check.tsx";
@@ -58,8 +58,16 @@ export function App() {
     );
   }
 
+  const snapshot = isSnapshot(ctx.payload);
+  const taken = Math.floor(ctx.payload.loadedAt / 1000);
   return (
-    <Shell ctx={ctx} onRefresh={refresh} route={route}>
+    <Shell ctx={ctx} onRefresh={snapshot ? undefined : refresh} route={route}>
+      {snapshot ? (
+        <p className="banner snapshot" role="status">
+          A snapshot from {shortDate(taken, ctx.tz)} at {clockTime(taken, ctx.tz)}: the results up to then. It does not change; ask
+          {ctx.me !== "" ? ` ${ctx.nameOf(ctx.me)}` : " whoever sent it"} for a new one after the next game.
+        </p>
+      ) : null}
       {ctx.payload.consoleOpen > 0 && ctx.payload.canWrite ? (
         <p className="banner" role="status">
           The console app is open. It saves its own copy of the names, sheets and settings when it quits, so changes here wait
@@ -69,7 +77,13 @@ export function App() {
       <ScopeBar ctx={ctx} onChange={changeScope} />
       <Page ctx={ctx} route={route} onSaved={refresh} />
       <footer className="footer muted">
-        Reading <code>{folderName(ctx.payload.dataRoot)}</code> on this computer · loaded {clockTime(Math.floor(ctx.payload.loadedAt / 1000), ctx.tz)} ·
+        {snapshot ? (
+          <>Snapshot of {plural(ctx.world.games.length, "game")} · taken {shortDate(taken, ctx.tz)} {clockTime(taken, ctx.tz)} · </>
+        ) : (
+          <>
+            Reading <code>{folderName(ctx.payload.dataRoot)}</code> on this computer · loaded {clockTime(taken, ctx.tz)} ·{" "}
+          </>
+        )}
         times in {ctx.tz}
       </footer>
     </Shell>
@@ -102,6 +116,7 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
     case "settings":
       return <Settings ctx={ctx} onSaved={onSaved} />;
     case "add":
+      if (isSnapshot(ctx.payload)) return <div className="card pad">Games are added on the computer that runs the site.</div>;
       return <AddGame ctx={ctx} onSaved={onSaved} />;
     default:
       return (
@@ -139,7 +154,7 @@ function Shell({ ctx, onRefresh, route, children }: { ctx?: Ctx; onRefresh?: () 
         ) : null}
         {ctx !== undefined ? (
           <nav className="tabs" aria-label="Pages">
-            {TABS.map((t) => (
+            {TABS.filter((t) => !(isSnapshot(ctx.payload) && (t.path === "add" || t.path === "settings"))).map((t) => (
               <a key={t.path} href={t.path === "" ? href() : href(t.path)} className={active === t.path ? "active" : ""}>
                 {t.label}
                 {t.path === "check" && checks > 0 ? <span className="badge">{checks}</span> : null}

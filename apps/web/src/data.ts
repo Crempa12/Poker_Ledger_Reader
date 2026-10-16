@@ -4,7 +4,7 @@
 import { loadWorld, parseLocalDate, type Scope, type World, type ledger } from "@plr/core";
 
 export interface Payload {
-  source: string; // "local": read from the console app's folder on this computer
+  source: string; // "local": read from the console app's folder on this computer; "snapshot": a shared file
   dataRoot: string;
   timeZone: string;
   loadedAt: number; // ms since the epoch
@@ -20,10 +20,23 @@ export interface Loaded {
   world: World;
 }
 
+// A snapshot file (server/snapshot.ts) carries its data in this element instead.
+function embedded(): Payload | null {
+  const el = typeof document === "undefined" ? null : document.getElementById("plr-data");
+  return el === null || el.textContent === null ? null : (JSON.parse(el.textContent) as Payload);
+}
+
+export function isSnapshot(payload: Payload): boolean {
+  return payload.source === "snapshot";
+}
+
 export async function loadData(): Promise<Loaded> {
-  const res = await fetch("/api/data", { cache: "no-store" });
-  if (!res.ok) throw new Error(`the data server answered ${res.status}`);
-  const payload = (await res.json()) as Payload;
+  let payload = embedded();
+  if (payload === null) {
+    const res = await fetch("/api/data", { cache: "no-store" });
+    if (!res.ok) throw new Error(`the data server answered ${res.status}`);
+    payload = (await res.json()) as Payload;
+  }
   const world = loadWorld({ timeZone: payload.timeZone, ledgers: payload.ledgers, saved: payload.saved });
   return { payload, world };
 }

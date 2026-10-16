@@ -3,6 +3,8 @@ import { settlement, type PaymentPreference, type Settings as AppSettings } from
 
 import { useSaver } from "../components/saver.tsx";
 import type { Ctx } from "../context.ts";
+import { postJSON } from "../data.ts";
+import { errorText } from "../saved.ts";
 
 // Console menu 6: pinned payments, the banker, who "me" is, and the console's display.
 // Each change is saved the way menu 6 saves it: the whole file, straight away.
@@ -13,7 +15,7 @@ export function Settings({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 
   return (
     <>
-      {canWrite ? null : <p className="banner">Settings can be changed on the computer that runs the site.</p>}
+      {canWrite ? <Share /> : <p className="banner">Settings can be changed on the computer that runs the site.</p>}
       <Pins ctx={ctx} onSaved={onSaved} people={people} canWrite={canWrite} />
       <PersonSetting
         ctx={ctx}
@@ -56,6 +58,55 @@ export function Settings({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 }
 
 type Person = Ctx["everyone"][number];
+
+interface Made {
+  name: string;
+  bytes: number;
+  games: number;
+  file: string;
+}
+
+// One file with the whole site and the data up to now, for people without this
+// computer: it opens on any phone or computer, offline, with nothing to install.
+function Share() {
+  const [busy, setBusy] = useState(false);
+  const [made, setMade] = useState<Made | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const make = async (): Promise<void> => {
+    setBusy(true);
+    setError(null);
+    try {
+      setMade(await postJSON<Made>("/api/snapshot", {}));
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="card">
+      <h2>Share a snapshot</h2>
+      <p className="muted small">
+        One file with every page of this site and the results up to now. It opens on any phone or computer, even offline, with
+        nothing to install: send it by AirDrop, a message or a shared drive. It does not update, so make a new one after each
+        game. It holds everyone's results and names: send it only to people who may see them.
+      </p>
+      <button onClick={() => void make()} disabled={busy}>
+        {busy ? "Making it…" : "Make a snapshot"}
+      </button>
+      {made !== null ? (
+        <p className="up small">
+          Made {made.name} ({Math.round(made.bytes / 1024)} KB, {made.games} ledgers).{" "}
+          <a href={`/api/snapshot/${encodeURIComponent(made.name)}`} download={made.name}>
+            Download it
+          </a>{" "}
+          · also kept at <code>{made.file}</code>
+        </p>
+      ) : null}
+      {error !== null ? <p className="down small">{error}</p> : null}
+    </section>
+  );
+}
 
 function Pins({ ctx, onSaved, people, canWrite }: { ctx: Ctx; onSaved: () => void; people: Person[]; canWrite: boolean }) {
   const { world } = ctx;

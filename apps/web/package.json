@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.json",
-    "dev:quiet": "PLR_NO_OPEN=1 vite"
+    "dev:quiet": "PLR_NO_OPEN=1 vite",
+    "snapshot": "node server/snapshot.ts"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

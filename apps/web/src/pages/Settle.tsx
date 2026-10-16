@@ -19,6 +19,16 @@ import { defaultSessionId, errorText, gameSessionId, writeSaved } from "../saved
 
 const TAG: Record<SettlementReason, string> = { preference: "pinned", requested: "requested", banker: "banker", auto: "" };
 
+// The sheet as menu 13 exports it, saved by the browser.
+function download(name: string, text: string): void {
+  const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function pairOf(p: PaymentPreference): string {
   return `${p.payerNormalized}->${p.payeeNormalized}`;
 }
@@ -112,8 +122,13 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
           </p>
         ) : pinsHere.length > 0 ? (
           <p className="muted small">
-            Pinned payments that apply here: {pinsHere.map((p) => `${ctx.nameOf(p.payerNormalized)} always pays ${ctx.nameOf(p.payeeNormalized)}`).join(", ")}{" "}
-            · <a href={href("settings")}>change pins</a>
+            Pinned payments that apply here: {pinsHere.map((p) => `${ctx.nameOf(p.payerNormalized)} always pays ${ctx.nameOf(p.payeeNormalized)}`).join(", ")}
+            {ctx.payload.canWrite ? (
+              <>
+                {" "}
+                · <a href={href("settings")}>change pins</a>
+              </>
+            ) : null}
           </p>
         ) : null}
       </section>
@@ -146,7 +161,12 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
                 </li>
               ))}
             </ul>
-            <button onClick={copy}>{copied ? "Copied" : "Copy for the group chat"}</button>
+            <div className="controls">
+              <button onClick={copy}>{copied ? "Copied" : "Copy for the group chat"}</button>
+              <button className="ghost" onClick={() => download("settlements.csv", settlement.settlementsCSV(sheet.entries))}>
+                Download CSV
+              </button>
+            </div>
           </>
         )}
         {sheet.warnings.map((w, i) => (
