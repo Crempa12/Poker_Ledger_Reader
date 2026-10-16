@@ -17,7 +17,7 @@ import { EVERYTHING, type Payload, type ScopeChoice } from "../src/data.ts";
 import { Adjust } from "../src/pages/Adjust.tsx";
 import { Owed } from "../src/pages/Owed.tsx";
 import { Settle } from "../src/pages/Settle.tsx";
-import { balanceRows, copyText, offByLines, printOrder, receiversOf, scopeWords, sheetCsv, sheetRows, sheetSummary } from "../src/settle-sheet.ts";
+import { balanceRows, copyText, offByLines, owedCopyText, printOrder, receiversOf, scopeWords, sheetCsv, sheetRows, sheetSummary } from "../src/settle-sheet.ts";
 
 const TZ = "America/New_York";
 const SYNTHETIC = fileURLToPath(new URL("../../../fixtures/synthetic/", import.meta.url));
@@ -659,5 +659,19 @@ describe("the saves write the files the console wrote", () => {
     const saved = sessions.addSettlementBatch(ctx.world.balances, "reference-all", calcEntries(ctx));
     const paid = sessions.recordPayment(saved, "reference-all", { fromNormalized: "marisolquenby", toNormalized: "wick" }, 350);
     expect(sessions.serializeSessionBalances(paid.balances)).toBe(recorded(EDGE_REF + "sessions/session_balances.csv"));
+  });
+});
+
+describe("the Who owes reminder for the group chat", () => {
+  it("lists what each pair still owes, in the page's order, with the total", () => {
+    const owed = [
+      { fromDisplay: "Della", fromNormalized: "della", toDisplay: "Ozzie", toNormalized: "ozzie", totalCents: 1250 },
+      { fromDisplay: "Quorin", fromNormalized: "quorin", toDisplay: "Della", toNormalized: "della", totalCents: 500 },
+    ];
+    expect(owedCopyText(owed)).toBe("Poker: still owed ($17.50 in all)\nDella → Ozzie: $12.50\nQuorin → Della: $5.00");
+  });
+
+  it("says so when nothing is owed", () => {
+    expect(owedCopyText([])).toBe("Poker: nothing is owed. Every saved sheet is paid.");
   });
 });

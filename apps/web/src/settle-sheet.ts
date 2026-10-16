@@ -2,7 +2,7 @@
 // settlement::warnGap) shows them: the balances table, the transfers in print order with each payer's
 // total, who receives what, the warning when the balances do not add up, and the summary line under the sheet. Pure: the page passes the
 // board and the sheet in and renders what comes back.
-import { money, moneyCents, moneySigned, moneySignedCents, players, settlement, util, type PlayerStats, type SettlementEntry } from "@plr/core";
+import { money, moneyCents, moneySigned, moneySignedCents, players, settlement, util, type PlayerStats, type SettlementEntry, type sessions } from "@plr/core";
 
 import type { ScopeChoice } from "./data.ts";
 import { plural } from "./format.ts";
@@ -134,6 +134,17 @@ export function copyText(title: string, entries: readonly SettlementEntry[]): st
   return [
     `Poker settle-up: ${title}`,
     ...printOrder(entries).map((e) => `${e.fromDisplay} → ${e.toDisplay}: ${moneyCents(e.amountCents)}`),
+  ].join("\n");
+}
+
+// What is still unpaid on the saved sheets, as text for the group chat (Who owes): one line per pair,
+// biggest first, as the page lists them.
+export function owedCopyText(owed: readonly sessions.CombinedDebt[]): string {
+  if (owed.length === 0) return "Poker: nothing is owed. Every saved sheet is paid.";
+  const total = owed.reduce((s, d) => s + d.totalCents, 0);
+  return [
+    `Poker: still owed (${moneyCents(total)} in all)`,
+    ...owed.map((d) => `${d.fromDisplay} → ${d.toDisplay}: ${moneyCents(d.totalCents)}`),
   ].join("\n");
 }
 

@@ -40,7 +40,7 @@ the page says so, and nothing is saved anywhere.
 | Play style | from the hand logs: how everyone plays (menu 18), deep profiles (menu 21) and the hit & run factor (menu 22), with the console's CSV files to download |
 | Games | every game, newest first; one game's results per player, and every seat with "whose money was it?" (menu 20) |
 | Settle up | who pays whom for the scope or one game, with your pins and banker mode; "send my money to a specific person" requests (menu 5); copy it for the group chat; **Save sheet** to track payments (menu 7) |
-| Who owes | what is still owed between each pair, every saved sheet, and **Paid…** to record a payment (menu 10) |
+| Who owes | what is still owed between each pair (with a reminder to copy for the group chat), every saved sheet, and **Paid…** to record a payment (menu 10) |
 | Checks | what the console app flags at startup; answer new names, merge names by hand or split one back out (menu 4); answer seats that look shared, undo a saved seat owner (menu 20) |
 | Settings | pinned payments, the banker, who "me" is, the console's display (menu 6) |
 | Payments & corrections | linked from Settle up and the overview: money that changed hands outside the ledger, debts let go, one-sided corrections, removing one (menu 17) |

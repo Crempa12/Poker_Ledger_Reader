@@ -1,10 +1,12 @@
 import { Fragment, useState } from "react";
 import { fixed2Cents, sessions, type SessionBalance } from "@plr/core";
 
+import { CopyForChat } from "../components/copychat.tsx";
 import type { Ctx } from "../context.ts";
 import { moneyCents } from "../format.ts";
 import { href } from "../router.ts";
 import { errorText, typedCents, writeSaved } from "../saved.ts";
+import { owedCopyText } from "../settle-sheet.ts";
 
 function pairKey(b: SessionBalance): string {
   return sessions.makeKey(b.sessionId, b.fromNormalized, b.toNormalized);
@@ -38,6 +40,7 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
             ))}
           </ul>
         )}
+        {view.owed.length > 0 ? <CopyForChat text={owedCopyText(view.owed)} label="Copy a reminder for the group chat" what="Reminder text" /> : null}
       </section>
 
       <section className="card">
