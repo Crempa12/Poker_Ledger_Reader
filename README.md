@@ -23,10 +23,10 @@ another folder.
 |---|---|
 | Overview | games, players, money in play, whether the books balance, your running total, the leaderboard |
 | Player | every night with the running total and its chart, best and worst nights, nicknames |
-| Games | every game, newest first; one game's results per player |
+| Games | every game, newest first; one game's results per player, and every seat with "whose money was it?" (menu 20) |
 | Settle up | who pays whom for the scope or one game, with your pins and banker mode; "send my money to a specific person" requests (menu 5); copy it for the group chat; **Save sheet** to track payments (menu 7) |
 | Who owes | what is still owed between each pair, every saved sheet, and **Paid…** to record a payment (menu 10) |
-| Checks | what the console app flags at startup; answer new names, merge names by hand or split one back out (menu 4) |
+| Checks | what the console app flags at startup; answer new names, merge names by hand or split one back out (menu 4); answer seats that look shared, undo a saved seat owner (menu 20) |
 | Settings | pinned payments, the banker, who "me" is, the console's display (menu 6) |
 | Payments & corrections | linked from Settle up and the overview: money that changed hands outside the ledger, debts let go, one-sided corrections, removing one (menu 17) |
 | + Add game | paste a PokerNow game link to file its ledger; pick a downloaded hand log to file it |
@@ -35,7 +35,7 @@ The folder and date range at the top work like the console app's scope (menu 1).
 
 ### Changing names, sheets and settings
 
-The buttons on Settle up, Who owes, Checks, Settings and Payments & corrections write the same files in
+The buttons on Settle up, Who owes, Checks, Settings, Payments & corrections and a game's Seats write the same files in
 `Saved_Data/` that the console menus write, byte for byte (checked against the
 console app on copies of the data). Two rules keep the two apps from undoing each
 other:

@@ -3,9 +3,9 @@ import { moneySigned, players, seats } from "@plr/core";
 
 import { useSaver, type Saver } from "../components/saver.tsx";
 import type { Ctx } from "../context.ts";
-import { longDate, plural } from "../format.ts";
-import { href } from "../router.ts";
+import { plural } from "../format.ts";
 import { confirmNames } from "../saved.ts";
+import { SavedSeatOwners, SharedSeats } from "./Seats.tsx";
 
 // How many things the console app would ask you to look at.
 export function checkCount(ctx: Ctx): number {
@@ -20,10 +20,9 @@ function netOf(ctx: Ctx, normalized: string): string {
 }
 
 export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
-  const { world, view, tz } = ctx;
+  const { world, view } = ctx;
   const unbalanced = world.messages.filter((m) => m.startsWith("WARNING"));
   const notes = world.messages.filter((m) => !m.startsWith("WARNING"));
-  const gameById = new Map(world.games.map((g) => [g.id, g]));
   // Kept here, so the answer to the last question still shows once the card is gone.
   const answers = useSaver(ctx, onSaved);
 
@@ -48,24 +47,7 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         </section>
       ) : null}
 
-      {view.seatFlags.length > 0 ? (
-        <section className="card">
-          <h3>Seats that look shared · menu 20</h3>
-          <ul className="plain">
-            {view.seatFlags.map((f) => {
-              const g = gameById.get(f.gameId);
-              const row = g?.rows[f.row];
-              return (
-                <li key={`${f.gameId}-${f.row}`}>
-                  <a href={href("game", f.gameId)}>{longDate(g?.start ?? null, tz)}</a> · <strong>{row?.nickname ?? "?"}</strong>
-                  {f.usualOwner !== "" ? <span className="muted"> on {ctx.nameOf(f.usualOwner)}'s account</span> : null}
-                  {f.overlapAccounts.length > 0 ? <span className="muted"> · sitting on {plural(f.overlapAccounts.length, "other account")} at the same time</span> : null}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ) : null}
+      <SharedSeats ctx={ctx} onSaved={onSaved} />
 
       {world.duplicates.length > 0 ? (
         <section className="card">
@@ -109,6 +91,14 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       ) : null}
 
       <Names ctx={ctx} onSaved={onSaved} />
+      <section className="card">
+        <h3>Seat owners · menu 20</h3>
+        <p className="muted small">
+          Seats handed to someone other than their name, and seats checked as right. Any seat of a game can be handed over from
+          that game's page.
+        </p>
+        <SavedSeatOwners ctx={ctx} onSaved={onSaved} />
+      </section>
     </>
   );
 }

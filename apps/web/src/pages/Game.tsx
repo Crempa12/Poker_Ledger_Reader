@@ -1,9 +1,10 @@
 import type { Ctx } from "../context.ts";
+import { SeatEditor } from "./Seats.tsx";
 import { clockTime, longDate, moneyCents, moneySignedCents, plural, toneOfCents } from "../format.ts";
 import { resultsOf } from "../game.ts";
 import { href } from "../router.ts";
 
-export function GamePage({ ctx, id }: { ctx: Ctx; id: string }) {
+export function GamePage({ ctx, id, onSaved }: { ctx: Ctx; id: string; onSaved: () => void }) {
   const { world, tz } = ctx;
   const game = world.games.find((g) => g.id === id);
   if (game === undefined) {
@@ -61,6 +62,7 @@ export function GamePage({ ctx, id }: { ctx: Ctx; id: string }) {
           </table>
         </div>
       </section>
+      <SeatEditor key={game.id} ctx={ctx} game={game} onSaved={onSaved} />
     </>
   );
 }

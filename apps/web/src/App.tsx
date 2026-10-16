@@ -90,7 +90,7 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
     case "games":
       return <Games ctx={ctx} />;
     case "game":
-      return <GamePage ctx={ctx} id={second ?? ""} />;
+      return <GamePage ctx={ctx} id={second ?? ""} onSaved={onSaved} />;
     case "settle":
       return <Settle ctx={ctx} gameId={second ?? ""} onSaved={onSaved} />;
     case "owed":
