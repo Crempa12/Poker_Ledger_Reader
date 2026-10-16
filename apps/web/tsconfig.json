@@ -16,6 +16,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "server/**/*.ts",
+    "test/**/*.ts",
     "vite.config.ts"
   ]
 }

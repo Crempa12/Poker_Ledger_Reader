@@ -11,7 +11,8 @@ export interface Payload {
   ledgers: ledger.LedgerInput[];
   logs: string[]; // paths of the hand logs under the game folder (their text is not sent)
   saved: Record<string, string>;
-  canWrite: boolean; // the server can file new game files (local mode)
+  canWrite: boolean; // the server can file new game files and rewrite Saved_Data (this computer only)
+  consoleOpen: number; // console app windows open when the data was read (Saved_Data saves wait for 0)
 }
 
 export interface Loaded {

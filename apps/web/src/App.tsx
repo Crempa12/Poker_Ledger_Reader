@@ -58,6 +58,12 @@ export function App() {
 
   return (
     <Shell ctx={ctx} onRefresh={refresh} route={route}>
+      {ctx.payload.consoleOpen > 0 && ctx.payload.canWrite ? (
+        <p className="banner" role="status">
+          The console app is open. It saves its own copy of the names, sheets and settings when it quits, so changes here wait
+          until it is closed: quit it with <strong>0. Save and exit</strong>, then press Refresh.
+        </p>
+      ) : null}
       <ScopeBar ctx={ctx} onChange={changeScope} />
       <Page ctx={ctx} route={route} onSaved={refresh} />
       <footer className="footer muted">
@@ -84,11 +90,11 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
     case "game":
       return <GamePage ctx={ctx} id={second ?? ""} />;
     case "settle":
-      return <Settle ctx={ctx} gameId={second ?? ""} />;
+      return <Settle ctx={ctx} gameId={second ?? ""} onSaved={onSaved} />;
     case "owed":
-      return <Owed ctx={ctx} />;
+      return <Owed ctx={ctx} onSaved={onSaved} />;
     case "check":
-      return <Check ctx={ctx} />;
+      return <Check ctx={ctx} onSaved={onSaved} />;
     case "add":
       return <AddGame ctx={ctx} onSaved={onSaved} />;
     default:

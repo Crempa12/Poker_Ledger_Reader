@@ -434,6 +434,7 @@ tr.dim td {
 }
 .sheet {
   margin-bottom: 16px;
+  overflow-x: auto;
 }
 
 .footer {
@@ -507,4 +508,75 @@ textarea.links {
 button:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* Changing Saved_Data: sheet names, payments, name questions. */
+input:not([type]),
+input[inputmode] {
+  font: inherit;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  min-height: 2.25rem;
+  min-width: 0;
+}
+.controls .grow {
+  flex: 1 1 16rem;
+}
+.controls .grow input {
+  width: 100%;
+}
+button.small {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+.formrow td {
+  background: var(--bg);
+  padding: 10px 12px;
+}
+.banner {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: var(--down-soft);
+  color: var(--text);
+  font-size: 0.92rem;
+}
+.questions > li {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.questions > li:first-child {
+  border-top: 0;
+}
+.questions p {
+  margin: 0 0 8px;
+}
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.choices .muted {
+  color: inherit;
+  opacity: 0.75;
+}
+details summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin-top: 12px;
+}
+.merged li {
+  padding: 4px 0;
+}
+.merged .alias {
+  display: inline-flex;
+  gap: 4px;
+  align-items: baseline;
+  margin-right: 12px;
+}
+.merged .alias button {
+  font-size: 0.8rem;
 }
