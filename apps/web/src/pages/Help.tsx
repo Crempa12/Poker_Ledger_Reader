@@ -32,7 +32,8 @@ export function Help({ ctx }: { ctx: Ctx }) {
         <ol>
           <li>
             <a href={href("add")}>+ Add game</a>: paste the game&apos;s PokerNow link. The ledger is saved where the console app keeps
-            its games. PokerNow puts a captcha on hand logs, so download the hand log yourself and pick the file on the same page.
+            its games. PokerNow puts a captcha on hand logs, so download the hand log yourself: the page finds it in your Downloads
+            folder (press <strong>Add all</strong>, then <strong>Save all</strong>), or you can pick the file.
           </li>
           <li>
             <a href={href("check")}>Checks</a>: answer any new name (a new nickname, or a new player) and any seat that looks like

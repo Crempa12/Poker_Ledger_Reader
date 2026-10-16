@@ -25,9 +25,10 @@
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { isIP } from "node:net";
+import { homedir } from "node:os";
 import { basename, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
@@ -57,6 +58,7 @@ export interface ApiConfig {
   consoleProbe?: () => Promise<ConsoleCheck>; // how the console app is looked for; default: probeConsoleApps
   backupDir?: string; // where old Saved_Data versions go; default: the web project's local/backups/
   snapshotDir?: string; // where snapshot files go; default: the web project's local/snapshots/
+  downloadsDir?: string; // where the browser saves downloads; default: Downloads in the home folder (as menu 19)
   lockWaitMs?: number; // how long a save waits for another save's lock file; default: LOCK_WAIT_MS
   handLogs?: HandLogCache; // where the hand-log results are kept; default: the process's one (handlogs.ts)
 }
@@ -790,15 +792,76 @@ export async function handleSnapshotFile(cfg: ApiConfig, req: IncomingMessage, r
   res.end(await readFile(file));
 }
 
+// ---- the Downloads folder (menu 19) ------------------------------------------------------------
+
+// The folder the browser saves downloads in, found as menu 19 finds it: Downloads in the home folder.
+function downloadsDir(cfg: ApiConfig): string {
+  return cfg.downloadsDir ?? join(homedir(), "Downloads");
+}
+
+// Only this page, on this computer, looks in the Downloads folder: not another site (the custom header
+// needs a preflight the server never answers), and not a phone on the Wi-Fi in phone mode.
+function fromThisComputer(req: IncomingMessage): boolean {
+  return isLoopback(req) && namesThisServer(req) && req.headers["x-plr"] === "1" && readAllowed(req);
+}
+
+export interface DownloadedFile {
+  name: string; // as it is in Downloads, with a browser copy suffix if it has one ("ledger_pglX (1).csv")
+  kind: "ledger" | "poker_now_log";
+  gameId: string;
+  bytes: number;
+  modified: number; // ms since the epoch
+}
+
+// GET /api/downloads: the PokerNow files at the top of the Downloads folder (where menu 19 looks), newest
+// first. Names and sizes only; a file's text is read when the page asks for that file. Nothing in Downloads
+// is moved or changed: the page files a copy through /api/save, with that save's checks.
+export async function handleDownloads(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!fromThisComputer(req)) return send(res, 403, { error: NOT_YOURS });
+  const dir = downloadsDir(cfg);
+  const entries = await readdir(dir, { withFileTypes: true }).catch(() => null);
+  if (entries === null) return send(res, 200, { dir, found: false, files: [] });
+  const files: DownloadedFile[] = [];
+  for (const e of entries) {
+    // A link is not followed (isFile is false for one), so only a file really in Downloads is offered.
+    if (!e.isFile()) continue;
+    const m = FILE_NAME.exec(e.name);
+    if (m === null) continue;
+    const s = await stat(join(dir, e.name)).catch(() => null);
+    if (s === null) continue;
+    files.push({ name: e.name, kind: m[1] as DownloadedFile["kind"], gameId: m[2] ?? "", bytes: s.size, modified: s.mtimeMs });
+  }
+  files.sort((a, b) => b.modified - a.modified || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  send(res, 200, { dir, found: true, files });
+}
+
+// GET /api/downloads/<name>: one of those files' text, read the way a browser reads a picked file
+// (UTF-8, a byte order mark dropped). Only a PokerNow file name is taken, so no other file is reachable.
+export async function handleDownloadedFile(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse, raw: string): Promise<void> {
+  if (!fromThisComputer(req)) return send(res, 403, { error: NOT_YOURS });
+  const name = decodeURIComponent(raw);
+  if (FILE_NAME.exec(name) === null) return send(res, 400, { error: "only PokerNow ledger_… or poker_now_log_… files are read" });
+  const file = join(downloadsDir(cfg), name);
+  const s = await lstat(file).catch(() => null);
+  if (s === null || !s.isFile()) return send(res, 404, { error: `${name} is no longer in the Downloads folder` });
+  if (s.size > MAX_BYTES) return send(res, 400, { error: "file too large" });
+  sendLarge(req, res, 200, { name, text: new TextDecoder().decode(await readFile(file)) });
+}
+
 export function apiMiddleware(cfg: ApiConfig) {
   return (req: IncomingMessage, res: ServerResponse, next: () => void): void => {
     const url = (req.url ?? "").split("?")[0] ?? "";
     const snapshotFile = req.method === "GET" ? /^\/api\/snapshot\/([^/]+)$/.exec(url)?.[1] : undefined;
+    const downloaded = req.method === "GET" ? /^\/api\/downloads\/([^/]+)$/.exec(url)?.[1] : undefined;
     const route =
       req.method === "GET" && url === "/api/data"
         ? handleData(cfg, req, res)
         : req.method === "GET" && url === "/api/handlogs"
           ? handleHandLogs(cfg, req, res)
+        : req.method === "GET" && url === "/api/downloads"
+          ? handleDownloads(cfg, req, res)
+        : downloaded !== undefined
+          ? handleDownloadedFile(cfg, req, res, downloaded)
         : req.method === "POST" && url === "/api/pokernow"
           ? handlePokerNow(req, res)
           : req.method === "POST" && url === "/api/save"

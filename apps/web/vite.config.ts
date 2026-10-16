@@ -39,6 +39,7 @@ function localData(): Plugin {
           timeZone,
           consoleCheck,
           snapshotDir: process.env.PLR_SNAPSHOT_DIR,
+          downloadsDir: process.env.PLR_DOWNLOADS_DIR, // a test server looks in a made-up Downloads folder
           backupDir: process.env.PLR_BACKUP_DIR, // a test server keeps its backups apart from the real ones
         }),
       );

@@ -44,7 +44,7 @@ the page says so, and nothing is saved anywhere.
 | Checks | what the console app flags at startup; answer new names, merge names by hand or split one back out (menu 4); answer seats that look shared, undo a saved seat owner (menu 20) |
 | Settings | pinned payments, the banker, who "me" is, the console's display (menu 6) |
 | Payments & corrections | linked from Settle up and the overview: money that changed hands outside the ledger, debts let go, one-sided corrections, removing one (menu 17) |
-| + Add game | paste a PokerNow game link to file its ledger; pick a downloaded hand log to file it |
+| + Add game | paste a PokerNow game link to file its ledger; file the hand logs (and ledgers) in your Downloads folder, or pick them (menu 19) |
 
 The folder and date range at the top work like the console app's scope (menu 1).
 
@@ -90,7 +90,10 @@ Paste the game's link on **+ Add game**. The ledger is fetched from PokerNow and
 into `Games/<folder>/` in the console app's folder, the same place menu 19 puts it,
 so the console app sees it too. (A data folder with no `Games` folder yet gets the
 folder at its top, where the console app also reads games.) PokerNow puts a captcha on hand logs, so download
-the log yourself (the page links to each game missing one) and pick the file there.
+the log yourself (the page links to each game missing one). The page lists the PokerNow
+files in your Downloads folder that are not filed yet, as menu 19 does: **Add all**,
+then **Save all**. It files a copy and leaves Downloads as it is (menu 19 moves the
+files). You can also pick the files by hand.
 Game files hold everyone's names, PokerNow ids and results. If the console app's
 repository is public on GitHub, committing them there publishes all of that: keep them
 out of git, or make that repository private.

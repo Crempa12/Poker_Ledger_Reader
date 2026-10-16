@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { ledger, type Game } from "@plr/core";
 
 import type { Ctx } from "../context.ts";
-import { postJSON } from "../data.ts";
+import { getLocalJSON, postJSON } from "../data.ts";
 import { clockTime, longDate, moneyCents, moneySignedCents, plural, shortDate } from "../format.ts";
 import { resultsOf } from "../game.ts";
 import { href } from "../router.ts";
@@ -15,6 +15,20 @@ function logId(game: Game): string {
 const FILE_NAME = /^(ledger|poker_now_log)_(pgl[A-Za-z0-9_-]{10,40})(?: \(\d+\))?\.csv$/;
 
 type Status = "ready" | "saving" | "saved" | "there" | "error";
+
+// A PokerNow file in the Downloads folder, as the server lists it (GET /api/downloads).
+interface Downloaded {
+  name: string;
+  kind: "ledger" | "poker_now_log";
+  gameId: string;
+  bytes: number;
+  modified: number;
+}
+interface DownloadsList {
+  dir: string;
+  found: boolean;
+  files: Downloaded[]; // newest first
+}
 
 interface Item {
   key: string;
@@ -63,6 +77,30 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   useEffect(() => {
     basis.current = ctx.payload.basis;
   }, [ctx.payload.basis]);
+  // The PokerNow files in the Downloads folder (menu 19 looks there). Looked at again each time the data is
+  // read (a save, Refresh) and when this tab comes back to the front, as it does after a download elsewhere.
+  const [downloads, setDownloads] = useState<DownloadsList | null>(null);
+  useEffect(() => {
+    if (!ctx.payload.canWrite) return;
+    let current = true;
+    const look = (): void => {
+      getLocalJSON<DownloadsList>("/api/downloads").then(
+        (d) => current && setDownloads(d),
+        () => current && setDownloads(null),
+      );
+    };
+    const onFront = (): void => {
+      if (document.visibilityState === "visible") look();
+    };
+    look();
+    window.addEventListener("focus", look);
+    document.addEventListener("visibilitychange", onFront);
+    return () => {
+      current = false;
+      window.removeEventListener("focus", look);
+      document.removeEventListener("visibilitychange", onFront);
+    };
+  }, [ctx.payload.loadedAt, ctx.payload.canWrite]);
 
   if (!ctx.payload.canWrite) {
     return <div className="card pad">Adding games works only on the computer that holds the data.</div>;
@@ -121,7 +159,9 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
     setProblems(why);
   };
 
-  const save = async (item: Item): Promise<void> => {
+  // reload: whether the page reads the data again afterwards. Save all reads it once, at the end, so a
+  // reload that lands between two saves cannot hand the next save an older basis.
+  const save = async (item: Item, reload = true): Promise<void> => {
     setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saving" } : x)));
     try {
       const r = await postJSON<{ saved: string; basis: string }>("/api/save", {
@@ -132,12 +172,49 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       });
       basis.current = r.basis;
       setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saved", message: `saved as ${savedLabel(r.saved, gamesFolder)}` } : x)));
-      onSaved();
+      if (reload) onSaved();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "error", message } : x)));
     }
   };
+
+  const saveAll = async (list: Item[]): Promise<void> => {
+    setBusy(true);
+    for (const item of list) await save(item, false);
+    setBusy(false);
+    onSaved();
+  };
+
+  // The newest copy of each game's file in Downloads that is not in the data yet, nor on this page.
+  const seen = new Set<string>();
+  const fresh = (downloads?.files ?? []).filter((f) => {
+    const key = `${f.kind}_${f.gameId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return findExisting(ctx, f.kind, f.gameId) === null && !items.some((x) => x.key === key);
+  });
+
+  const addFromDownloads = async (files: Downloaded[]): Promise<void> => {
+    setProblems([]);
+    setBusy(true);
+    const why: string[] = [];
+    for (const f of files) {
+      try {
+        const r = await getLocalJSON<{ name: string; text: string }>(`/api/downloads/${encodeURIComponent(f.name)}`);
+        add({ key: `${f.kind}_${f.gameId}`, kind: f.kind, gameId: f.gameId, fileName: f.name, text: r.text });
+      } catch (err) {
+        why.push(`${f.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    setBusy(false);
+    setProblems(why);
+  };
+
+  // Ledgers first, so a game's hand log is filed after the game itself.
+  const saveable = items
+    .filter((x) => (x.status === "ready" || x.status === "error") && x.folder.trim() !== "")
+    .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "ledger" ? -1 : 1));
 
   const setFolder = (key: string, folder: string): void =>
     setItems((list) => list.map((x) => (x.key === key ? { ...x, folder } : x)));
@@ -188,9 +265,19 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       <section className="card">
         <h2>Add downloaded files</h2>
         <p className="muted small">
-          Hand logs can only be downloaded by a person (PokerNow puts a captcha on them): open the game on PokerNow, choose{" "}
-          <em>Download log</em>, then pick the file here. Ledger files from your Downloads work too.
+          Hand logs can only be downloaded by a person (PokerNow puts a captcha on them): open the game on PokerNow and choose{" "}
+          <em>Download log</em>. The PokerNow files in your Downloads folder show up here when you come back to this page (or press{" "}
+          <strong>Refresh</strong>); ledger files work too.
         </p>
+        <DownloadsFound
+          list={downloads}
+          fresh={fresh}
+          listed={(downloads?.files ?? []).some((f) => items.some((x) => x.key === `${f.kind}_${f.gameId}`))}
+          busy={busy}
+          tz={ctx.tz}
+          onAdd={(files) => void addFromDownloads(files)}
+        />
+        <p className="muted small">Or pick the files yourself:</p>
         <input type="file" accept=".csv,text/csv" multiple onChange={(e) => void pickFiles(e)} aria-label="Downloaded game files to add" />
       </section>
 
@@ -205,6 +292,14 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       {items.length > 0 ? (
         <section className="card">
           <h2>Ready to file</h2>
+          {saveable.length > 1 ? (
+            <div className="row tight">
+              <button onClick={() => void saveAll(saveable)} disabled={busy}>
+                Save all {saveable.length}
+              </button>
+              <span className="muted small">each to the folder shown with it</span>
+            </div>
+          ) : null}
           <ul className="plain">
             {items.map((item) => (
               <li key={item.key} className="additem">
@@ -251,6 +346,54 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         </section>
       ) : null}
     </>
+  );
+}
+
+// The PokerNow files the Downloads folder holds that are not filed yet, to add with one press. Nothing is
+// said when the folder cannot be looked at (a phone, or no Downloads folder).
+function DownloadsFound({
+  list,
+  fresh,
+  listed,
+  busy,
+  tz,
+  onAdd,
+}: {
+  list: DownloadsList | null;
+  fresh: Downloaded[];
+  listed: boolean; // some of its files are on this page already
+  busy: boolean;
+  tz: string;
+  onAdd: (files: Downloaded[]) => void;
+}) {
+  if (list === null || !list.found) return null;
+  if (fresh.length === 0) {
+    return (
+      <p className="muted small">
+        {listed ? "The new PokerNow files from your Downloads folder are listed below." : "No new PokerNow files in your Downloads folder."}
+      </p>
+    );
+  }
+  return (
+    <div className="downloads">
+      <p>
+        <strong>{plural(fresh.length, "new PokerNow file")}</strong> in your Downloads folder:
+      </p>
+      <ul className="plain small">
+        {fresh.map((f) => (
+          <li key={f.name}>
+            {f.kind === "ledger" ? "Ledger" : "Hand log"} <code>{f.name}</code>{" "}
+            <span className="muted">· downloaded {shortDate(Math.floor(f.modified / 1000), tz)} {clockTime(Math.floor(f.modified / 1000), tz)}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="row">
+        <button onClick={() => onAdd(fresh)} disabled={busy}>
+          {fresh.length === 1 ? "Add it" : `Add all ${fresh.length}`}
+        </button>
+        <span className="muted small">They stay in Downloads; a copy is filed when you save.</span>
+      </div>
+    </div>
   );
 }
 

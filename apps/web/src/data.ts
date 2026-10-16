@@ -85,6 +85,15 @@ export function saveScope(choice: ScopeChoice): void {
   }
 }
 
+// Reads from the local server that only this page, on this computer, may make (the Downloads
+// folder): the same custom header as postJSON.
+export async function getLocalJSON<T>(url: string): Promise<T> {
+  const res = await fetch(url, { headers: { "X-PLR": "1" }, cache: "no-store" });
+  const data = (await res.json().catch(() => ({}))) as T & { error?: string };
+  if (!res.ok) throw new Error(data.error ?? `the server answered ${res.status}`);
+  return data;
+}
+
 // Calls to the local server that change files. The custom header lets the server
 // refuse anything that did not come from this page.
 export async function postJSON<T>(url: string, body: unknown): Promise<T> {

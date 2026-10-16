@@ -511,6 +511,15 @@ textarea.links {
   flex-direction: column;
   gap: 2px;
 }
+/* The PokerNow files found in the Downloads folder, on + Add game. */
+.downloads {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+  margin: 10px 0 14px;
+}
+.downloads p {
+  margin: 0 0 6px;
+}
 .additem {
   padding: 12px 0;
 }
