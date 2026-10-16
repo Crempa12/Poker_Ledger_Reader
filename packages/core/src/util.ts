@@ -301,6 +301,8 @@ export function moneySignedCents(cents: number): string {
 // Milliseconds for a wall-clock reading taken as UTC. Fields out of range roll
 // over (day 31 of February becomes early March), as mktime and timegm do.
 function utcMs(year: number, month: number, day: number, hour: number, minute: number, second: number): number {
+  // Date.UTC rolls fields over the same way, but reads years 0 to 99 as 1900 to 1999.
+  if (year >= 100) return Date.UTC(year, month - 1, day, hour, minute, second);
   const d = new Date(0);
   d.setUTCFullYear(year, month - 1, day);
   d.setUTCHours(hour, minute, second, 0);
@@ -342,6 +344,8 @@ export function parseISO8601UTC(raw: string): number | null {
 export function readISO8601(raw: string): number | null {
   const s = trim(raw);
   if (s.length < 19) return null;
+  const usual = usualStamp(s);
+  if (usual !== null) return usual;
   let pos = 0;
   const field = (width: number): number | null => {
     const got = scanInt(s, pos, width);
@@ -367,6 +371,24 @@ export function readISO8601(raw: string): number | null {
   const second = field(2);
   if (second === null) return null;
   return Math.floor(utcMs(year, month, day, hour, minute, second) / 1000);
+}
+
+// The usual layout, "2031-05-06T03:34:31" with every digit there, read straight off the text: the
+// fields come out as the scanner above reads them. Null for any other text, which the scanner
+// then reads. Hand logs have a stamp on each of their hundreds of thousands of rows.
+const STAMP_DIGITS = [0, 1, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18];
+
+function usualStamp(s: string): number | null {
+  for (const i of STAMP_DIGITS) {
+    const c = s.charCodeAt(i);
+    if (c < 48 || c > 57) return null;
+  }
+  if (s.charAt(4) !== "-" || s.charAt(7) !== "-" || s.charAt(10) !== "T" || s.charAt(13) !== ":" || s.charAt(16) !== ":") {
+    return null;
+  }
+  const two = (i: number): number => (s.charCodeAt(i) - 48) * 10 + (s.charCodeAt(i + 1) - 48);
+  const year = two(0) * 100 + two(2);
+  return Math.floor(utcMs(year, two(5), two(8), two(11), two(14), two(17)) / 1000);
 }
 
 // Three integers separated by one character, read like sscanf("%d<sep>%d<sep>%d").

@@ -305,39 +305,54 @@ function readPlayerRef(text: string, pos: number): PlayerRef | null {
 }
 
 // A CSV read the way the C++ reads it: quotes group commas and newlines, a doubled quote is one
-// quote, and carriage returns outside quotes are dropped.
+// quote, and carriage returns outside quotes are dropped. Plain text is taken a run at a time
+// (text.slice from `from` up to the next special character), not a character at a time: the
+// logs are tens of megabytes, and one string per character made reading them slow.
 function readCSVRecords(text: string): string[][] {
   const records: string[][] = [];
   let row: string[] = [];
-  let field = "";
+  let field = ""; // the current field, up to `from`
+  let from = 0; // where the run not yet in `field` starts
   let inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text.charAt(i);
+  const n = text.length;
+  let i = 0;
+  while (i < n) {
     if (inQuotes) {
-      if (c === '"') {
-        if (text.charAt(i + 1) === '"') {
-          field += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
+      const q = text.indexOf('"', i);
+      if (q === -1) break; // an unclosed quote runs to the end of the text
+      field += text.slice(from, q);
+      if (text.charCodeAt(q + 1) === 34) {
+        field += '"';
+        i = q + 2;
       } else {
-        field += c;
+        inQuotes = false;
+        i = q + 1;
       }
-    } else if (c === '"') {
+      from = i;
+      continue;
+    }
+    const c = text.charCodeAt(i);
+    if (c === 34 /* " */) {
+      field += text.slice(from, i);
       inQuotes = true;
-    } else if (c === ",") {
-      row.push(field);
+    } else if (c === 44 /* , */) {
+      row.push(field + text.slice(from, i));
       field = "";
-    } else if (c === "\n") {
-      row.push(field);
+    } else if (c === 10 /* \n */) {
+      row.push(field + text.slice(from, i));
       field = "";
       records.push(row);
       row = [];
-    } else if (c !== "\r") {
-      field += c;
+    } else if (c === 13 /* \r */) {
+      field += text.slice(from, i);
+    } else {
+      i++;
+      continue;
     }
+    i++;
+    from = i;
   }
+  field += text.slice(from, n);
   if (field !== "" || row.length > 0) {
     row.push(field);
     records.push(row);
@@ -348,6 +363,8 @@ function readCSVRecords(text: string): string[][] {
 // std::stoll on the trimmed text, with the C++ catch that makes a bad number 0: an optional sign
 // and digits, the rest ignored, and out of range is 0.
 function orderNumber(s: string): number {
+  // Up to 15 digits and nothing else (every row of a PokerNow log): exact as a double already.
+  if (s.length > 0 && s.length <= 15 && /^\d+$/.test(s)) return Number(s);
   const m = /^[+-]?\d+/.exec(s);
   if (m === null) return 0;
   const v = BigInt(m[0].replace(/^\+/, ""));
