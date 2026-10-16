@@ -151,7 +151,7 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
   const [first, second, third] = route;
   switch (first) {
     case undefined:
-      return <Overview ctx={ctx} />;
+      return <Overview ctx={ctx} onSaved={onSaved} />;
     case "player":
       return <PlayerPage ctx={ctx} normalized={second ?? ""} />;
     case "games":

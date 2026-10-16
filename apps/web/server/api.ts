@@ -49,7 +49,7 @@ import {
 } from "../../../packages/core/src/settlement.ts";
 import { isExcludedDir } from "../../../packages/core/src/util.ts";
 import { SAVED_DATA_FILES, loadDataRoot } from "../../../tools/load.ts";
-import { dataRootReady, notADataFolder } from "./dataroot.ts";
+import { canStartDataRoot, dataRootReady, notADataFolder, startDataRoot } from "./dataroot.ts";
 import { SNAPSHOT_NAME, SNAPSHOTS, savedForPage } from "./snapshot.ts";
 import { handLogCache, parseHandScope, type HandLogCache } from "./handlogs.ts";
 
@@ -340,6 +340,9 @@ export async function handleData(cfg: ApiConfig, req: IncomingMessage, res: Serv
     consoleOpen: "open" in check ? check.open : -1,
     // Whether the data has a Games folder: a new game is filed there, or at the top of the data folder.
     gamesFolder: existsSync(join(cfg.dataRoot, "Games")),
+    // Whether the folder holds the console app's data, and if not, whether a new one may be started there.
+    dataReady: await dataRootReady(cfg.dataRoot),
+    canStartData: canWrite && (await canStartDataRoot(cfg.dataRoot)),
     basis,
   });
 }
@@ -834,6 +837,23 @@ export async function handleSnapshotFile(cfg: ApiConfig, req: IncomingMessage, r
   res.end(await readFile(file));
 }
 
+// POST /api/start-data: starts a data folder where the site reads (Games and Saved_Data, empty), for a
+// group without the console app. Only where nothing is yet: an empty or missing folder, never one with
+// files in it, and never a folder that already holds the console app's data.
+export async function handleStartData(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!writeAllowed(req)) return send(res, 403, { error: NOT_YOURS });
+  await inSaveQueue(async () => {
+    if (await dataRootReady(cfg.dataRoot)) return send(res, 409, { error: "There is a data folder there already. Press Refresh." });
+    if (!(await canStartDataRoot(cfg.dataRoot))) {
+      return send(res, 409, {
+        error: `${cfg.dataRoot} has other files in it, so no data folder was started there. Set PLR_DATA_ROOT to an empty folder.`,
+      });
+    }
+    await startDataRoot(cfg.dataRoot);
+    send(res, 200, { started: cfg.dataRoot });
+  });
+}
+
 // ---- the Downloads folder (menu 19) ------------------------------------------------------------
 
 // The folder the browser saves downloads in, found as menu 19 finds it: Downloads in the home folder.
@@ -945,6 +965,8 @@ export function apiMiddleware(cfg: ApiConfig) {
               ? handleSavedFile(cfg, req, res)
               : req.method === "POST" && url === "/api/snapshot"
                 ? handleSnapshot(cfg, req, res)
+              : req.method === "POST" && url === "/api/start-data"
+                ? handleStartData(cfg, req, res)
                 : snapshotFile !== undefined
                   ? handleSnapshotFile(cfg, req, res, snapshotFile)
                   : null;

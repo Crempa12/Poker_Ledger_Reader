@@ -15,9 +15,11 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
 import { apiMiddleware } from "./server/api.ts";
+import { defaultDataRoot } from "./server/dataroot.ts";
 import { denyPatternFor } from "./server/fsdeny.ts";
 
-const dataRoot = resolve(process.env.PLR_DATA_ROOT ?? resolve(import.meta.dirname, "../../../Poker_Ledger_Reader"));
+// The console app's folder next to this project, or the site's own data/ folder (server/dataroot.ts).
+const dataRoot = resolve(process.env.PLR_DATA_ROOT ?? defaultDataRoot(resolve(import.meta.dirname, "../..")));
 const timeZone = process.env.PLR_TZ ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 const consoleCheck = process.env.PLR_CONSOLE_CHECK !== "0";
 const LOCAL = resolve(import.meta.dirname, "../../local");
@@ -63,7 +65,8 @@ export default defineConfig(({ mode }) => ({
       // local/ holds the Saved_Data backups, the snapshots and the real-data reference
       // runs: Vite's /@fs/ must never hand them out (a phone on the Wi-Fi could ask).
       // Setting deny replaces Vite's list, so its own entries are repeated here.
-      deny: [".env", ".env.*", "*.{crt,pem,key,p12,pfx,cer,der}", ".npmrc", ".yarnrc.yml", "**/.git/**", denyPatternFor(LOCAL)],
+      // The data folder too: the site's own data/ is inside this project, where /@fs/ could reach it.
+      deny: [".env", ".env.*", "*.{crt,pem,key,p12,pfx,cer,der}", ".npmrc", ".yarnrc.yml", "**/.git/**", denyPatternFor(LOCAL), denyPatternFor(dataRoot)],
     },
   },
 }));

@@ -16,6 +16,8 @@ export interface Payload {
   canWrite: boolean; // the server can file new game files and rewrite Saved_Data (this computer only)
   consoleOpen: number; // console app windows open when the data was read: 0 none, -1 could not tell (Saved_Data saves wait for 0)
   gamesFolder?: boolean; // whether the data folder has a Games folder (a new game goes there, else at the top); absent in a snapshot
+  dataReady?: boolean; // whether the folder read holds the console app's data; absent in a snapshot
+  canStartData?: boolean; // whether a new data folder may be started there (it is missing or empty); absent in a snapshot
   basis: string; // the server's token for every input a save depends on; sent back with each save ("" for a snapshot, which never writes)
   handlogs?: SnapshotHandLogs; // a snapshot's hand-log results for all dates (absent in local mode, which asks the server)
 }

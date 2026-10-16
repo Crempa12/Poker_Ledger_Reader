@@ -27,6 +27,15 @@ git worktree add ../Poker_Ledger_Web web-app
 
 The site's **Help** tab walks through a week of using it.
 
+### Without the console app
+
+Another group can use the site on its own. With no `Poker_Ledger_Reader` folder next to
+this one, the site keeps its data in `data/` inside this folder (git ignores it): the
+Overview offers **Start a new data folder**, then add games on **+ Add game**. The files
+are the same ones the console app reads, so it can be pointed at that folder later.
+`PLR_DATA_ROOT` names any other folder; the site starts a data folder only in one that
+is empty or not there yet.
+
 It reads `Games/` and `Saved_Data/` from the console app's folder next to this one
 (`../Poker_Ledger_Reader`), every time the page loads or you press **Refresh**, so
 it always shows the same numbers as the console app. Set `PLR_DATA_ROOT` to read

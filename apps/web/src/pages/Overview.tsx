@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { players, util, type PlayerStats } from "@plr/core";
 
 import { LineChart, NetBar, Sparkbars, type LinePoint } from "../components/charts.tsx";
-import { isSnapshot } from "../data.ts";
+import { isSnapshot, postJSON } from "../data.ts";
 import { nightsOf, upDown, type Ctx } from "../context.ts";
 import { longDate, moneyCents, moneySigned, moneySignedCents, plural, shortDate, toneOf, toneOfCents } from "../format.ts";
 import { useHandLogs } from "../handlogs.ts";
@@ -15,7 +16,7 @@ export function runningTotal(p: PlayerStats, timeZone: string): LinePoint[] {
   });
 }
 
-export function Overview({ ctx }: { ctx: Ctx }) {
+export function Overview({ ctx, onSaved = () => undefined }: { ctx: Ctx; onSaved?: () => void }) {
   const { view, tz, me, world } = ctx;
   // The hand-log results for this scope: the box's hand-log count comes from them (the rest of the page never waits).
   const hand = useHandLogs(ctx);
@@ -41,9 +42,20 @@ export function Overview({ ctx }: { ctx: Ctx }) {
   const logged = hand.status === "ready" && hand.data !== undefined ? [`hand logs ${hand.data.logged}/${hand.data.games}`] : [];
   const facts = [...logged, `banker ${banker}`, `pinned payments ${world.prefs.length}`, `me ${meName}`].join(" · ");
 
-  // No games at all (not just none in this scope): the folder read may not be the console app's.
+  // No games at all (not just none in this scope): the folder read may not be the console app's, or there
+  // may be no data folder yet (a group that does not use the console app starts one here).
   if (world.games.length === 0 && !isSnapshot(ctx.payload)) {
     const folder = ctx.payload.dataRoot.split(/[\\/]/).filter((part) => part !== "").pop() ?? ctx.payload.dataRoot;
+    if (ctx.payload.dataReady === true) {
+      return (
+        <div className="card pad">
+          <h2>No games yet</h2>
+          <p>
+            The data folder <code>{folder}</code> has no games in it yet. Add the first one on <a href={href("add")}>+ Add game</a>.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="card pad">
         <h2>No games were found</h2>
@@ -51,9 +63,11 @@ export function Overview({ ctx }: { ctx: Ctx }) {
           No games were found in <code>{folder}</code>.
         </p>
         <p className="muted">
-          The site reads the console app&apos;s folder (its <code>Games</code> and <code>Saved_Data</code> folders). It must sit next
-          to this one, as <code>Poker_Ledger_Reader</code>, or <code>PLR_DATA_ROOT</code> must name it. Then press <strong>Refresh</strong>.
+          If you use the console app, the site reads its folder (its <code>Games</code> and <code>Saved_Data</code> folders): it must sit
+          next to this one, as <code>Poker_Ledger_Reader</code>, or <code>PLR_DATA_ROOT</code> must name it. Then press{" "}
+          <strong>Refresh</strong>.
         </p>
+        {ctx.payload.canStartData === true ? <StartData ctx={ctx} onSaved={onSaved} /> : null}
       </div>
     );
   }
@@ -208,6 +222,38 @@ export function Tile({ label, value, sub, tone }: { label: string; value: string
       <div className="muted small">{label}</div>
       <div className={`big ${tone ?? ""}`}>{value}</div>
       {sub !== undefined ? <div className="muted small">{sub}</div> : null}
+    </div>
+  );
+}
+
+// For a group without the console app: starts the site's data folder (Games and Saved_Data) where it
+// reads, which the server allows only where nothing is yet.
+function StartData({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const start = async (): Promise<void> => {
+    setBusy(true);
+    setError(null);
+    try {
+      await postJSON<{ started: string }>("/api/start-data", {});
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="startdata">
+      <p>
+        Not using the console app? Start a new data folder at <code>{ctx.payload.dataRoot}</code>, then add your games on{" "}
+        <strong>+ Add game</strong>. The site keeps everything there, in the same files the console app uses. Keep that folder out
+        of git: it holds everyone&apos;s names and results.
+      </p>
+      <button onClick={() => void start()} disabled={busy}>
+        {busy ? "Starting…" : "Start a new data folder"}
+      </button>
+      {error !== null ? <p className="down small">{error}</p> : null}
     </div>
   );
 }

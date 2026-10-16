@@ -511,6 +511,12 @@ textarea.links {
   flex-direction: column;
   gap: 2px;
 }
+/* Starting a data folder, on an Overview with none. */
+.startdata {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 14px;
+}
 /* The PokerNow files found in the Downloads folder, on + Add game. */
 .downloads {
   border-left: 3px solid var(--accent);

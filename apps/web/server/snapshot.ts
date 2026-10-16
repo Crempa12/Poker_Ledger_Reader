@@ -22,7 +22,7 @@ import { build } from "vite";
 import { looksLikeLedger } from "../../../packages/core/src/ledger.ts";
 import { formatLocalDate } from "../../../packages/core/src/util.ts";
 import { loadDataRoot } from "../../../tools/load.ts";
-import { dataRootReady } from "./dataroot.ts";
+import { dataRootReady, defaultDataRoot } from "./dataroot.ts";
 import { handWorldFromInputs, savedForPage, snapshotHandLogs } from "./handlogs.ts";
 
 // The saved files a page sees are listed in handlogs.ts, shared with the server.
@@ -127,7 +127,7 @@ export async function makeSnapshot(dataRoot: string, timeZone: string, outDir: s
 
 // npm run snapshot
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const dataRoot = resolve(process.env.PLR_DATA_ROOT ?? resolve(APP, "../../../Poker_Ledger_Reader"));
+  const dataRoot = resolve(process.env.PLR_DATA_ROOT ?? defaultDataRoot(resolve(APP, "../..")));
   const timeZone = process.env.PLR_TZ ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const r = await makeSnapshot(dataRoot, timeZone, process.env.PLR_SNAPSHOT_DIR ?? SNAPSHOTS).catch((err: unknown) => {
     console.error(err instanceof Error ? err.message : String(err));

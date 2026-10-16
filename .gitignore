@@ -9,6 +9,9 @@ coverage/
 # Reference runs on real game data stay on this machine, never in git.
 local/
 
+# The site's own data folder, for a group without the console app: real games, never in git.
+/data/
+
 # Real PokerNow files and app state must never be committed on this branch.
 # Made-up ones for tests live under fixtures/ and are allowed back in below.
 Games/
