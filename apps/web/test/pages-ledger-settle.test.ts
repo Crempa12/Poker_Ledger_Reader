@@ -548,6 +548,13 @@ describe("Who owes, against the saved sheets the console prints", () => {
     expect(html).toContain(">Still owed</th>");
   });
 
+  it("with no saved sheet owing anything, says so as the console does (menu 11, sessions.cpp:175)", async () => {
+    // A saved balances file with no rows: nothing is owed on any saved sheet.
+    const ctx = await pageCtx(SYNTHETIC, EVERYTHING, { "session_balances.csv": "" });
+    const text = textOfHtml(renderToStaticMarkup(createElement(Owed, { ctx, onSaved: () => {} })));
+    expect(text).toContain("Nobody. Every saved sheet is paid.");
+  });
+
   it("the made-up views (menus 8 and 11): every saved row in order, and the combined list", async () => {
     const ctx = await pageCtx(SYNTHETIC, EVERYTHING);
     const html = renderToStaticMarkup(createElement(Owed, { ctx, onSaved: () => {} }));
@@ -625,7 +632,13 @@ describe("Payments & corrections, against menu 17", () => {
   it("says where new entries go, as the console does", async () => {
     const ctx = await pageCtx(SYNTHETIC, EVERYTHING);
     const text = textOfHtml(renderToStaticMarkup(createElement(Adjust, { ctx, onSaved: () => {} })));
-    expect(text).toContain("New entries go under: all folders.");
+    // The console's line under the list (menu 17, adjustments.cpp:100-101), read from the recorded output; the page's sentence ends with a dot.
+    const line = recorded(REF + "views/views.txt")
+      .split("\n")
+      .map((l) => l.trim())
+      .find((l) => l.startsWith("New entries go under:"));
+    expect(line).toBe("New entries go under: all folders (they count only when settling everything)");
+    expect(text).toContain(`${line}.`);
   });
 });
 

@@ -33,6 +33,12 @@ const FOLDERS = [
 ];
 
 const noop = (): void => {};
+
+// The name a game's Results cell gives for that night: "Della" or the nickname in "Della · as D E L L A".
+function nightNameOf(cell: string): string {
+  const at = cell.lastIndexOf(" · as ");
+  return at < 0 ? cell : cell.slice(at + " · as ".length);
+}
 const normalize = (s: string): string => s.replace(/\s+/g, " ").trim();
 const reference = (path: string): string => readFileSync(path, "utf8");
 const show = (el: ReactElement): string => renderToStaticMarkup(el).replace(/<!-- -->/g, "");
@@ -207,16 +213,52 @@ function duplicateBlock(text: string): DuplicateLine[] {
   return out;
 }
 
-// One saved seat owner row of menu 20: the game (a date, or "(not loaded)"), nickname,
-// account, net, counted for, and the note (the console cuts the note short).
+// The display width of one character, as the console counts it (util.cpp columnsOf): combining and
+// zero-width characters take none, East Asian wide characters and emoji take two, the rest one.
+function columnsOf(ch: string): number {
+  const cp = ch.codePointAt(0) ?? 0;
+  if ((cp >= 0x300 && cp <= 0x36f) || (cp >= 0x200b && cp <= 0x200f) || (cp >= 0xfe00 && cp <= 0xfe0f) || (cp >= 0x20d0 && cp <= 0x20ff)) {
+    return 0;
+  }
+  const wide =
+    (cp >= 0x1100 && cp <= 0x115f) ||
+    (cp >= 0x2e80 && cp <= 0xa4cf) ||
+    (cp >= 0xac00 && cp <= 0xd7a3) ||
+    (cp >= 0xf900 && cp <= 0xfaff) ||
+    (cp >= 0xfe30 && cp <= 0xfe4f) ||
+    (cp >= 0xff00 && cp <= 0xff60) ||
+    (cp >= 0xffe0 && cp <= 0xffe6) ||
+    (cp >= 0x1f300 && cp <= 0x1faff) ||
+    (cp >= 0x20000 && cp <= 0x3fffd);
+  return wide ? 2 : 1;
+}
+
+// The text of a console line that starts in its display columns [from, to).
+function columnText(line: string, from: number, to: number): string {
+  let col = 0;
+  let out = "";
+  for (const ch of line) {
+    if (col >= from && col < to) out += ch;
+    col += columnsOf(ch);
+  }
+  return out.trim();
+}
+
+// One saved seat owner row of menu 20, read by the console's columns (seats.cpp:340-348), each padded to
+// its width in display columns: the number (4), the game's date or "(not loaded)" (12), the nickname (16),
+// the account (12), the net (11, right-aligned), two spaces, the counted-for name (14), then the note (the
+// console cuts the note short). The gaps between words cannot tell the counted-for name from the note: a
+// 13-character name leaves one space before its note.
 function seatOwnerRow(line: string): string[] {
-  const m = /^\d+\s+(\(not loaded\)|\d{4}-\d{2}-\d{2})\s*(.*)$/.exec(line.trimEnd());
-  expect(m, line).not.toBeNull();
-  const cells = (m?.[2] ?? "")
-    .split(/\s{2,}/)
-    .map((s) => s.trim())
-    .filter((s) => s !== "");
-  return [m?.[1] ?? "", cells[0] ?? "", cells[1] ?? "", cells[2] ?? "", cells[3] ?? "", cells[4] ?? ""];
+  expect(columnText(line, 0, 4), line).toMatch(/^\d+$/);
+  return [
+    columnText(line, 4, 16),
+    columnText(line, 16, 32),
+    columnText(line, 32, 44),
+    columnText(line, 44, 55),
+    columnText(line, 57, 71),
+    columnText(line, 71, Number.POSITIVE_INFINITY),
+  ];
 }
 
 interface PickerRow {
@@ -394,6 +436,27 @@ describe("the Checks page's hand-log notes against the startup's hand-log lines 
   });
 });
 
+describe("the saved seat owners' columns, as menu 20 prints them (made-up rows)", () => {
+  it("a counted-for name of 13 characters leaves one space before its note, and the note stays in its own cell", () => {
+    // seats.cpp:340-348: the number (4 columns), the date (12), the nickname (16), the account (12), the net (11,
+    // right-aligned), two spaces, the counted-for name (14), then the note.
+    const row = `1   2026-10-01  ${"Nick".padEnd(16)}${"acct01".padEnd(12)}${"+$5.00".padStart(11)}  ${"Abcdefghijklm".padEnd(14)}a short note`;
+    expect(seatOwnerRow(row)).toEqual(["2026-10-01", "Nick", "acct01", "+$5.00", "Abcdefghijklm", "a short note"]);
+  });
+
+  it("a row with no note, and a game that was not loaded, read as their columns", () => {
+    const row = `2   (not loaded)${"Nick".padEnd(16)}${"acct02".padEnd(12)}${"$0.00".padStart(11)}  ${"Abc".padEnd(14)}`;
+    expect(seatOwnerRow(row)).toEqual(["(not loaded)", "Nick", "acct02", "$0.00", "Abc", ""]);
+  });
+
+  it("a nickname with an emoji is as wide as the console counts it, so the columns after it still line up", () => {
+    // "🎲Brask" is two columns for the emoji and five for the letters: seven columns, so nine spaces fill its 16.
+    const nick = "🎲Brask";
+    const row = `3   2026-10-02  ${nick}${" ".repeat(9)}${"acctX".padEnd(12)}${"-$1.00".padStart(11)}  ${"Harlo".padEnd(14)}`;
+    expect(seatOwnerRow(row)).toEqual(["2026-10-02", nick, "acctX", "-$1.00", "Harlo", ""]);
+  });
+});
+
 // ---- the Games page -------------------------------------------------------------------------
 
 describe("the Games page against the console's game picker, menu 5 (made-up data)", () => {
@@ -448,7 +511,8 @@ describe("one game's results against the console's single-game settlement (made-
       expect(picked, c.picker).toBeDefined();
       const block = blockRows(text, `-- Game of ${picked?.date ?? ""}, 1 game`).filter((l) => !/^\s+Player\s/.test(l));
       const recorded = nets(block);
-      const results = rowsOf(needCard(html, "Results")).map((cells) => [cells[0] ?? "", cells[cells.length - 1] ?? ""]);
+      // A name cell is "usual" or "usual · as <that night's nickname>"; the console prints the nickname.
+      const results = rowsOf(needCard(html, "Results")).map((cells) => [nightNameOf(cells[0] ?? ""), cells[cells.length - 1] ?? ""]);
       expect(results).toEqual(recorded);
 
       const shown = textOf(html);
@@ -468,6 +532,16 @@ describe("one game's results against the console's single-game settlement (made-
     const warned = /ledger_pglFAKE0006\.csv does not balance: its nets sum to ([+-]?\$[\d,.]+) instead/.exec(startup)?.[1];
     expect(warned).toBe("+$5.00");
     expect(shown).toContain(`The nets add up to ${warned} instead of $0.00.`);
+  });
+
+  it("synthetic ledger 0006: a seat played under another nickname shows the usual name and that night's, as the single-game sheet names it", async () => {
+    // One seat of this game was played under "🃏🃏"; the player's name across every game is another nickname ("🎴").
+    // The single-game sheet (menu 5, option 1) names the seat by the nickname used in this game.
+    const ctx = await ctxFor(SYNTHETIC);
+    const html = show(createElement(GamePage, { ctx, id: "ledger_pglFAKE0006", onSaved: noop }));
+    const names = rowsOf(needCard(html, "Results")).map((cells) => cells[0] ?? "");
+    expect(names).toContain("🎴 · as 🃏🃏");
+    expect(names.map(nightNameOf)).toContain("🃏🃏");
   });
 });
 

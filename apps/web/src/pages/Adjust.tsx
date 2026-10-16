@@ -77,7 +77,7 @@ export function Adjust({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         <>
           {scope.folder === "" ? (
             <p className="muted small center">
-              New entries go under: <strong>all folders</strong>. They count only when settling every folder. Pick a folder at the top to
+              New entries go under: <strong>all folders</strong> (they count only when settling everything). Pick a folder at the top to
               tag them with it.
             </p>
           ) : (

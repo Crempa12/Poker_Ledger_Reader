@@ -1,6 +1,6 @@
-import { handlog } from "@plr/core";
+import { boardFor, handlog, players } from "@plr/core";
 
-import type { Ctx } from "../context.ts";
+import { dayScope, type Ctx } from "../context.ts";
 import { SeatEditor } from "./Seats.tsx";
 import { clockTime, longDate, moneyCents, moneySignedCents, plural, toneOfCents } from "../format.ts";
 import { resultsOf } from "../game.ts";
@@ -19,6 +19,9 @@ export function GamePage({ ctx, id, onSaved }: { ctx: Ctx; id: string; onSaved: 
   }
   const results = resultsOf(game, world.rules);
   const offBy = results.reduce((s, r) => s + r.netCents, 0);
+  // Each player by the name used across every game, and, when it differs, the nickname this game's
+  // single-game sheet names them by (menu 5, option 1: the same board the Settle page uses for it).
+  const gameBoard = boardFor(world, [game], dayScope(game, tz));
   return (
     <>
       <section className="card">
@@ -53,7 +56,7 @@ export function GamePage({ ctx, id, onSaved }: { ctx: Ctx; id: string; onSaved: 
               {results.map((r) => (
                 <tr key={r.person} className={r.person === ctx.me ? "me" : ""}>
                   <td>
-                    <a href={href("player", r.person)}>{ctx.nameOf(r.person)}</a>
+                    <NightName usual={ctx.nameOf(r.person)} tonight={players.displayName(gameBoard, r.person)} person={r.person} />
                   </td>
                   <td className="num hide-xs">{r.seats}</td>
                   <td className="num">{moneyCents(r.buyInCents)}</td>
@@ -66,6 +69,16 @@ export function GamePage({ ctx, id, onSaved }: { ctx: Ctx; id: string; onSaved: 
         </div>
       </section>
       <SeatEditor key={game.id} ctx={ctx} game={game} onSaved={onSaved} />
+    </>
+  );
+}
+
+// "Della", or "Della · as D E L L A" when that night's nickname is another name for them.
+function NightName({ usual, tonight, person }: { usual: string; tonight: string; person: string }) {
+  return (
+    <>
+      <a href={href("player", person)}>{usual}</a>
+      {tonight !== usual ? <span className="muted small">{` · as ${tonight}`}</span> : null}
     </>
   );
 }

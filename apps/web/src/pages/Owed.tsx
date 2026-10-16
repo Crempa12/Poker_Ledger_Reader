@@ -24,7 +24,7 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         <h2>Who still owes whom</h2>
         <p className="muted small">Everything still unpaid, added up across every saved sheet (menu 11 in the console app).</p>
         {view.owed.length === 0 ? (
-          <p className="up">Nobody owes anything on a saved sheet.</p>
+          <p className="up">Nobody. Every saved sheet is paid.</p>
         ) : (
           <ul className="payments">
             {view.owed.map((d) => (
