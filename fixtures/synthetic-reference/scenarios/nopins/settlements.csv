@@ -1,29 +1,38 @@
 from,to,amount,reason,from_normalized,to_normalized
-Quorin,Plenkor,46.85,auto,quorin,plenkor
-707070,Plenkor,7.87,auto,707070,plenkor
-"Quinn ""Q"" Varn",Plenkor,3.26,auto,quinnqvarn,plenkor
-Dulvane,Frymoss,24.94,auto,dulvane,frymoss
-Dulvane,🎴,5.06,auto,dulvane,unnamedfakeid
-Ostrelin,🎴,19.55,auto,ostrelin,unnamedfakeid
-Ostrelin,Bexrunn,1.50,auto,ostrelin,bexrunn
-Nuvrask,Vorndal,35.41,auto,nuvrask,vorndal
-Nuvrask,Pindrel,5.59,auto,nuvrask,pindrel
-Tarvelle,🎲Brask,21.85,auto,tarvelle,brask
-Tarvelle,Pindrel,8.15,auto,tarvelle,pindrel
+Ostravan,Dorrig,10.00,auto,ostravan,dorrig
+Quorin,Tovrin,25.00,auto,quorin,tovrin
+Quorin,🎲Brask,21.85,auto,quorin,brask
+Dulvane,Vexlor,20.00,auto,dulvane,vexlor
+Dulvane,Cavlorn,5.00,auto,dulvane,cavlorn
+Dulvane,Ulvane,5.00,auto,dulvane,ulvane
 Ekvarto,Jolwick,37.52,auto,ekvarto,jolwick
 Lumqat,Jolwick,11.25,auto,lumqat,jolwick
-Lumqat,Hiltrex,1.50,auto,lumqat,hiltrex
+Lumqat,Bexrunn,1.50,auto,lumqat,bexrunn
 Lumqat,Ylmande,0.50,auto,lumqat,ylmande
+Morvak,Frymoss,24.94,auto,morvak,frymoss
+Morvak,🎴,5.06,auto,morvak,unnamedfakeid
+Ostrelin,🎴,19.55,auto,ostrelin,unnamedfakeid
+Ostrelin,Hiltrex,1.50,auto,ostrelin,hiltrex
+Nuvrask,Mirtavo,29.53,auto,nuvrask,mirtavo
+Nuvrask,Sorrel,11.47,auto,nuvrask,sorrel
+Tarvelle,Hespyre,22.47,auto,tarvelle,hespyre
+Tarvelle,Sorrel,7.53,auto,tarvelle,sorrel
 Zaqvin,Gorvast,77.22,auto,zaqvin,gorvast
-Ombrix,Sybnari,54.56,auto,ombrix,sybnari
-"Harlo, Dromm",Sybnari,36.91,auto,harlodromm,sybnari
-"Harlo, Dromm",Mirtavo,15.33,auto,harlodromm,mirtavo
-Wexlorn,Mirtavo,14.20,auto,wexlorn,mirtavo
-Wexlorn,Gorvast,0.97,auto,wexlorn,gorvast
-Fenquor,Vextor,33.06,auto,fenquor,vextorion
-Quelzit,Hespyre,22.47,auto,quelzit,hespyre
-Quelzit,Vextor,7.63,auto,quelzit,vextorion
-Rixmoot,Cavlorn,5.00,auto,rixmoot,cavlorn
-Rixmoot,Mari Quenby,2.82,auto,rixmoot,marisolquenby
-Rixmoot,Frymoss Two,1.08,auto,rixmoot,frymosstwo
-Rixmoot,Vextor,0.85,auto,rixmoot,vextorion
+Ombrix,Plenkor,54.56,auto,ombrix,plenkor
+"Harlo, Dromm",Sybnari,52.24,auto,harlodromm,sybnari
+Fenquor,Vorndal,33.06,auto,fenquor,vorndal
+Quelzit,Sybnari,30.10,auto,quelzit,sybnari
+Wexlorn,Vextor,15.17,auto,wexlorn,vextorion
+Kelvane,Vextor,15.00,auto,kelvane,vextorion
+Pethra,Pindrel,12.00,auto,pethra,pindrel
+Ysolde,Vextor,11.37,auto,ysolde,vextorion
+Ysolde,Gorvast,0.63,auto,ysolde,gorvast
+Rixmoot,Sybnari,9.13,auto,rixmoot,sybnari
+Rixmoot,Frymoss Two,1.01,auto,rixmoot,frymosstwo
+707070,Plenkor,3.42,auto,707070,plenkor
+707070,Mari Quenby,2.82,auto,707070,marisolquenby
+707070,Pindrel,1.63,auto,707070,pindrel
+"Quinn ""Q"" Varn",Vorndal,2.35,auto,quinnqvarn,vorndal
+"Quinn ""Q"" Varn",Gorvast,0.34,auto,quinnqvarn,gorvast
+"Quinn ""Q"" Varn",Pindrel,0.11,auto,quinnqvarn,pindrel
+"Quinn ""Q"" Varn",Frymoss Two,0.07,auto,quinnqvarn,frymosstwo

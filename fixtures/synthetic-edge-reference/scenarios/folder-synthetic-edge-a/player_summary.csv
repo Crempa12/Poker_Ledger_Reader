@@ -1,0 +1,8 @@
+rank,display_name,normalized_name,games,buy_ins,total_won,total_lost,adjustments,total_net,avg_per_game,biggest_win,biggest_loss,aliases,hands_dealt,nights_logged,seconds_dealt,seconds_estimated,hours,per_hour
+1,Sable,sable,3,3,52.64,-16.29,0.00,36.35,12.12,40.80,-16.29,sable,154,3,10297.00,0.00,2.86,12.71
+2,Wick,wick,1,1,28.75,0.00,0.00,28.75,28.75,28.75,28.75,wick,16,1,862.00,211.00,0.30,96.46
+3,Zinnia,zinnia,1,1,26.85,0.00,0.00,26.85,26.85,26.85,26.85,zinnia,36,1,3012.00,0.00,0.84,32.09
+4,Rune,rune,2,2,34.99,-18.12,0.00,16.87,8.44,34.99,-18.12,rune,112,2,7811.00,320.00,2.26,7.47
+5,Pell,pell,1,1,12.21,0.00,0.00,12.21,12.21,12.21,12.21,pell,35,1,2071.00,0.00,0.58,21.22
+6,Quill,quill,2,3,15.25,-21.76,0.00,-6.51,-3.26,15.25,-21.76,quill | yarrow,63,2,4595.00,134.00,1.31,-4.96
+7,Thorn,thorn,3,3,22.48,-32.87,0.00,-10.39,-3.46,22.48,-19.41,thorn,152,3,10183.00,0.00,2.83,-3.67

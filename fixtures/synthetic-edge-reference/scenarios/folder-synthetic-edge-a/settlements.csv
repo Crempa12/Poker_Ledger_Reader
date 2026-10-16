@@ -1,0 +1,3 @@
+from,to,amount,reason,from_normalized,to_normalized
+Thorn,Pell,10.39,auto,thorn,pell
+Quill,Rune,6.51,auto,quill,rune

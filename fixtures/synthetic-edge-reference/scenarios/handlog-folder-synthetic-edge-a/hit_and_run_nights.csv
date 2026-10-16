@@ -1,0 +1,14 @@
+date,game,player,normalized,hands_in_night,hands_missing_from_log,sat_down_hand,last_hand,hands_played,hands_left,estimated,played_pct,away_pct,net,big_blind,net_bb,exit,rebuys,came_back,came_back_up,peak,peak_at_log_start,final_running,kept_pct,hands_after_peak,minutes_after_peak,fresh
+2026-10-06,ledger_pglEDGE0001,Pell,pell,60,0,15,49,35,11,no,58.33,23.91,12.21,0.50,24.42,Left up,0,0,0,47.88,no,24.88,51.96,12,11.4,0.3428
+2026-10-06,ledger_pglEDGE0001,Quill,quill,60,0,7,17,11,43,no,18.33,79.63,-21.76,0.50,-43.52,Left down,0,0,0,22.74,no,22.74,100.00,1,1.0,0.9659
+2026-10-06,ledger_pglEDGE0001,Rune,rune,60,0,1,60,60,0,no,100.00,0.00,-18.12,0.50,-36.24,Stayed,0,0,0,200.94,no,200.94,100.00,0,0.0,1.0000
+2026-10-06,ledger_pglEDGE0001,Sable,sable,60,0,1,60,60,0,no,100.00,0.00,40.80,0.50,81.60,Stayed,0,0,0,371.07,no,363.82,98.05,1,0.9,0.9471
+2026-10-06,ledger_pglEDGE0001,Thorn,thorn,60,0,1,58,58,2,no,96.67,0.00,-19.41,0.50,-38.82,Stayed,1,0,0,252.13,no,252.13,100.00,0,0.0,1.0000
+2026-10-07,ledger_pglEDGE0003,Sable,sable,50,0,1,50,50,0,no,100.00,0.00,11.84,1.00,11.84,Stayed,0,0,0,522.62,no,517.62,99.04,1,1.1,0.9567
+2026-10-07,ledger_pglEDGE0003,Thorn,thorn,50,0,1,50,50,0,no,100.00,0.00,-13.46,1.00,-13.46,Stayed,0,0,0,462.60,no,462.60,100.00,0,0.0,1.0000
+2026-10-08,ledger_pglEDGE0002,Quill,quill,55,3,3,55,53,0,no,96.36,0.00,15.25,0.50,30.50,Stayed,0,0,0,17.25,no,15.25,88.41,2,2.0,0.8249
+2026-10-08,ledger_pglEDGE0002,Rune,rune,55,3,1,55,55,0,no,100.00,0.00,34.99,0.50,69.98,Stayed,0,0,0,35.74,no,34.99,97.90,4,4.5,0.8523
+2026-10-08,ledger_pglEDGE0002,Sable,sable,55,3,12,55,44,0,no,80.00,0.00,-16.29,0.50,-32.58,Stayed,0,0,0,311.06,no,311.06,100.00,0,0.0,1.0000
+2026-10-08,ledger_pglEDGE0002,Thorn,thorn,55,3,12,55,44,0,no,80.00,0.00,22.48,0.50,44.96,Stayed,0,0,0,52.49,no,-12.28,0.00,39,58.1,0.0000
+2026-10-08,ledger_pglEDGE0002,Wick,wick,55,3,2,19,18,36,no,32.73,66.67,28.75,0.50,57.50,Left up,0,0,0,28.75,no,28.75,100.00,0,0.0,1.0000
+2026-10-08,ledger_pglEDGE0002,Zinnia,zinnia,55,3,20,55,36,0,no,65.45,0.00,26.85,0.50,53.70,Stayed,0,0,0,35.11,no,32.61,92.88,1,0.6,0.8972

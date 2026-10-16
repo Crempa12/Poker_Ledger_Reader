@@ -98,6 +98,19 @@ const PL = {
   marisol: ["Marisol Quenby", "FAKEid0071"],  // one person, two names
   mari: ["Mari Quenby", "FAKEid0071"],
   emptySeat: ["Empty Seat", "FAKEid0030"],
+  // Players of the two hand-log nights (0014 and 0015). New names, so no older total changes.
+  tovrin: ["Tovrin", "FAKEid0081"],
+  ysolde: ["Ysolde", "FAKEid0082"],
+  morvak: ["Morvak", "FAKEid0083"],
+  pethra: ["Pethra", "FAKEid0084"],
+  dorrig: ["Dorrig", "FAKEid0085"],
+  vexlor: ["Vexlor", "FAKEid0086"],
+  ostravan: ["Ostravan", "FAKEid0087"],
+  sorrel: ["Sorrel", "FAKEid0088"],
+  kelvane: ["Kelvane", "FAKEid0089"],
+  ulvane: ["Ulvane", "FAKEid0090"],
+  wenrick: ["Wenrick", "FAKEid0091"],
+  quillan: ["Quillan", "FAKEid0092"],
 } as const satisfies Record<string, Who>;
 
 // Merge rules as the app stores them (alias -> canonical). The chain vextorQ -> vextor -> vextorion
@@ -249,6 +262,28 @@ const GAMES: GameIn[] = [
     s(PL.vorndal, "19:45", "23:55", 4000, "r"),
     s(PL.frymoss, "19:50", "23:59", 2000, "b"),
   ] },
+  // Two nights with hand logs (written by handLogs below). Appended, so the earlier nights keep their
+  // random numbers. Their seats are explicit, not random.
+  { id: "ledger_pglFAKE0014", folder: "Synthetic Autumn", date: "2026-10-17", off: -4, seats: [
+    // The log is cut short at 21:25. Pethra busts at 20:45 and rebuys at 20:50; Morvak busts at 21:18
+    // in an all-in that runs twice; Dorrig leaves at 21:10 while the sheet has her up.
+    s(PL.sorrel, "19:02", "23:40", 3000, "b"),
+    s(PL.tovrin, "19:00", "23:40", 4000, 2500),
+    s(PL.ysolde, "19:04", "22:45", 3000, -1200),
+    s(PL.morvak, "19:05", "21:20", 3000, -3000),
+    s(PL.pethra, "19:10", "20:45", 2000, -2000),
+    s(PL.pethra, "20:50", "23:40", 2000, 800),
+    s(PL.dorrig, "19:20", "21:10", 2000, 1000),
+  ] },
+  { id: "ledger_pglFAKE0015", folder: "Synthetic Autumn", date: "2026-10-31", off: -4, seats: [
+    // The complete night: a bomb pot, a 7-2 bounty, and Ulvane leaves at 22:00 while up.
+    s(PL.wenrick, "19:00", "23:30", 2500, "b"),
+    s(PL.vexlor, "19:05", "23:30", 3000, 2000),
+    s(PL.ostravan, "19:10", "23:30", 2000, -1000),
+    s(PL.kelvane, "19:15", "23:30", 4000, -1500),
+    s(PL.ulvane, "19:20", "22:00", 2000, 500),
+    s(PL.quillan, "19:00", "23:30", 2000, 0),
+  ] },
 ];
 
 // The one-night file that holds only seats never played. The app skips it with a message.
@@ -344,6 +379,547 @@ function ledgerCsv(rows: Row[]): string {
     ].join(","));
   }
   return lines.join("\n") + "\n";
+}
+
+// ---------------------------------------------------------------- hand logs (made up, PokerNow form)
+
+const dollarText = (cents: number): string => (cents / 100).toFixed(2);
+
+// Writes a PokerNow hand log. It plays the hands out with the chips in cents: a call, a bet or a
+// raise names the level the player has put in on this street, and the stacks, the pots and the
+// returned bets follow from it, so every stack line and pot is one the table could have printed.
+// The scripts below say who does what. The amounts come from the table.
+class LogWriter {
+  rows: { at: string; text: string }[] = [];
+  private readonly day: Day;
+  private readonly off: number; // the night's UTC offset in hours (-4 is Eastern daylight time)
+  private readonly prefix: string; // the hand id stem: "FAKEh14" gives "FAKEh1401"
+  private secs = 0; // local seconds after midnight, for the next entry
+  private seats: string[] = []; // account ids at the table, in seat order
+  private stacks = new Map<string, number>(); // cents
+  private nicks = new Map<string, string>(); // account id -> nickname
+  private hands = 0;
+  private board: string[] = [];
+  private committed = new Map<string, number>(); // this street: the level each player has put in
+  private contributed = new Map<string, number>(); // this hand: money put in
+  private returned = new Map<string, number>(); // this hand: uncalled bets handed back
+
+  constructor(day: Day, off: number, prefix: string) {
+    this.day = day;
+    this.off = off;
+    this.prefix = prefix;
+  }
+
+  // Sits a player down with a stack, at the end of the seats.
+  sit(who: Who, cents: number): void {
+    const [nick, acct] = who;
+    this.nicks.set(acct, nick);
+    this.stacks.set(acct, cents);
+    if (!this.seats.includes(acct)) this.seats.push(acct);
+  }
+
+  // Sets the clock for the next entries: "HH:MM" or "HH:MM:SS", local time.
+  at(clock: string): void {
+    const [h = 0, m = 0, s = 0] = clock.split(":").map(Number);
+    this.secs = h * 3600 + m * 60 + s;
+  }
+
+  private say(text: string): void {
+    const utc = Date.UTC(this.day[0], this.day[1] - 1, this.day[2]) + this.secs * 1000 - this.off * 3_600_000;
+    this.rows.push({ at: new Date(utc).toISOString(), text });
+    this.secs += 3;
+  }
+
+  private who(acct: string): string {
+    return `"${this.nicks.get(acct) ?? acct} @ ${acct}"`;
+  }
+
+  // Puts money in until the player has put in `level` on this street.
+  private put(acct: string, level: number): void {
+    const add = level - (this.committed.get(acct) ?? 0);
+    const stack = this.stacks.get(acct) ?? 0;
+    if (add < 0 || add > stack) throw new Error(`${acct}: cannot put in ${add} from a stack of ${stack}`);
+    this.stacks.set(acct, stack - add);
+    this.contributed.set(acct, (this.contributed.get(acct) ?? 0) + add);
+    this.committed.set(acct, level);
+  }
+
+  startHand(dealer: string, clock: string): void {
+    this.at(clock);
+    this.hands++;
+    this.board = [];
+    this.committed = new Map();
+    this.contributed = new Map();
+    this.returned = new Map();
+    const id = `${this.prefix}${String(this.hands).padStart(2, "0")}`;
+    this.say(`-- starting hand #${this.hands} (id: ${id}) (dealer: ${this.who(dealer)})`);
+    const stacks = this.seats.map((acct, i) => `#${i + 1} ${this.who(acct)} (${dollarText(this.stacks.get(acct) ?? 0)})`);
+    this.say(`Player stacks: ${stacks.join(" | ")}`);
+  }
+
+  blind(acct: string, kind: "small" | "big", cents: number): void {
+    this.put(acct, cents);
+    this.say(`${this.who(acct)} posts a ${kind} blind of ${dollarText(cents)}`);
+  }
+
+  // A bomb pot: the first player bets, the others call, all before the cards.
+  bomb(acct: string, cents: number, first: boolean): void {
+    this.put(acct, cents);
+    this.say(`${this.who(acct)} ${first ? "bets" : "calls"} ${dollarText(cents)} (bomb pot bet)`);
+  }
+
+  raiseTo(acct: string, level: number, allIn = false): void {
+    this.put(acct, level);
+    this.say(`${this.who(acct)} raises to ${dollarText(level)}${allIn ? " and go all in" : ""}`);
+  }
+
+  betTo(acct: string, level: number, allIn = false): void {
+    this.put(acct, level);
+    this.say(`${this.who(acct)} bets ${dollarText(level)}${allIn ? " and go all in" : ""}`);
+  }
+
+  callTo(acct: string, level: number, allIn = false): void {
+    this.put(acct, level);
+    this.say(`${this.who(acct)} calls ${dollarText(level)}${allIn ? " and go all in" : ""}`);
+  }
+
+  check(acct: string): void {
+    this.say(`${this.who(acct)} checks`);
+  }
+
+  fold(acct: string): void {
+    this.say(`${this.who(acct)} folds`);
+  }
+
+  // The level a player's whole stack takes them to on this street.
+  allInLevel(acct: string): number {
+    return (this.committed.get(acct) ?? 0) + (this.stacks.get(acct) ?? 0);
+  }
+
+  committedOf(acct: string): number {
+    return this.committed.get(acct) ?? 0;
+  }
+
+  // Cards out: three for the flop, then one for the turn and one for the river.
+  dealt(cards: string[]): void {
+    this.board.push(...cards);
+    this.committed = new Map();
+    const list = (xs: string[]): string => `[${xs.join(", ")}]`;
+    if (this.board.length === 3) this.say(`Flop: ${list(this.board)}`);
+    else if (this.board.length === 4) this.say(`Turn: ${list(this.board.slice(0, 3))} ${list(this.board.slice(3))}`);
+    else if (this.board.length === 5) this.say(`River: ${list(this.board.slice(0, 4))} ${list(this.board.slice(4))}`);
+    else throw new Error(`a board of ${this.board.length} cards is not one the table can show`);
+  }
+
+  runTwice(): void {
+    this.say("All players in hand choose to run it twice");
+  }
+
+  uncalled(acct: string, cents: number): void {
+    this.stacks.set(acct, (this.stacks.get(acct) ?? 0) + cents);
+    this.returned.set(acct, (this.returned.get(acct) ?? 0) + cents);
+    this.say(`Uncalled bet of ${dollarText(cents)} returned to ${this.who(acct)}`);
+  }
+
+  // The pot to one player: everything put in, less what was handed back.
+  award(acct: string, showdown?: { rank: string; cards: string }): void {
+    let pot = 0;
+    for (const v of this.contributed.values()) pot += v;
+    for (const v of this.returned.values()) pot -= v;
+    this.stacks.set(acct, (this.stacks.get(acct) ?? 0) + pot);
+    const won = showdown === undefined ? "" : ` with ${showdown.rank} (combination: ${showdown.cards})`;
+    this.say(`${this.who(acct)} collected ${dollarText(pot)} from pot${won}`);
+  }
+
+  shows(acct: string, cards: string): void {
+    this.say(`${this.who(acct)} shows a ${cards}.`);
+  }
+
+  // The end of a hand. A player with no chips left is out of the game.
+  endHand(): void {
+    this.say(`-- ending hand #${this.hands} --`);
+    this.seats = this.seats.filter((acct) => (this.stacks.get(acct) ?? 0) > 0);
+  }
+
+  // A 7-2 bounty, paid after the hand it belongs to.
+  bounty(payer: string, payee: string, cents: number): void {
+    this.stacks.set(payer, (this.stacks.get(payer) ?? 0) - cents);
+    this.stacks.set(payee, (this.stacks.get(payee) ?? 0) + cents);
+    this.say(`${this.who(payer)} paid ${dollarText(cents)} for the 7-2 bounty to ${this.who(payee)}`);
+  }
+
+  // A player who busted buys back in between hands: the two lines the app reads as a rebuy.
+  rebuy(acct: string, cents: number, clock: string): void {
+    this.at(clock);
+    this.say(`The player ${this.who(acct)} requested a rebuy of ${dollarText(cents)}.`);
+    this.stacks.set(acct, cents);
+    if (!this.seats.includes(acct)) this.seats.push(acct);
+    this.say(`The player ${this.who(acct)} rebought. New stack ${dollarText(cents)}.`);
+  }
+
+  // A player leaves the table between hands.
+  leave(acct: string, clock: string): void {
+    this.at(clock);
+    this.say(`${this.who(acct)} quits the game with a stack of ${dollarText(this.stacks.get(acct) ?? 0)}.`);
+    this.seats = this.seats.filter((x) => x !== acct);
+  }
+}
+
+// The file: the header, then the entries newest first, each with its order (the first entry is 1).
+function handLogCsv(rows: { at: string; text: string }[]): string {
+  const lines = rows.map((r, i) => `${esc(r.text)},${r.at},${i + 1}`);
+  return ["entry,at,order", ...lines.reverse()].join("\n") + "\n";
+}
+
+// Night 0014. The log stops at 21:25 in the middle of a hand. Pethra busts at 20:44 and rebuys at
+// 20:50; Dorrig leaves at 21:10 while up; Morvak busts at 21:18 in an all-in that runs twice.
+function script0014(w: LogWriter): void {
+  const a = (k: keyof typeof PL): string => PL[k][1];
+  w.sit(PL.sorrel, 3000);
+  w.sit(PL.tovrin, 4000);
+  w.sit(PL.ysolde, 3000);
+  w.sit(PL.morvak, 3000);
+  w.sit(PL.pethra, 2000);
+  w.sit(PL.dorrig, 2000);
+
+  // 19:12. Morvak raises, everyone folds to Ysolde, and her flop bet is not called.
+  w.startHand(a("sorrel"), "19:12:00");
+  w.blind(a("tovrin"), "small", 25);
+  w.blind(a("ysolde"), "big", 50);
+  w.raiseTo(a("morvak"), 150);
+  w.fold(a("pethra"));
+  w.fold(a("dorrig"));
+  w.fold(a("sorrel"));
+  w.fold(a("tovrin"));
+  w.callTo(a("ysolde"), 150);
+  w.dealt(["K♥", "7♣", "2♦"]);
+  w.betTo(a("ysolde"), 200);
+  w.fold(a("morvak"));
+  w.uncalled(a("ysolde"), 200);
+  w.award(a("ysolde"));
+  w.endHand();
+
+  // 19:16. Two pair at showdown: Sorrel's fours and nines beat Pethra's pair of nines.
+  w.startHand(a("ysolde"), "19:16:20");
+  w.blind(a("morvak"), "small", 25);
+  w.blind(a("pethra"), "big", 50);
+  w.fold(a("dorrig"));
+  w.callTo(a("sorrel"), 50);
+  w.fold(a("tovrin"));
+  w.fold(a("ysolde"));
+  w.callTo(a("morvak"), 50);
+  w.check(a("pethra"));
+  w.dealt(["9♠", "9♦", "3♣"]);
+  w.check(a("morvak"));
+  w.check(a("pethra"));
+  w.check(a("sorrel"));
+  w.dealt(["6♥"]);
+  w.betTo(a("pethra"), 100);
+  w.callTo(a("sorrel"), 100);
+  w.fold(a("morvak"));
+  w.dealt(["A♣"]);
+  w.check(a("pethra"));
+  w.check(a("sorrel"));
+  w.shows(a("pethra"), "2♠, 5♣");
+  w.shows(a("sorrel"), "4♣, 4♠");
+  w.award(a("sorrel"), { rank: "Two Pair, 9's and 4's", cards: "9♠, 9♦, 4♣, 4♠, A♣" });
+  w.endHand();
+
+  // 19:24. Tovrin raises, Dorrig calls and folds to the flop bet, and the unmatched bet goes back.
+  w.startHand(a("morvak"), "19:24:40");
+  w.blind(a("pethra"), "small", 25);
+  w.blind(a("dorrig"), "big", 50);
+  w.callTo(a("sorrel"), 50);
+  w.raiseTo(a("tovrin"), 300);
+  w.fold(a("ysolde"));
+  w.fold(a("morvak"));
+  w.fold(a("pethra"));
+  w.fold(a("sorrel"));
+  w.callTo(a("dorrig"), 300);
+  w.dealt(["A♠", "8♦", "4♣"]);
+  w.check(a("dorrig"));
+  w.betTo(a("tovrin"), 400);
+  w.fold(a("dorrig"));
+  w.uncalled(a("tovrin"), 400);
+  w.award(a("tovrin"));
+  w.endHand();
+
+  // 19:33. An uncontested pot after a flop check and a turn bet.
+  w.startHand(a("dorrig"), "19:33:10");
+  w.blind(a("sorrel"), "small", 25);
+  w.blind(a("tovrin"), "big", 50);
+  w.raiseTo(a("ysolde"), 200);
+  w.fold(a("morvak"));
+  w.fold(a("pethra"));
+  w.fold(a("dorrig"));
+  w.fold(a("sorrel"));
+  w.callTo(a("tovrin"), 200);
+  w.dealt(["J♥", "10♠", "2♣"]);
+  w.check(a("tovrin"));
+  w.check(a("ysolde"));
+  w.dealt(["5♦"]);
+  w.betTo(a("tovrin"), 300);
+  w.fold(a("ysolde"));
+  w.uncalled(a("tovrin"), 300);
+  w.award(a("tovrin"));
+  w.endHand();
+
+  // 19:48. Morvak bets the flop, Sorrel calls, and Morvak loses the showdown.
+  w.startHand(a("pethra"), "19:48:05");
+  w.blind(a("dorrig"), "small", 25);
+  w.blind(a("sorrel"), "big", 50);
+  w.fold(a("tovrin"));
+  w.callTo(a("ysolde"), 50);
+  w.raiseTo(a("morvak"), 150);
+  w.fold(a("pethra"));
+  w.fold(a("dorrig"));
+  w.callTo(a("sorrel"), 150);
+  w.fold(a("ysolde"));
+  w.dealt(["7♠", "7♣", "Q♦"]);
+  w.check(a("sorrel"));
+  w.betTo(a("morvak"), 200);
+  w.callTo(a("sorrel"), 200);
+  w.dealt(["K♣"]);
+  w.check(a("sorrel"));
+  w.check(a("morvak"));
+  w.dealt(["3♥"]);
+  w.check(a("sorrel"));
+  w.check(a("morvak"));
+  w.shows(a("morvak"), "Q♠, J♠");
+  w.shows(a("sorrel"), "7♥, 2♠");
+  w.award(a("sorrel"), { rank: "Three of a Kind, 7's", cards: "7♥, 7♠, 7♣, K♣, Q♦" });
+  w.endHand();
+
+  // 20:44. Pethra goes all in preflop, Tovrin calls, and Pethra busts out.
+  w.startHand(a("sorrel"), "20:44:30");
+  w.blind(a("tovrin"), "small", 25);
+  w.blind(a("ysolde"), "big", 50);
+  w.fold(a("morvak"));
+  w.raiseTo(a("pethra"), w.allInLevel(a("pethra")), true);
+  w.fold(a("dorrig"));
+  w.fold(a("sorrel"));
+  w.callTo(a("tovrin"), w.committedOf(a("pethra")));
+  w.fold(a("ysolde"));
+  w.dealt(["A♥", "7♣", "2♦"]);
+  w.dealt(["9♠"]);
+  w.dealt(["Q♥"]);
+  w.shows(a("pethra"), "4♣, 4♦");
+  w.shows(a("tovrin"), "A♠, K♦");
+  w.award(a("tovrin"), { rank: "Pair, A's", cards: "A♥, A♠, Q♥, 9♠, 7♣" });
+  w.endHand();
+
+  // 20:50. Pethra buys back in, and the next hand is dealt to her.
+  w.rebuy(a("pethra"), 2000, "20:50:10");
+  w.startHand(a("ysolde"), "20:58:00");
+  w.blind(a("morvak"), "small", 25);
+  w.blind(a("pethra"), "big", 50);
+  w.fold(a("dorrig"));
+  w.fold(a("sorrel"));
+  w.fold(a("tovrin"));
+  w.fold(a("ysolde"));
+  w.callTo(a("morvak"), 50);
+  w.check(a("pethra"));
+  w.dealt(["2♠", "5♥", "9♣"]);
+  w.check(a("morvak"));
+  w.check(a("pethra"));
+  w.dealt(["9♥"]);
+  w.check(a("morvak"));
+  w.check(a("pethra"));
+  w.dealt(["Q♣"]);
+  w.check(a("morvak"));
+  w.check(a("pethra"));
+  w.shows(a("morvak"), "8♠, 6♠");
+  w.shows(a("pethra"), "J♦, J♣");
+  w.award(a("pethra"), { rank: "Two Pair, J's and 9's", cards: "J♦, J♣, 9♣, 9♥, Q♣" });
+  w.endHand();
+
+  // 21:10. Dorrig leaves while up.
+  w.leave(a("dorrig"), "21:10:00");
+
+  // 21:18. Morvak shoves, Tovrin calls, and the two all-in players run the board twice. Morvak busts.
+  w.startHand(a("pethra"), "21:18:20");
+  w.blind(a("sorrel"), "small", 25);
+  w.blind(a("tovrin"), "big", 50);
+  w.fold(a("ysolde"));
+  w.raiseTo(a("morvak"), w.allInLevel(a("morvak")), true);
+  w.fold(a("pethra"));
+  w.fold(a("sorrel"));
+  w.callTo(a("tovrin"), w.committedOf(a("morvak")));
+  w.runTwice();
+  w.dealt(["J♣", "8♦", "4♠"]);
+  w.dealt(["5♥"]);
+  w.dealt(["7♣"]);
+  w.shows(a("morvak"), "2♣, 2♥");
+  w.shows(a("tovrin"), "K♠, K♦");
+  w.award(a("tovrin"), { rank: "Pair, K's", cards: "K♠, K♦, J♣, 8♦, 7♣" });
+  w.endHand();
+
+  // 21:25. The log stops here, in the middle of this hand.
+  w.startHand(a("sorrel"), "21:25:00");
+  w.blind(a("tovrin"), "small", 25);
+  w.blind(a("ysolde"), "big", 50);
+  w.raiseTo(a("pethra"), 150);
+}
+
+// Night 0015. The complete night: a bomb pot, a 7-2 bounty, and Ulvane leaves at 22:00 while up.
+function script0015(w: LogWriter): void {
+  const a = (k: keyof typeof PL): string => PL[k][1];
+  w.sit(PL.wenrick, 2500);
+  w.sit(PL.vexlor, 3000);
+  w.sit(PL.ostravan, 2000);
+  w.sit(PL.kelvane, 4000);
+  w.sit(PL.ulvane, 2000);
+  w.sit(PL.quillan, 2000);
+
+  // 19:12. Kelvane raises, nobody calls, and the unmatched part of the raise goes back.
+  w.startHand(a("wenrick"), "19:12:00");
+  w.blind(a("vexlor"), "small", 25);
+  w.blind(a("ostravan"), "big", 50);
+  w.raiseTo(a("kelvane"), 150);
+  w.fold(a("ulvane"));
+  w.fold(a("quillan"));
+  w.fold(a("wenrick"));
+  w.fold(a("vexlor"));
+  w.fold(a("ostravan"));
+  w.uncalled(a("kelvane"), 100);
+  w.award(a("kelvane"));
+  w.endHand();
+
+  // 19:20. A bomb pot: everyone puts in before the cards. Kelvane's full house takes the pot.
+  w.startHand(a("vexlor"), "19:20:00");
+  w.bomb(a("ostravan"), 100, true);
+  w.bomb(a("kelvane"), 100, false);
+  w.bomb(a("ulvane"), 100, false);
+  w.bomb(a("quillan"), 100, false);
+  w.bomb(a("wenrick"), 100, false);
+  w.bomb(a("vexlor"), 100, false);
+  w.dealt(["9♠", "9♦", "3♣"]);
+  w.betTo(a("kelvane"), 200);
+  w.callTo(a("vexlor"), 200);
+  w.fold(a("wenrick"));
+  w.fold(a("ostravan"));
+  w.fold(a("ulvane"));
+  w.fold(a("quillan"));
+  w.dealt(["6♥"]);
+  w.check(a("vexlor"));
+  w.check(a("kelvane"));
+  w.dealt(["K♦"]);
+  w.check(a("vexlor"));
+  w.check(a("kelvane"));
+  w.shows(a("kelvane"), "K♠, K♥");
+  w.shows(a("vexlor"), "Q♣, 2♦");
+  w.award(a("kelvane"), { rank: "Full House, K's over 9's", cards: "K♠, K♥, K♦, 9♠, 9♦" });
+  w.endHand();
+
+  // 19:31. Ostravan holds 7-2 and wins at showdown with a pair of twos. Three players pay the bounty.
+  w.startHand(a("kelvane"), "19:31:00");
+  w.blind(a("ulvane"), "small", 25);
+  w.blind(a("quillan"), "big", 50);
+  w.callTo(a("wenrick"), 50);
+  w.fold(a("vexlor"));
+  w.callTo(a("ostravan"), 50);
+  w.fold(a("kelvane"));
+  w.callTo(a("ulvane"), 50);
+  w.check(a("quillan"));
+  w.dealt(["8♥", "5♦", "J♣"]);
+  w.fold(a("ulvane"));
+  w.check(a("quillan"));
+  w.check(a("wenrick"));
+  w.betTo(a("ostravan"), 100);
+  w.fold(a("quillan"));
+  w.callTo(a("wenrick"), 100);
+  w.dealt(["K♥"]);
+  w.check(a("wenrick"));
+  w.check(a("ostravan"));
+  w.dealt(["2♣"]);
+  w.check(a("wenrick"));
+  w.check(a("ostravan"));
+  w.shows(a("ostravan"), "7♠, 2♦");
+  w.shows(a("wenrick"), "A♥, 3♣");
+  w.award(a("ostravan"), { rank: "Pair, 2's", cards: "2♦, 2♣, K♥, J♣, 8♥" });
+  w.endHand();
+  w.bounty(a("kelvane"), a("ostravan"), 100);
+  w.bounty(a("vexlor"), a("ostravan"), 100);
+  w.bounty(a("ulvane"), a("ostravan"), 100);
+
+  // 19:40. Vexlor raises to 2.00 and everyone folds: the 1.50 that nobody called goes back.
+  w.startHand(a("ostravan"), "19:40:00");
+  w.blind(a("kelvane"), "small", 25);
+  w.blind(a("ulvane"), "big", 50);
+  w.fold(a("quillan"));
+  w.fold(a("wenrick"));
+  w.raiseTo(a("vexlor"), 200);
+  w.fold(a("ostravan"));
+  w.fold(a("kelvane"));
+  w.fold(a("ulvane"));
+  w.uncalled(a("vexlor"), 150);
+  w.award(a("vexlor"));
+  w.endHand();
+
+  // 20:05. Vexlor bets the flop, and everyone else folds.
+  w.startHand(a("wenrick"), "20:05:00");
+  w.blind(a("vexlor"), "small", 25);
+  w.blind(a("ostravan"), "big", 50);
+  w.fold(a("kelvane"));
+  w.callTo(a("ulvane"), 50);
+  w.fold(a("quillan"));
+  w.fold(a("wenrick"));
+  w.callTo(a("vexlor"), 50);
+  w.check(a("ostravan"));
+  w.dealt(["Q♠", "7♦", "2♥"]);
+  w.betTo(a("vexlor"), 100);
+  w.fold(a("ostravan"));
+  w.fold(a("ulvane"));
+  w.uncalled(a("vexlor"), 100);
+  w.award(a("vexlor"));
+  w.endHand();
+
+  // 20:30. Kelvane bets the flop and takes it down.
+  w.startHand(a("vexlor"), "20:30:00");
+  w.blind(a("ostravan"), "small", 25);
+  w.blind(a("kelvane"), "big", 50);
+  w.fold(a("ulvane"));
+  w.fold(a("quillan"));
+  w.fold(a("wenrick"));
+  w.fold(a("vexlor"));
+  w.callTo(a("ostravan"), 50);
+  w.check(a("kelvane"));
+  w.dealt(["4♣", "4♦", "9♥"]);
+  w.check(a("ostravan"));
+  w.betTo(a("kelvane"), 200);
+  w.fold(a("ostravan"));
+  w.uncalled(a("kelvane"), 200);
+  w.award(a("kelvane"));
+  w.endHand();
+
+  // 22:00. Ulvane leaves while up.
+  w.leave(a("ulvane"), "22:00:00");
+
+  // 23:15. A quiet last hand: Wenrick bets the turn and Quillan folds.
+  w.startHand(a("kelvane"), "23:15:00");
+  w.blind(a("quillan"), "small", 25);
+  w.blind(a("wenrick"), "big", 50);
+  w.fold(a("vexlor"));
+  w.fold(a("ostravan"));
+  w.fold(a("kelvane"));
+  w.callTo(a("quillan"), 50);
+  w.check(a("wenrick"));
+  w.dealt(["5♣", "6♠", "Q♥"]);
+  w.check(a("quillan"));
+  w.check(a("wenrick"));
+  w.dealt(["A♣"]);
+  w.betTo(a("wenrick"), 100);
+  w.fold(a("quillan"));
+  w.uncalled(a("wenrick"), 100);
+  w.award(a("wenrick"));
+  w.endHand();
+}
+
+// The two made-up hand logs, named for the ledger ids they pair with.
+function handLogFor(date: string, off: number, prefix: string, script: (w: LogWriter) => void): string {
+  const w = new LogWriter(dayOf(date), off, prefix);
+  script(w);
+  return handLogCsv(w.rows);
 }
 
 // ---------------------------------------------------------------- Saved_Data inputs
@@ -476,6 +1052,10 @@ function main(): void {
     { nick: PL.emptySeat[0], acct: PL.emptySeat[1], start: null, end: null, buyIn: 0, buyOut: 0, net: 0 },
   ]));
 
+  // The two hand logs, next to their ledgers (the file name is poker_now_log_<ledger id without ledger_>.csv).
+  writeText("Games/Synthetic Autumn/poker_now_log_pglFAKE0014.csv", handLogFor("2026-10-17", -4, "FAKEh14", script0014));
+  writeText("Games/Synthetic Autumn/poker_now_log_pglFAKE0015.csv", handLogFor("2026-10-31", -4, "FAKEh15", script0015));
+
   writeText("Saved_Data/merge_rules.csv", "alias_normalized,canonical_normalized\n" +
     MERGE_ROWS.map(([a, c]) => `${a},${c}`).join("\n") + "\n");
   writeText("Saved_Data/payment_preferences.csv", "payer_normalized,payee_normalized,note\n" +
@@ -489,7 +1069,7 @@ function main(): void {
     SESSION_ROWS.map((r) => r.join(",")).join("\n") + "\n");
 
   const seats = GAMES.reduce((t, g) => t + (built.get(g.id) ?? []).length, 0);
-  console.log(`wrote ${GAMES.length} game ledgers (${seats} seat rows), 3 folders, 2 copies, 1 never-played-only file, 6 Saved_Data files under fixtures/synthetic`);
+  console.log(`wrote ${GAMES.length} game ledgers (${seats} seat rows), 2 hand logs, 3 folders, 2 copies, 1 never-played-only file, 6 Saved_Data files under fixtures/synthetic`);
 }
 
 function writeText(rel: string, text: string): void {

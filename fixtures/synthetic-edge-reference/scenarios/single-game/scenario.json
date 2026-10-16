@@ -1,0 +1,40 @@
+{
+  "name": "single-game",
+  "description": "Only the newest game (menu 5, option 1, game 1): its settlement sheet (menu 13).",
+  "status": "ok",
+  "code": "Poker_Ledger_Reader",
+  "data": "edge-data-1",
+  "tz": "America/New_York",
+  "flags": [],
+  "notes": [
+    "newest game id: pglEDGE0002"
+  ],
+  "expected_exports": [
+    "settlements.csv"
+  ],
+  "missing_exports": [],
+  "steps": [
+    {
+      "kind": "settle",
+      "log": "logs/settle.txt",
+      "exit": 0,
+      "args": [],
+      "menu_file": "settle-newest.txt",
+      "menu": [
+        "5",
+        "1",
+        "1",
+        "n",
+        "",
+        "13",
+        "0"
+      ]
+    }
+  ],
+  "exports": [
+    {
+      "file": "settlements.csv",
+      "data_rows": 1
+    }
+  ]
+}

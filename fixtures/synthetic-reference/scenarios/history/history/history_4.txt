@@ -1,14 +1,14 @@
 Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
 WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
 WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
-Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+Loaded 14 games (3 folders), 2 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
 WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
 WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
          They count for the name on the seat until you check them in menu 20.
 
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker off | pinned payments 2                                 |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP
@@ -37,34 +37,46 @@ WARNING: 3 buy-ins look like they were made on someone else's account or under s
    5  Vorndal                     2      +$35.41
    6  Mirtavo                     6      +$29.53
    7  Vextor                      1      +$29.04
-   8  Frymoss                     5      +$24.94
-   9  🎴                          2      +$24.61
-  10  Hespyre                     4      +$22.47
-  11  Pindrel                     3      +$13.74
-  12  Mari Quenby                 1       +$9.82
-  13  Cavlorn                     8       +$5.00
-  14  Bexrunn                     4       +$1.50
-  15  Hiltrex                     3       +$1.50
-  16  Frymoss Two                 1       +$1.08
-  17  Ylmande                     4       +$0.50
-  18  Kaxtun                      5       -$1.61
-  19  🎲Brask                     3       -$3.15
-  20  Quinn "Q" Varn              1       -$3.26
-  21  707070                      3       -$7.87
-  22  Rixmoot                     2      -$10.14
-  23  Lumqat                      2      -$13.25
-  24  Wexlorn                     4      -$15.17
-  25  Ostrelin                    3      -$21.05
-  26  Quorin                     2      -$21.85
-  27  Dulvane                     1      -$30.00
-  28  Tarvelle                    1      -$30.00
-  29  Quelzit                     7      -$30.10
-  30  Fenquor                     2      -$33.06
-  31  Ekvarto                     3      -$37.52
-  32  Nuvrask                     3      -$41.00
-  33  Harlo, Dromm                3      -$52.24
-  34  Ombrix                      2      -$54.56
-  35  Zaqvin                      5      -$64.72
+   8  Tovrin                      1      +$25.00
+   9  Frymoss                     5      +$24.94
+  10  🎴                          2      +$24.61
+  11  Hespyre                     4      +$22.47
+  12  Vexlor                      1      +$20.00
+  13  Sorrel                      1      +$19.00
+  14  Pindrel                     3      +$13.74
+  15  Dorrig                      1      +$10.00
+  16  Mari Quenby                 1       +$9.82
+  17  Cavlorn                     8       +$5.00
+  18  Ulvane                      1       +$5.00
+  19  Bexrunn                     4       +$1.50
+  20  Hiltrex                     3       +$1.50
+  21  Frymoss Two                 1       +$1.08
+  22  Ylmande                     4       +$0.50
+  23  Quillan                     1        $0.00
+  24  Wenrick                     1        $0.00
+  25  Kaxtun                      5       -$1.61
+  26  🎲Brask                     3       -$3.15
+  27  Quinn "Q" Varn              1       -$3.26
+  28  707070                      3       -$7.87
+  29  Ostravan                    1      -$10.00
+  30  Rixmoot                     2      -$10.14
+  31  Pethra                      1      -$12.00
+  32  Ysolde                      1      -$12.00
+  33  Lumqat                      2      -$13.25
+  34  Kelvane                     1      -$15.00
+  35  Wexlorn                     4      -$15.17
+  36  Ostrelin                    3      -$21.05
+  37  Quorin                     2      -$21.85
+  38  Dulvane                     1      -$30.00
+  39  Morvak                      1      -$30.00
+  40  Tarvelle                    1      -$30.00
+  41  Quelzit                     7      -$30.10
+  42  Fenquor                     2      -$33.06
+  43  Ekvarto                     3      -$37.52
+  44  Nuvrask                     3      -$41.00
+  45  Harlo, Dromm                3      -$52.24
+  46  Ombrix                      2      -$54.56
+  47  Zaqvin                      5      -$64.72
 -----------------------------------------------
 Player number (0 to cancel): 
 -- Jolwick, night by night ----------------------------------------------------------------------
@@ -102,11 +114,11 @@ Player number (0 to cancel):
     It runs long: a seat stays open while its player sits out.
 
 -- Beaten at showdown by ------------------------------------------------------------------------
-  None of the 12 games in scope has a hand log, so there are no showdowns to read.
+  Jolwick reached no showdowns (2 of 14 games in scope have a hand log).
 (press Enter to continue)
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker off | pinned payments 2                                 |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP

@@ -1,0 +1,6 @@
+player,normalized,nights,estimated_nights,played_pct,stayed,stayed_up,stayed_down,left_up,left_down,left_even,busted,removed,rebuys,came_back,came_back_up,hands_left_when_up,up_nights,when_up_raw_pct,when_up_pct,down_nights,when_down_raw_pct,when_down_pct,peak_nights_left_up,hands_after_peak_when_up,minutes_after_peak_when_up,kept_of_peak_when_up_pct,hit_raw_pct,hit_pct,hit_run,reliable,tag
+Sable,sable,1,0,22.50,0,0,0,1,0,0,0,0,0,0,0,22.0,1,70.97,45.65,0,0.00,0.00,1,6.0,6.5,26.38,15.21,9.78,33.69,no,
+Pell,pell,1,0,100.00,1,1,0,0,0,0,0,0,1,0,0,0.0,1,0.00,35.16,0,0.00,0.00,0,0.0,0.0,0.00,0.00,7.53,25.95,no,
+Ondine,ondine,1,0,87.50,1,0,1,0,0,0,0,0,0,0,0,0.0,0,0.00,40.51,1,0.00,0.00,0,0.0,0.0,0.00,0.00,8.68,0.00,no,
+Quill,quill,1,0,100.00,1,0,0,0,0,0,0,0,0,0,0,0.0,0,0.00,40.51,0,0.00,0.00,0,0.0,0.0,0.00,0.00,8.68,0.00,no,
+Wick,wick,1,0,75.00,1,0,1,0,0,0,0,0,0,0,0,0.0,0,0.00,40.51,1,0.00,0.00,0,0.0,0.0,0.00,0.00,8.68,0.00,no,

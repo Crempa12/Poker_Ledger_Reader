@@ -1,0 +1,15 @@
+loser,loser_normalized,winner,winner_normalized,times,amount
+Ondine,ondine,Sable,sable,2,57.00
+Ondine,ondine,Quill,quill,1,13.00
+Ondine,ondine,Wick,wick,1,32.00
+Pell,pell,Ondine,ondine,2,31.50
+Pell,pell,Quill,quill,2,44.00
+Pell,pell,Sable,sable,1,13.50
+Pell,pell,Wick,wick,1,20.00
+Quill,quill,Ondine,ondine,2,15.50
+Quill,quill,Pell,pell,2,16.50
+Quill,quill,Sable,sable,1,32.00
+Quill,quill,Wick,wick,1,5.00
+Wick,wick,Quill,quill,3,64.25
+Wick,wick,Sable,sable,2,48.00
+Wick,wick,Ondine,ondine,1,7.75

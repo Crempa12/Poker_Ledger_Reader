@@ -1,0 +1,97 @@
+WARNING: ledger_pglEDGE0001.csv does not balance: its nets sum to -$6.28 instead of $0.00.
+WARNING: ledger_pglEDGE0002.csv does not balance: its nets sum to +$112.03 instead of $0.00.
+WARNING: ledger_pglEDGE0003.csv does not balance: its nets sum to -$1.62 instead of $0.00.
+WARNING: ledger_pglEDGE0004.csv does not balance: its nets sum to +$1.34 instead of $0.00.
+WARNING: ledger_pglEDGE0006.csv does not balance: its nets sum to +$45.46 instead of $0.00.
+WARNING: ledger_pglEDGE0007.csv does not balance: its nets sum to +$32.64 instead of $0.00.
+WARNING: ledger_pglEDGE0008.csv does not balance: its nets sum to +$109.96 instead of $0.00.
+WARNING: ledger_pglEDGE0009.csv does not balance: its nets sum to +$24.67 instead of $0.00.
+Duplicate hand log ignored: <work>/runs/handlog/playstyle/Games/Synthetic Edge A/poker_now_log_pglEDGE0003 (1).csv
+Skipped hand log: no hands in <work>/runs/handlog/playstyle/Games/Synthetic Edge B/poker_now_log_pglEDGE0007.csv
+Loaded 8 games (3 folders), 7 hand logs, 1 merged names, 3 seat checks, 5 payments & corrections.
+WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
+WARNING: 4 buy-ins look like they were made on someone else's account or under someone else's name.
+         They count for the name on the seat until you check them in menu 20.
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   8 games | Oct 3 - Oct 8 | all folders                       |
+| 13 players | hand logs 6/8 | books off by +$318.20                         |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 4 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check                      0  Save and exit
+
+ Choose a number: 
+Deep playstyle for all folders: 6 of 8 games have a log, 288 hands analysed.
+NOTE: 2 games in scope have no hand log, so these reads cover only part of the money.
+
+Pool average over 2 players with 200+ hands: VPIP 47%, PFR 12%
+
+-- Before the flop ---------------------------------------------------------------------------------
+Player            Hands   VPIP    PFR   Limp   3Bet  Steal    Def   Archetype
+----------------------------------------------------------------------------------------------------
+Sable               233    48%    11%    46%    20%     8%   (83)   Average-passive                 
+Thorn               222    46%    12%    46%    12%    12%   (50)   Average-passive                 
+Rune                162    47%     7%    50%    (9)     2%   (50)   (too few hands)                 
+Pell                142    40%    16%    31%   (15)    21%   (50)   (too few hands)                 
+Quill               124    50%    12%    38%     4%    10%   (71)   (too few hands)                 
+Ondine               88    46%     9%    45%    (0)   (10)   (33)   (too few hands)                 
+Wick                 83    42%     7%    48%    (0)   (12)   (75)   (too few hands)                 
+Zinnia               52    40%    19%   (20)   (20)   (18)    (0)   (too few hands)                 
+----------------------------------------------------------------------------------------------------
+
+-- After the flop, and leaving the table -----------------------------------------------------------
+Player             CBet   F>CB   ChkR  AF flop  AF turn  AF river   WTSD   W$SD   H&R  Leaving
+----------------------------------------------------------------------------------------------------
+Sable              (36)   (33)      -      2.1      2.1       3.4    48%    62%     9  Stays late   
+Thorn              (50)   (20)      -      1.7      1.7       1.6    41%    45%   (9)               
+Rune                (0)   (33)      -      1.1      2.1       1.5    38%    60%   (6)               
+Pell               (44)   (50)      -      2.8      2.4       7.7    44%    44%     9  Stays late   
+Quill              (29)    (0)      -      3.1      1.7       2.4    47%    62%    13               
+Ondine              (0)  (100)      -      1.5      2.5       1.5    46%   (48)     -               
+Wick                (0)    (0)      -      1.0      1.6       2.0    48%   (64)  (29)               
+Zinnia             (20)    (0)      -      1.2      2.0       1.3   (43)   (40)   (5)               
+----------------------------------------------------------------------------------------------------
+A rate in (brackets) has fewer than 25 opportunities behind it and is not a tendency.
+Limp = called the big blind with the pot unopened.   3Bet = re-raised a single raise.
+Steal = first-in raise from CO/BTN/SB.   Def = did not fold a blind to a steal.
+CBet = bet the flop having raised preflop.   F>CB = folded facing a flop c-bet.
+ChkR = check-raised.   AF = (bets + raises) / calls.   WTSD = flops that reached showdown.
+H&R = hit & run factor, 0-100, from every night in scope (menu 22 has the night-by-night exits).
+An H&R in (brackets) has fewer than 3 winning nights behind it; its only possible tag is Busts out.
+
+Show the long read for one player? (y/n): Export these profiles to Saved_Data/playstyle.csv? (y/n): Exported to <work>/runs/handlog/playstyle/Saved_Data/playstyle.csv
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   8 games | Oct 3 - Oct 8 | all folders                       |
+| 13 players | hand logs 6/8 | books off by +$318.20                         |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 4 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check                      0  Save and exit
+
+ Choose a number: Saved merge rules, preferences, settings, seat owners and session balances. Bye.

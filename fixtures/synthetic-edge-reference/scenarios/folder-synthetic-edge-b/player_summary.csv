@@ -1,0 +1,9 @@
+rank,display_name,normalized_name,games,buy_ins,total_won,total_lost,adjustments,total_net,avg_per_game,biggest_win,biggest_loss,aliases,hands_dealt,nights_logged,seconds_dealt,seconds_estimated,hours,per_hour
+1,Quill,quill,4,5,109.17,0.00,0.00,109.17,27.29,40.08,13.34,quill | yarrow,21,2,1813.00,6957.00,2.44,44.81
+2,Zinnia,zinnia,1,1,34.83,0.00,0.00,34.83,34.83,34.83,34.83,zinnia,16,1,1518.00,484.00,0.56,62.63
+3,Wick,wick,3,3,39.34,-7.95,0.00,31.39,10.46,36.21,-7.95,wick,37,1,3211.00,2808.00,1.67,18.77
+4,Rune,rune,1,1,10.83,0.00,0.00,10.83,10.83,10.83,10.83,rune,50,1,4553.00,0.00,1.26,8.56
+5,Thorn,thorn,2,2,19.55,-13.10,0.00,6.45,3.23,19.55,-13.10,thorn,70,1,5702.00,2100.00,2.17,2.98
+6,Pell,pell,3,3,34.65,-28.82,0.00,5.83,1.94,34.65,-15.27,pell,67,2,6073.00,4559.00,2.95,1.97
+7,Sable,sable,2,2,20.24,-20.00,0.00,0.24,0.12,20.24,-20.00,sable,70,1,5702.00,914.00,1.84,0.13
+8,Ondine,ondine,3,3,32.85,-42.19,0.00,-9.34,-3.11,32.85,-24.89,ondine,53,1,4685.00,4919.00,2.67,-3.50

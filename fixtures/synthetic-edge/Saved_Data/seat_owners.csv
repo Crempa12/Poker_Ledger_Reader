@@ -1,0 +1,4 @@
+ledger_id,player_id,session_start_at,nickname,owner_normalized,note
+ledger_pglFAKE0010,FAKEid0040,2026-10-03T23:03:00Z,Ombrix,hespyre,"bought under ""Ombrix"" on account FAKEid0040"
+ledger_pglFAKE0001,FAKEid0040,2026-01-15T00:15:00Z,Hespyre,hespyre,checked: name was right
+ledger_pglFAKE0099,FAKEid0031,2026-07-07T19:00:00Z,Ghostly,zaqvin,"bought under ""Ghostly"" on account FAKEid0031"

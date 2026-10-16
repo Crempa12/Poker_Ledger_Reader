@@ -13,7 +13,9 @@ the same every time (fixed seed, no clock).
 | Case | Where |
 | --- | --- |
 | 3 folders | `Games/Synthetic Winter`, `Synthetic Spring`, `Synthetic Autumn` |
-| 12 game ledgers | `ledger_pglFAKE0001` to `0012` |
+| 14 game ledgers | `ledger_pglFAKE0001` to `0015` (`0013` holds only never-played seats, so it is skipped) |
+| Two nights with hand logs | `Games/Synthetic Autumn/poker_now_log_pglFAKE0014.csv` (cut short at 21:25, mid-hand) and `poker_now_log_pglFAKE0015.csv` (complete) |
+| Hand-log specials | `0014`: a rebuy (Pethra), a bust-out (Morvak) in an all-in that runs twice, a player who leaves while up (Dorrig). `0015`: a bomb pot, a 7-2 bounty paid by three players, a player who leaves while up (Ulvane) |
 | 6 to 25 seats per game | 6 seats in `0004`, 24 in `0011` (every seat counts, including never-played ones) |
 | 22+ non-zero balances in one game | `0011`: 24 people, each with a non-zero total (the settlement's larger-group path) |
 | Rebuys (several rows per player) | `0001` (Plenkor twice), `0003` (Zaqvin twice) |
@@ -40,5 +42,9 @@ the same every time (fixed seed, no clock).
 | Settings | `settings.csv`: `me` is `zaqvin`, no banker |
 | Saved sheets | `session_balances.csv`: one open, one partial, one paid balance |
 
-Hand logs are not in the made-up data, so the hand-log exports (menus 18, 21, 22) are empty for
-it. The real data has them.
+The two hand logs are made up as well. `tools/make-fixtures.ts` plays their hands out with the chips in
+cents, so every stack line, pot and bounty adds up within the log (the parser counts no stack
+mismatch). The log's stacks and pots are not the ledger's cash-outs, though: the logs test the code
+paths (rebuy, bust-out, run it twice, bomb pot, bounty, cut-short night), not the money. The hand-log
+exports (menus 18, 21, 22, and the playstyle tool) are written for `Synthetic Autumn` only, the one
+folder with logs; the other two folders have none.

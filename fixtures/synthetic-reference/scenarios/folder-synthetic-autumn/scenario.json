@@ -53,15 +53,15 @@
   "exports": [
     {
       "file": "player_summary.csv",
-      "data_rows": 31
+      "data_rows": 43
     },
     {
       "file": "settlements.csv",
-      "data_rows": 25
+      "data_rows": 33
     },
     {
       "file": "showdown_rivals.csv",
-      "data_rows": 0
+      "data_rows": 7
     }
   ]
 }

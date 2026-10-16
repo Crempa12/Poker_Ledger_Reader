@@ -1,0 +1,13 @@
+date,game,player,normalized,hands_in_night,hands_missing_from_log,sat_down_hand,last_hand,hands_played,hands_left,estimated,played_pct,away_pct,net,big_blind,net_bb,exit,rebuys,came_back,came_back_up,peak,peak_at_log_start,final_running,kept_pct,hands_after_peak,minutes_after_peak,fresh
+2026-10-03,ledger_pglEDGE0004,Ondine,ondine,70,0,18,70,53,0,no,75.71,0.00,-24.89,0.50,-49.78,Stayed,0,0,0,21.46,no,-6.02,0.00,39,63.7,0.0000
+2026-10-03,ledger_pglEDGE0004,Pell,pell,70,0,14,70,57,0,no,81.43,0.00,-15.27,0.50,-30.54,Stayed,0,0,0,146.76,no,141.01,96.08,1,0.6,0.9281
+2026-10-03,ledger_pglEDGE0004,Quill,quill,70,0,9,13,5,57,no,7.14,91.94,31.48,0.50,62.96,Left up,0,0,0,0.00,no,-10.92,0.00,0,0.0,0.0000
+2026-10-03,ledger_pglEDGE0004,Rune,rune,70,0,12,61,50,9,no,71.43,0.00,10.83,0.50,21.66,Stayed,0,0,0,185.42,no,112.25,60.54,18,45.2,0.3244
+2026-10-03,ledger_pglEDGE0004,Sable,sable,70,0,1,70,70,0,no,100.00,0.00,20.24,0.50,40.48,Stayed,0,0,0,281.60,no,281.60,100.00,0,0.0,1.0000
+2026-10-03,ledger_pglEDGE0004,Thorn,thorn,70,0,1,70,70,0,no,100.00,0.00,-13.10,0.50,-26.20,Stayed,0,0,0,399.59,no,396.34,99.19,1,0.6,0.9581
+2026-10-03,ledger_pglEDGE0004,Wick,wick,70,0,17,53,37,17,no,52.86,31.48,-7.95,0.50,-15.90,Left down,0,0,0,100.59,no,58.36,58.02,21,32.6,0.2802
+2026-10-04,ledger_pglEDGE0008,Pell,pell,45,29,4,39,36,6,no,80.00,0.00,34.65,1.00,34.65,Stayed,0,0,0,34.65,no,34.65,100.00,0,0.0,1.0000
+2026-10-04,ledger_pglEDGE0008,Quill,quill,45,29,1,45,45,0,no,100.00,0.00,24.27,1.00,24.27,Stayed,0,0,0,41.77,no,24.27,58.10,2,2.5,0.5421
+2026-10-04,ledger_pglEDGE0008,Zinnia,zinnia,45,29,24,45,22,0,no,48.89,0.00,34.83,1.00,34.83,Stayed,0,0,0,34.83,no,34.83,100.00,0,0.0,1.0000
+2026-10-04,ledger_pglEDGE0008,Sable,sable,45,29,17,29,13,16,yes,28.89,55.17,-20.00,1.00,-20.00,Busted out,0,0,0,,no,,,,,
+2026-10-04,ledger_pglEDGE0008,Wick,wick,45,29,1,27,27,18,yes,60.00,40.00,36.21,1.00,36.21,Left up,0,0,0,,no,,,,,

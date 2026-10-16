@@ -1,0 +1,9 @@
+player,normalized,games,hands,vpip_pct,pfr_pct,saw_flop_pct,wtsd_pct,wsd_pct,fold_to_raise_pct,aggression,hands_won,biggest_pot_won,net_from_log,bounties_net,all_ins,style,hit_run,hit_run_reliable,hit_run_tag,saw_flop,showdowns,showdowns_voluntary,showdown_wins,courtesy_reveals
+Sable,sable,1,70,54.24,10.17,59.32,54.29,52.17,21.43,2.06,18,53.89,281.60,-1.00,3,Loose,9.23,no,,35,23,19,12,4
+Thorn,thorn,1,70,49.15,16.95,61.02,36.11,18.75,40.00,1.55,19,66.42,396.34,1.00,6,Loose,,no,,36,16,13,3,7
+Pell,pell,2,67,35.09,14.04,42.11,58.33,52.63,41.67,3.00,23,44.05,327.02,-1.00,3,Loose-aggressive,10.40,no,,24,19,14,10,3
+Ondine,ondine,1,53,43.18,11.36,47.73,33.33,27.27,66.67,1.33,7,37.64,-6.02,2.00,2,Loose,,no,,21,11,7,3,3
+Rune,rune,1,50,53.66,14.63,56.10,43.48,71.43,50.00,1.61,15,55.77,112.25,0.00,5,Loose,11.06,no,,23,14,10,10,2
+Wick,wick,1,37,34.48,0.00,44.83,38.46,71.43,75.00,1.44,6,43.89,58.36,-1.00,0,Loose,14.72,no,,13,7,5,5,2
+Quill,quill,2,21,38.10,14.29,42.86,11.11,0.00,0.00,3.50,7,38.19,116.32,0.00,0,(few hands),24.51,no,,9,1,1,0,0
+Zinnia,zinnia,1,16,18.75,6.25,31.25,20.00,0.00,100.00,99.00,3,36.72,67.71,0.00,0,(few hands),9.72,no,,5,1,1,0,1

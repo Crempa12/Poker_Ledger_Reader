@@ -1,0 +1,40 @@
+Games loaded: 8   in scope: 8   hand logs in scope: 6
+Hands analysed: 288
+
+[2mPool average over 2 players with 200+ hands: VPIP 47%, PFR 12%[0m
+
+[2m──[0m [1mBefore the flop[0m [2m─────────────────────────────────────────────────────────────────────────────────[0m
+[1mPlayer            Hands   VPIP    PFR   Limp   3Bet  Steal    Def   Archetype[0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+Sable               233    48%    11%    46%    20%     8%   (83)   [36mAverage-passive                 [0m
+Thorn               222    46%    12%    46%    12%    12%   (50)   [36mAverage-passive                 [0m
+Rune                162    47%     7%    50%    (9)     2%   (50)   [36m(too few hands)                 [0m
+Pell                142    40%    16%    31%   (15)    21%   (50)   [36m(too few hands)                 [0m
+Quill               124    50%    12%    38%     4%    10%   (71)   [36m(too few hands)                 [0m
+Ondine               88    46%     9%    45%    (0)   (10)   (33)   [36m(too few hands)                 [0m
+Wick                 83    42%     7%    48%    (0)   (12)   (75)   [36m(too few hands)                 [0m
+Zinnia               52    40%    19%   (20)   (20)   (18)    (0)   [36m(too few hands)                 [0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+
+[2m──[0m [1mAfter the flop, and leaving the table[0m [2m───────────────────────────────────────────────────────────[0m
+[1mPlayer             CBet   F>CB   ChkR  AF flop  AF turn  AF river   WTSD   W$SD   H&R  Leaving[0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+Sable              (36)   (33)      -      2.1      2.1       3.4    48%    62%     9  [36mStays late   [0m
+Thorn              (50)   (20)      -      1.7      1.7       1.6    41%    45%   (9)  [36m             [0m
+Rune                (0)   (33)      -      1.1      2.1       1.5    38%    60%   (6)  [36m             [0m
+Pell               (44)   (50)      -      2.8      2.4       7.7    44%    44%     9  [36mStays late   [0m
+Quill              (29)    (0)      -      3.1      1.7       2.4    47%    62%    13  [36m             [0m
+Ondine              (0)  (100)      -      1.5      2.5       1.5    46%   (48)     -  [36m             [0m
+Wick                (0)    (0)      -      1.0      1.6       2.0    48%   (64)  (29)  [36m             [0m
+Zinnia             (20)    (0)      -      1.2      2.0       1.3   (43)   (40)   (5)  [36m             [0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[2mA rate in (brackets) has fewer than 25 opportunities behind it and is not a tendency.
+Limp = called the big blind with the pot unopened.   3Bet = re-raised a single raise.
+Steal = first-in raise from CO/BTN/SB.   Def = did not fold a blind to a steal.
+CBet = bet the flop having raised preflop.   F>CB = folded facing a flop c-bet.
+ChkR = check-raised.   AF = (bets + raises) / calls.   WTSD = flops that reached showdown.
+H&R = hit & run factor, 0-100, from every night in scope (menu 22 has the night-by-night exits).
+An H&R in (brackets) has fewer than 3 winning nights behind it; its only possible tag is Busts out.
+[0m
+
+Wrote <out>/scenarios/handlog/tool/playstyle_tool.csv

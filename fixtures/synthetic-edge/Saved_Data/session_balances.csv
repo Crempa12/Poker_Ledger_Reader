@@ -1,0 +1,4 @@
+session_id,from_display,from_normalized,to_display,to_normalized,original_amount,remaining_amount,status
+Winter 2026 sheet,Jolwick,jolwick,Kaxtun,kaxtun,15.00,0.00,paid
+Winter 2026 sheet,Mirtavo,mirtavo,Zaqvin,zaqvin,25.00,10.00,partial
+Winter 2026 sheet,Zaqvin,zaqvin,Plenkor,plenkor,40.00,40.00,open

@@ -1,0 +1,40 @@
+Games loaded: 14   in scope: 14   hand logs in scope: 2
+Hands analysed: 16
+
+[2m──[0m [1mHit & run: how early they leave when winning[0m [2m────────────────────────────────────────────────────[0m
+[2m2 nights with a hand log, measured hand by hand.[0m
+[33m12 nights in scope have no hand log and are left out: a ledger cannot say when
+someone stopped playing.[0m
+
+[1mPlayer           Nights  Play Stay  Up Down Bust Rebuy Back When up When dn   Hit  H&R  Tag[0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+Dorrig                1   78%    1   0    0    0     0    0      0%      0%    0%[2m  (0)[0m  [2m            [0m
+Kelvane               1  100%    1   0    0    0     0    0       -      0%     -[2m    -[0m  [2m            [0m
+Morvak                1   89%    1   0    0    0     0    0       -      0%     -[2m    -[0m  [2m            [0m
+Ostravan              1  100%    1   0    0    0     0    0       -      0%     -[2m    -[0m  [2m            [0m
+Pethra                1  100%    1   0    0    0     1    0       -      0%     -[2m    -[0m  [2m            [0m
+Quillan               1  100%    1   0    0    0     0    0       -      0%     -[2m    -[0m  [2m            [0m
+Sorrel                1  100%    1   0    0    0     0    0      0%      0%    0%[2m  (0)[0m  [2m            [0m
+Tovrin                1  100%    1   0    0    0     0    0      0%      0%    0%[2m  (0)[0m  [2m            [0m
+Ulvane                1   86%    1   0    0    0     0    0      0%      0%    0%[2m  (0)[0m  [2m            [0m
+Vexlor                1  100%    1   0    0    0     0    0      0%      0%    0%[2m  (0)[0m  [2m            [0m
+Wenrick               1  100%    1   0    0    0     0    0       -      0%     -[2m    -[0m  [2m            [0m
+Ysolde                1  100%    1   0    0    0     0    0       -      0%     -[2m    -[0m  [2m            [0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[2mEach night ends in one exit, judged on the LAST time they left (a break they came back from is not).
+Stay = dealt in during the night's last 10 hands.  Play = share of each night's hands dealt to them.
+Up / Down = left for good with chips, 5+ big blinds ahead / behind.
+(About even, and taken out by the admin: in the player view.)
+Bust = went under 1 big blind and went home.  Rebuy = busted and bought back in.
+Back = gone 30+ hands, then dealt in again.
+When up = share of the night (from their sit-down) still to come when they left, on nights they
+finished ahead, weighted by the win (50+ big blinds counts fully).  Staying counts as 0%.
+When dn = the same on nights they finished behind with chips.
+Hit = the part of When up that came right after their best point of the night, with most of it
+kept: full credit leaving at the peak, half 20 hands later, a sixteenth 80 hands later.
+All three lean toward the pool's average for a player with few such nights.
+H&R = 100 x (When up + how much When up exceeds When dn + Hit) / 3.
+An H&R in (brackets) has fewer than 3 winning nights; the only tag it can get is Busts out.
+[0m
+
+Wrote <out>/scenarios/handlog/tool/hit_and_run_nights_tool.csv

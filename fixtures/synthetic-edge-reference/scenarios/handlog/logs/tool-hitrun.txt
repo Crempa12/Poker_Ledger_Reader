@@ -1,0 +1,39 @@
+Games loaded: 8   in scope: 8   hand logs in scope: 6
+Hands analysed: 288
+
+[2m──[0m [1mHit & run: how early they leave when winning[0m [2m────────────────────────────────────────────────────[0m
+[2m6 nights with a hand log, measured hand by hand.[0m
+[2m2 of those logs start late (PokerNow cuts the first hands off a long night); seats from
+before a log begins are placed by the ledger's times.[0m
+[33m2 nights in scope have no hand log and are left out: a ledger cannot say when
+someone stopped playing.[0m
+[2mAverage H&R over the 3 players with 3+ winning nights: 10.[0m
+
+[1mPlayer           Nights  Play Stay  Up Down Bust Rebuy Back When up When dn   Hit  H&R  Tag[0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+Quill                 5   64%    3   1    1    0     0    0     32%     27%    3%   13              
+Sable                 6   72%    4   1    0    1     0    0     15%      8%    5%    9  Stays late  
+Pell                  4   80%    3   1    0    0     1    0     14%      8%    5%    9  Stays late  
+Wick                  4   55%    1   2    1    0     0    0     36%     12%   27%[2m (29)[0m  [2m            [0m
+Thorn                 4   94%    4   0    0    0     1    0     13%      5%    5%[2m  (9)[0m  [2m            [0m
+Rune                  3   90%    3   0    0    0     0    0     11%      8%    4%[2m  (6)[0m  [2m            [0m
+Zinnia                2   57%    2   0    0    0     0    0     10%     10%    4%[2m  (5)[0m  [2m            [0m
+Ondine                2   82%    2   0    0    0     0    0       -      6%     -[2m    -[0m  [2m            [0m
+[2m────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[2mEach night ends in one exit, judged on the LAST time they left (a break they came back from is not).
+Stay = dealt in during the night's last 10 hands.  Play = share of each night's hands dealt to them.
+Up / Down = left for good with chips, 5+ big blinds ahead / behind.
+(About even, and taken out by the admin: in the player view.)
+Bust = went under 1 big blind and went home.  Rebuy = busted and bought back in.
+Back = gone 30+ hands, then dealt in again.
+When up = share of the night (from their sit-down) still to come when they left, on nights they
+finished ahead, weighted by the win (50+ big blinds counts fully).  Staying counts as 0%.
+When dn = the same on nights they finished behind with chips.
+Hit = the part of When up that came right after their best point of the night, with most of it
+kept: full credit leaving at the peak, half 20 hands later, a sixteenth 80 hands later.
+All three lean toward the pool's average for a player with few such nights.
+H&R = 100 x (When up + how much When up exceeds When dn + Hit) / 3.
+An H&R in (brackets) has fewer than 3 winning nights; the only tag it can get is Busts out.
+[0m
+
+Wrote <out>/scenarios/handlog/tool/hit_and_run_nights_tool.csv

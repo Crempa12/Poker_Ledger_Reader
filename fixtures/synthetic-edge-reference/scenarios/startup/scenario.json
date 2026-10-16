@@ -1,0 +1,29 @@
+{
+  "name": "startup",
+  "description": "Startup output only: loaded ledgers, merge suggestions, seat flags, duplicate notes, unbalanced-game warnings.",
+  "status": "ok",
+  "code": "Poker_Ledger_Reader",
+  "data": "edge-data-1",
+  "tz": "America/New_York",
+  "flags": [],
+  "notes": [],
+  "expected_exports": [],
+  "missing_exports": [],
+  "steps": [
+    {
+      "kind": "startup",
+      "log": "startup.txt",
+      "exit": 0,
+      "args": [],
+      "menu_file": "quit.txt",
+      "menu": [
+        "0"
+      ]
+    }
+  ],
+  "exports": [
+    {
+      "file": "startup.txt"
+    }
+  ]
+}

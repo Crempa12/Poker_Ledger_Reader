@@ -1,14 +1,14 @@
 Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
 WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
 WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
-Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+Loaded 14 games (3 folders), 2 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
 WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
 WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
          They count for the name on the seat until you check them in menu 20.
 
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker off | pinned payments 2                                 |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP
@@ -33,7 +33,7 @@ WARNING: 3 buy-ins look like they were made on someone else's account or under s
   3. Everything in the current scope (all folders)
   0. Cancel
 Choose: 
--- Everything in all folders, 12 games -------------------------------------
+-- Everything in all folders, 14 games -------------------------------------
   Player                   Poker net    Payments   Settles as
   Sybnari                    +$91.47           -   is owed $91.47
   Gorvast                    +$78.19           -   is owed $78.19
@@ -42,25 +42,37 @@ Choose:
   Vextor                     +$29.04     +$12.50   is owed $41.54
   Vorndal                    +$35.41           -   is owed $35.41
   Mirtavo                    +$29.53           -   is owed $29.53
+  Tovrin                     +$25.00           -   is owed $25.00
   Frymoss                    +$24.94           -   is owed $24.94
   🎴                         +$24.61           -   is owed $24.61
   Hespyre                    +$22.47           -   is owed $22.47
   🎲Brask                     -$3.15     +$25.00   is owed $21.85
+  Vexlor                     +$20.00           -   is owed $20.00
+  Sorrel                     +$19.00           -   is owed $19.00
   Pindrel                    +$13.74           -   is owed $13.74
+  Dorrig                     +$10.00           -   is owed $10.00
   Cavlorn                     +$5.00           -   is owed $5.00
+  Ulvane                      +$5.00           -   is owed $5.00
   Mari Quenby                 +$9.82      -$7.00   is owed $2.82
   Bexrunn                     +$1.50           -   is owed $1.50
   Hiltrex                     +$1.50           -   is owed $1.50
   Frymoss Two                 +$1.08           -   is owed $1.08
   Ylmande                     +$0.50           -   is owed $0.50
+  Quillan                      $0.00           -   even
+  Wenrick                      $0.00           -   even
   Kaxtun                      -$1.61           -   owes $1.61
   Quinn "Q" Varn              -$3.26           -   owes $3.26
   707070                      -$7.87           -   owes $7.87
+  Ostravan                   -$10.00           -   owes $10.00
   Rixmoot                    -$10.14           -   owes $10.14
+  Pethra                     -$12.00           -   owes $12.00
+  Ysolde                     -$12.00           -   owes $12.00
   Lumqat                     -$13.25           -   owes $13.25
+  Kelvane                    -$15.00           -   owes $15.00
   Wexlorn                    -$15.17           -   owes $15.17
   Ostrelin                   -$21.05           -   owes $21.05
   Dulvane                    -$30.00           -   owes $30.00
+  Morvak                     -$30.00           -   owes $30.00
   Tarvelle                   -$30.00           -   owes $30.00
   Quelzit                    -$30.10           -   owes $30.10
   Fenquor                    -$33.06           -   owes $33.06
@@ -80,71 +92,88 @@ Does anyone want to send their money to a specific person? (y/n):
     The cause is a one-sided correction (menu 17) or a ledger that does not balance.
 
 -- Settlement sheet --------------------------------------------------------
-  28 payments, 16 senders, 18 receivers
+  37 payments, 21 senders, 23 receivers
 
   Zaqvin                --->  Sybnari                  $77.22   pinned
-  Ombrix                --->  Gorvast                  $54.56   
-  Harlo, Dromm          --->  Mirtavo                  $29.53   
-                        --->  Gorvast                  $22.71   
-                              sends $52.24 in all, to 2 people
-  Quorin               --->  Plenkor                  $46.85   
-  Nuvrask               --->  Vorndal                  $35.41   
-                        --->  Pindrel                   $5.59   
+  Ombrix                --->  Plenkor                  $54.56   
+  Harlo, Dromm          --->  Gorvast                  $52.24   
+  Quorin               --->  Tovrin                   $25.00   
+                        --->  🎲Brask                  $21.85   
+                              sends $46.85 in all, to 2 people
+  Nuvrask               --->  Mirtavo                  $29.53   
+                        --->  Sorrel                   $11.47   
                               sends $41.00 in all, to 2 people
   Ekvarto               --->  Jolwick                  $37.52   
-  Fenquor               --->  Vextor                   $33.06   
-  Quelzit               --->  Hespyre                  $22.47   
-                        --->  Vextor                    $7.63   
-                              sends $30.10 in all, to 2 people
-  Dulvane               --->  Frymoss                  $24.94   
+  Fenquor               --->  Vorndal                  $33.06   
+  Quelzit               --->  Vextor                   $30.10   
+  Dulvane               --->  Vexlor                   $20.00   
+                        --->  Cavlorn                   $5.00   
+                        --->  Ulvane                    $5.00   
+                              sends $30.00 in all, to 3 people
+  Morvak                --->  Frymoss                  $24.94   
                         --->  🎴                        $5.06   
                               sends $30.00 in all, to 2 people
-  Tarvelle              --->  🎲Brask                  $21.85   
-                        --->  Pindrel                   $8.15   
+  Tarvelle              --->  Hespyre                  $22.47   
+                        --->  Sorrel                    $7.53   
                               sends $30.00 in all, to 2 people
   Ostrelin              --->  🎴                       $19.55   
-                        --->  Bexrunn                   $1.50   
-                              sends $21.05 in all, to 2 people
-  Wexlorn               --->  Sybnari                  $14.25   
-                        --->  Gorvast                   $0.92   
-                              sends $15.17 in all, to 2 people
-  Lumqat                --->  Jolwick                  $11.25   
                         --->  Hiltrex                   $1.50   
+                              sends $21.05 in all, to 2 people
+  Wexlorn               --->  Gorvast                  $15.17   
+  Kelvane               --->  Sybnari                  $14.25   
+                        --->  Frymoss Two               $0.75   
+                              sends $15.00 in all, to 2 people
+  Lumqat                --->  Jolwick                  $11.25   
+                        --->  Bexrunn                   $1.50   
                         --->  Ylmande                   $0.50   
                               sends $13.25 in all, to 3 people
-  Rixmoot               --->  Cavlorn                   $5.00   
+  Pethra                --->  Pindrel                  $12.00   
+  Ysolde                --->  Vextor                   $11.44   
+                        --->  Pindrel                   $0.56   
+                              sends $12.00 in all, to 2 people
+  Rixmoot               --->  Gorvast                  $10.14   
+  Ostravan              --->  Dorrig                   $10.00   
+  707070                --->  Plenkor                   $3.42   
                         --->  Mari Quenby               $2.82   
-                        --->  Frymoss Two               $1.08   
-                        --->  Vextor                    $0.85   
-                              sends $9.75 in all, to 4 people
-  707070                --->  Plenkor                   $7.87   
-  Quinn "Q" Varn        --->  Plenkor                   $3.26   
+                        --->  Vorndal                   $1.63   
+                              sends $7.87 in all, to 3 people
+  Quinn "Q" Varn        --->  Pindrel                   $1.18   
+                        --->  Vorndal                   $0.72   
+                        --->  Gorvast                   $0.64   
+                        --->  Frymoss Two               $0.33   
+                              sends $2.87 in all, to 4 people
 
 -- Who receives what -------------------------------------------------------
-  Bexrunn                   $1.50   from Ostrelin
-  Cavlorn                   $5.00   from Rixmoot
-  Frymoss                  $24.94   from Dulvane
-  Frymoss Two               $1.08   from Rixmoot
-  Gorvast                  $78.19   from Ombrix, Harlo, Dromm, Wexlorn
-  Hespyre                  $22.47   from Quelzit
-  Hiltrex                   $1.50   from Lumqat
+  Bexrunn                   $1.50   from Lumqat
+  Cavlorn                   $5.00   from Dulvane
+  Dorrig                   $10.00   from Ostravan
+  Frymoss                  $24.94   from Morvak
+  Frymoss Two               $1.08   from Kelvane, Quinn "Q" Varn
+  Gorvast                  $78.19   from Harlo, Dromm, Wexlorn, Rixmoot,
+                                         Quinn "Q" Varn
+  Hespyre                  $22.47   from Tarvelle
+  Hiltrex                   $1.50   from Ostrelin
   Jolwick                  $48.77   from Ekvarto, Lumqat
-  Mari Quenby               $2.82   from Rixmoot
-  Mirtavo                  $29.53   from Harlo, Dromm
-  Pindrel                  $13.74   from Nuvrask, Tarvelle
-  Plenkor                  $57.98   from Quorin, 707070, Quinn "Q" Varn
-  Sybnari                  $91.47   from Zaqvin, Wexlorn
-  Vextor                   $41.54   from Fenquor, Quelzit, Rixmoot
-  Vorndal                  $35.41   from Nuvrask
+  Mari Quenby               $2.82   from 707070
+  Mirtavo                  $29.53   from Nuvrask
+  Pindrel                  $13.74   from Pethra, Ysolde, Quinn "Q" Varn
+  Plenkor                  $57.98   from Ombrix, 707070
+  Sorrel                   $19.00   from Nuvrask, Tarvelle
+  Sybnari                  $91.47   from Zaqvin, Kelvane
+  Tovrin                   $25.00   from Quorin
+  Ulvane                    $5.00   from Dulvane
+  Vexlor                   $20.00   from Dulvane
+  Vextor                   $41.54   from Quelzit, Ysolde
+  Vorndal                  $35.41   from Fenquor, 707070, Quinn "Q" Varn
   Ylmande                   $0.50   from Lumqat
-  🎲Brask                  $21.85   from Tarvelle
-  🎴                       $24.61   from Dulvane, Ostrelin
+  🎲Brask                  $21.85   from Quorin
+  🎴                       $24.61   from Morvak, Ostrelin
 
   Next: 7 saves this sheet as a session, 13 exports it as CSV.
 (press Enter to continue)
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker off | pinned payments 2                                 |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP
@@ -162,11 +191,11 @@ Does anyone want to send their money to a specific person? (y/n):
   15  Charts                              19  Import from Downloads
   16  Duplicate check  * 3 found           0  Save and exit
 
- Choose a number: Session ID [all_games_as_of_2026-10-12]: Saved 28 balances under session "reference-all".
+ Choose a number: Session ID [all_games_as_of_2026-10-15]: Saved 37 balances under session "reference-all".
 
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker off | pinned payments 2                                 |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP
@@ -187,8 +216,8 @@ Does anyone want to send their money to a specific person? (y/n):
  Choose a number: Exported to <work>/runs/sessions/Saved_Data/settlements.csv
 
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker off | pinned payments 2                                 |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP

@@ -1,0 +1,13 @@
+date,game,player,normalized,hands_in_night,hands_missing_from_log,sat_down_hand,last_hand,hands_played,hands_left,estimated,played_pct,away_pct,net,big_blind,net_bb,exit,rebuys,came_back,came_back_up,peak,peak_at_log_start,final_running,kept_pct,hands_after_peak,minutes_after_peak,fresh
+2026-10-17,ledger_pglFAKE0014,Dorrig,dorrig,9,0,1,7,7,2,no,77.78,0.00,10.00,0.50,20.00,Stayed,0,0,0,0.00,no,-3.25,0.00,0,0.0,0.0000
+2026-10-17,ledger_pglFAKE0014,Morvak,morvak,9,0,1,8,8,1,no,88.89,0.00,-30.00,0.50,-60.00,Stayed,0,0,0,0.00,no,-30.00,0.00,0,0.0,0.0000
+2026-10-17,ledger_pglFAKE0014,Pethra,pethra,9,0,1,9,9,0,no,100.00,0.00,-12.00,0.50,-24.00,Stayed,1,0,0,0.00,no,-21.00,0.00,0,0.0,0.0000
+2026-10-17,ledger_pglFAKE0014,Sorrel,sorrel,9,0,1,9,9,0,no,100.00,0.00,19.00,0.50,38.00,Stayed,0,0,0,5.50,no,5.25,95.45,4,96.9,0.8310
+2026-10-17,ledger_pglFAKE0014,Tovrin,tovrin,9,0,1,9,9,0,no,100.00,0.00,25.00,0.50,50.00,Stayed,0,0,0,48.75,no,48.50,99.49,1,6.7,0.9610
+2026-10-17,ledger_pglFAKE0014,Ysolde,ysolde,9,0,1,9,9,0,no,100.00,0.00,-12.00,0.50,-24.00,Stayed,0,0,0,1.75,no,-1.75,0.00,8,133.0,0.0000
+2026-10-31,ledger_pglFAKE0015,Kelvane,kelvane,7,0,1,7,7,0,no,100.00,0.00,-15.00,0.50,-30.00,Stayed,0,0,0,7.75,no,7.00,90.32,5,235.0,0.7595
+2026-10-31,ledger_pglFAKE0015,Ostravan,ostravan,7,0,1,7,7,0,no,100.00,0.00,-10.00,0.50,-20.00,Stayed,0,0,0,4.00,no,3.00,75.00,4,224.0,0.6529
+2026-10-31,ledger_pglFAKE0015,Quillan,quillan,7,0,1,7,7,0,no,100.00,0.00,0.00,0.50,0.00,Stayed,0,0,0,0.00,no,-2.00,0.00,0,0.0,0.0000
+2026-10-31,ledger_pglFAKE0015,Ulvane,ulvane,7,0,1,6,6,1,no,85.71,0.00,5.00,0.50,10.00,Stayed,0,0,0,0.00,no,-3.50,0.00,0,0.0,0.0000
+2026-10-31,ledger_pglFAKE0015,Vexlor,vexlor,7,0,1,7,7,0,no,100.00,0.00,20.00,0.50,40.00,Stayed,0,0,0,0.00,no,-2.50,0.00,0,0.0,0.0000
+2026-10-31,ledger_pglFAKE0015,Wenrick,wenrick,7,0,1,7,7,0,no,100.00,0.00,0.00,0.50,0.00,Stayed,0,0,0,0.00,no,-2.00,0.00,0,0.0,0.0000

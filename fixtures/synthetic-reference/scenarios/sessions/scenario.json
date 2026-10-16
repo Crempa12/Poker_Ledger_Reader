@@ -41,7 +41,7 @@
       "menu": [
         "10",
         "3",
-        "3.93",
+        "1.41",
         "0"
       ]
     },
@@ -63,11 +63,11 @@
   "exports": [
     {
       "file": "session_balances.csv",
-      "data_rows": 31
+      "data_rows": 40
     },
     {
       "file": "settlements.csv",
-      "data_rows": 28
+      "data_rows": 37
     }
   ]
 }

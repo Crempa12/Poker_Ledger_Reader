@@ -1,18 +1,25 @@
-// Parity with the C++ app. Recomputes the ledger side of a reference run
-// (reference/run.sh) with the TypeScript core, from the same data root, and
-// compares every output with what the C++ app wrote or printed.
+// Parity with the C++ app. Recomputes a reference run (reference/run.sh) with the
+// TypeScript core, from the same data root, and compares every output with what the C++
+// app wrote or printed.
 //
 //   node tools/parity.ts --reference <reference folder> --data <data root>
 //
-// Prints to the terminal only, and exits 1 on any mismatch. Nothing is written to
-// a file, so real data cannot reach a committed file. A mismatch names players by
-// normalized name, never by display name, and never shows a file name.
+// Prints to the terminal only, and exits 1 on any mismatch. Nothing is written to a file, so
+// real data cannot reach a committed file. A mismatch names players by normalized name, never
+// by display name, and never prints a value that is a name, a game id or free text.
 //
-// Compared: player_summary.csv (the ledger columns, cell by cell, as exact text),
-// settlements.csv and session_balances.csv (byte for byte), each history_<n>.txt
-// (every night's date, buy-ins, net and running total) and startup.txt (ledger
-// messages, duplicate and warning counts, the Loaded counts and the summary box).
-// Not compared: the hand-log columns and exports, and the printed views.
+// Compared, for every scenario:
+//   - player_summary.csv: every column, the hand-log time columns included, byte for byte;
+//   - showdown_rivals.csv (menu 12), byte for byte;
+//   - the hand-log exports of menus 18, 21 and 22 (style_stats.csv, playstyle.csv,
+//     hit_and_run.csv, hit_and_run_nights.csv), byte for byte, for the scope each step ran in;
+//     an export is expected exactly when the app wrote it;
+//   - the standalone playstyle_report's CSVs (tool/), for the whole corpus;
+//   - settlements.csv and session_balances.csv, byte for byte;
+//   - each history_<n>.txt: every night's date, buy-ins, net and running total;
+//   - startup.txt: ledger and hand-log messages, duplicate and warning counts, the Loaded
+//     counts (games, folders, hand logs, merged names, seat checks, payments) and the box.
+// Not compared: the printed views and the printed hand-log tables.
 
 import { readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -22,7 +29,7 @@ import { loadDataRoot } from "./load.ts";
 import type { DataRootInputs } from "./load.ts";
 import { filterGames, listFolders } from "../packages/core/src/ledger.ts";
 import type { Game, PlayerStats, Scope, SettlementEntry } from "../packages/core/src/models.ts";
-import { playerSummaryCSV, suggestMergesByPlayerId } from "../packages/core/src/players.ts";
+import { suggestMergesByPlayerId } from "../packages/core/src/players.ts";
 import { findSuspicious } from "../packages/core/src/seats.ts";
 import { settlementsCSV } from "../packages/core/src/settlement.ts";
 import { addSettlementBatch, recordPayment, serializeSessionBalances, sortedRows } from "../packages/core/src/sessions.ts";
@@ -30,6 +37,10 @@ import type { Balances } from "../packages/core/src/sessions.ts";
 import { dollarsToCents, formatLocalDate, moneySignedCents, parseLocalDate } from "../packages/core/src/util.ts";
 import { boardFor, loadWorld, sheetFor } from "../packages/core/src/world.ts";
 import type { World } from "../packages/core/src/world.ts";
+import { handViewOf, loadHandWorld } from "../packages/core/src/handworld.ts";
+import type { HandView, HandWorld } from "../packages/core/src/handworld.ts";
+import { playstyleCSV } from "../packages/core/src/playstyle.ts";
+import { hitRunFacts, hitRunNightsCSV } from "../packages/core/src/hitrun.ts";
 
 // ---------------- the report ----------------
 
@@ -142,12 +153,19 @@ function scopeFromArgs(args: readonly string[], timeZone: string): Scope {
   return scope;
 }
 
-// ---------------- building the world ----------------
+// ---------------- building the worlds ----------------
 
-// What the app holds after startup (main.cpp loadData and refresh): the core facade does the
-// work, so the parity check exercises the same entry point a website would call.
-function buildWorld(inputs: DataRootInputs, timeZone: string): World {
-  return loadWorld({ timeZone, ledgers: inputs.games, saved: inputs.savedData });
+// What the app holds after startup (main.cpp loadData and refresh), hand logs included: the
+// core facades do the work, so the parity check exercises the entry points a website calls.
+function buildHands(inputs: DataRootInputs, timeZone: string): HandWorld {
+  const world = loadWorld({ timeZone, ledgers: inputs.games, saved: inputs.savedData });
+  return loadHandWorld(world, inputs.games);
+}
+
+// The hand-log view of one scope, for a scenario's world (the same logs, the scenario's prefs,
+// banker and balances).
+function viewFor(base: HandWorld, world: World, scope: Scope): HandView {
+  return handViewOf({ ...base, world }, scope);
 }
 
 // The first player on the all-data board with the most games: reference/run.sh's
@@ -271,7 +289,22 @@ const SUMMARY_COLUMNS: Column[] = [
   { name: "avg_per_game", sensitive: false },
   { name: "biggest_win", sensitive: false },
   { name: "biggest_loss", sensitive: false },
-  { name: "aliases", sensitive: false },
+  { name: "aliases", sensitive: true },
+  { name: "hands_dealt", sensitive: false },
+  { name: "nights_logged", sensitive: false },
+  { name: "seconds_dealt", sensitive: false },
+  { name: "seconds_estimated", sensitive: false },
+  { name: "hours", sensitive: false },
+  { name: "per_hour", sensitive: false },
+];
+
+const RIVAL_COLUMNS: Column[] = [
+  { name: "loser", sensitive: true },
+  { name: "loser_normalized", sensitive: false },
+  { name: "winner", sensitive: true },
+  { name: "winner_normalized", sensitive: false },
+  { name: "times", sensitive: false },
+  { name: "amount", sensitive: false },
 ];
 
 const SETTLEMENT_COLUMNS: Column[] = [
@@ -302,6 +335,15 @@ const HISTORY_COLUMNS: Column[] = [
   { name: "running total", sensitive: false },
   { name: "game", sensitive: true },
 ];
+
+// The names a hand-log export's header uses for a person, a game or free text: never printed.
+const SENSITIVE_HEADERS = new Set(["player", "loser", "winner", "display_name", "game", "aliases", "from", "to", "session_id"]);
+
+// The columns of a CSV, from its own header line.
+function columnsOf(text: string): Column[] {
+  const header = rawFields(linesOf(text)[0] ?? "");
+  return header.map((name) => ({ name, sensitive: SENSITIVE_HEADERS.has(name) }));
+}
 
 // One night in a player's history table: number, date, folder or note, buy-ins, net,
 // running total, game. The folder or note is not compared.
@@ -359,16 +401,73 @@ function countMismatch(out: string[], what: string, cppText: string, tsValue: nu
 
 // ---------------- the checks ----------------
 
-async function checkSummary(dir: string, world: World, scope: Scope): Promise<Check> {
+async function checkSummary(dir: string, view: HandView): Promise<Check> {
   const name = "player_summary.csv";
   const cpp = await readText(join(dir, name));
   if (cpp === null) return { name, detail: "", mismatches: ["missing from the reference"] };
-  const board = boardFor(world, filterGames(world.games, scope), scope);
   return {
     name,
-    detail: `${board.length} players; ledger columns only, the hand-log columns are not compared`,
-    mismatches: compareCsv(cpp, playerSummaryCSV(board), SUMMARY_COLUMNS, (r) => r[2] ?? "", false),
+    detail: `${view.stats.size} players, every column (time columns included), byte for byte`,
+    mismatches: compareCsv(cpp, view.exports.playerSummary, SUMMARY_COLUMNS, (r) => r[2] ?? "", true),
   };
+}
+
+async function checkRivals(dir: string, view: HandView): Promise<Check> {
+  const name = "showdown_rivals.csv";
+  const cpp = await readText(join(dir, name));
+  if (cpp === null) return { name, detail: "", mismatches: ["missing from the reference"] };
+  return {
+    name,
+    detail: `${view.showdownRivals.size} players with a showdown record, byte for byte`,
+    mismatches: compareCsv(cpp, view.exports.showdownRivals, RIVAL_COLUMNS, (r) => r[1] ?? "", true),
+  };
+}
+
+// One hand-log export, against the text the core makes for the same scope. Neither side writing
+// it is a match. One side only is a mismatch: the app writes an export exactly when it has
+// something to write.
+async function checkExport(dir: string, file: string, ts: string | null): Promise<Check> {
+  const cpp = await readText(join(dir, file));
+  if (cpp === null && ts === null) {
+    return { name: file, detail: "not written for this scope (nothing in scope)", mismatches: [] };
+  }
+  if (cpp === null) return { name: file, detail: "", mismatches: ["TypeScript writes it, the app wrote nothing"] };
+  if (ts === null) return { name: file, detail: "", mismatches: ["the app wrote it, TypeScript writes nothing"] };
+  const rows = Math.max(linesOf(ts).length - 1, 0);
+  return {
+    name: file,
+    detail: `${rows} rows, byte for byte`,
+    mismatches: compareCsv(cpp, ts, columnsOf(ts), () => "", true),
+  };
+}
+
+// The exports one hand-log menu writes, for the scope its step ran in.
+async function handChecks(kind: string, dir: string, view: HandView): Promise<Check[]> {
+  switch (kind) {
+    case "style":
+      return [await checkExport(dir, "style_stats.csv", view.exports.styleStats)];
+    case "playstyle":
+      return [await checkExport(dir, "playstyle.csv", view.exports.playstyle)];
+    case "hit-and-run":
+      return [
+        await checkExport(dir, "hit_and_run.csv", view.exports.hitAndRun),
+        await checkExport(dir, "hit_and_run_nights.csv", view.exports.hitAndRunNights),
+      ];
+    default:
+      return [];
+  }
+}
+
+// The standalone playstyle_report, whole corpus. Its playstyle CSV carries the hit & run columns
+// (the tool annotates the profiles before it exports, as menu 21 does), and its nights CSV is the
+// one menu 22 writes.
+async function toolChecks(dir: string, view: HandView, timeZone: string): Promise<Check[]> {
+  const playstyleText = view.profiles.length > 0 ? playstyleCSV(view.profiles, hitRunFacts(view.hitRun.summaries)) : null;
+  const nightsText = view.hitRun.nights.length > 0 ? hitRunNightsCSV(view.hitRun.nights, timeZone) : null;
+  return [
+    await checkExport(dir, "tool/playstyle_tool.csv", playstyleText),
+    await checkExport(dir, "tool/hit_and_run_nights_tool.csv", nightsText),
+  ];
 }
 
 async function checkSettlementsFile(dir: string, entries: SettlementEntry[]): Promise<Check> {
@@ -448,10 +547,14 @@ const BOX_GAMES = /POKER LEDGER\s+(\d+) games/;
 const BOX_PLAYERS = /(\d+) players/;
 const BOX_PINNED = /pinned payments (\d+)/;
 
-async function checkStartup(dir: string, step: Step, world: World): Promise<Check> {
+// The hand-log loader's messages: a skipped log, or a duplicate one that was ignored.
+const isHandLogMessage = (text: string): boolean => text.includes("Skipped hand log") || text.includes("Duplicate hand log ignored");
+
+async function checkStartup(dir: string, step: Step, hw: HandWorld): Promise<Check> {
   const name = step.log;
   const text = await readText(join(dir, step.log));
   if (text === null) return { name, detail: "", mismatches: ["missing from the reference"] };
+  const world = hw.world;
   const lines = linesOf(stripAnsi(text));
   const mismatches: string[] = [];
   const first = (re: RegExp): RegExpExecArray | null => {
@@ -486,19 +589,27 @@ async function checkStartup(dir: string, step: Step, world: World): Promise<Chec
     countMismatch(mismatches, "skipped duplicates", dup[2] ?? "", skipped);
   }
 
-  // 3. The Loaded line: counts of what the app holds (the hand-log count is not compared).
+  // 3. The Loaded line: counts of what the app holds, hand logs included.
   const loaded = first(LOADED);
   if (loaded === null) {
     mismatches.push('the "Loaded" line is missing or not in the expected form');
   } else {
     countMismatch(mismatches, "games", loaded[1] ?? "", world.games.length);
     countMismatch(mismatches, "folders", loaded[2] ?? "", listFolders(world.games).length);
+    countMismatch(mismatches, "hand logs", loaded[3] ?? "", hw.logs.size);
     countMismatch(mismatches, "merged names", loaded[4] ?? "", world.rules.size);
     countMismatch(mismatches, "seat checks", loaded[5] ?? "", world.seatOwners.length);
     countMismatch(mismatches, "payments and corrections", loaded[6] ?? "", world.adjustments.length);
   }
 
-  // 4. The two warnings after it: accounts with a new name, and buy-ins to check.
+  // 4. The hand-log messages: the same number of skipped and duplicate logs (their paths differ).
+  const cppHandMessages = lines.filter(isHandLogMessage).length;
+  const tsHandMessages = hw.messages.filter(isHandLogMessage).length;
+  if (cppHandMessages !== tsHandMessages) {
+    mismatches.push(`hand-log messages: C++ ${cppHandMessages}, TypeScript ${tsHandMessages}`);
+  }
+
+  // 5. The two warnings after it: accounts with a new name, and buy-ins to check.
   countMismatch(
     mismatches,
     "accounts with a name never seen before",
@@ -507,7 +618,7 @@ async function checkStartup(dir: string, step: Step, world: World): Promise<Chec
   );
   countMismatch(mismatches, "buy-ins to check", first(BUY_INS)?.[1] ?? "0", findSuspicious(world.games, world.rules).length);
 
-  // 5. The summary box: games, players, pinned payments, and whether banker mode is on.
+  // 6. The summary box: games, players, pinned payments, and whether banker mode is on.
   const boxGames = first(BOX_GAMES);
   const boxPlayers = first(BOX_PLAYERS);
   const boxPinned = first(BOX_PINNED);
@@ -533,17 +644,21 @@ async function checkStartup(dir: string, step: Step, world: World): Promise<Chec
   const extra = otherWarnings > 0 ? `; ${otherWarnings} other warning line(s) not compared` : "";
   return {
     name,
-    detail: `ledger messages, duplicates, the Loaded counts, the two warnings and the box${extra}`,
+    detail: `ledger and hand-log messages, duplicates, the Loaded counts, the two warnings and the box${extra}`,
     mismatches,
   };
 }
 
 // ---------------- scenarios and the whole run ----------------
 
-async function checkScenario(dir: string, scenario: ScenarioFile, base: World): Promise<ScenarioReport> {
+// The file names the hand-log checks compare, so the listing below does not call them uncompared.
+const HAND_EXPORTS = ["showdown_rivals.csv", "style_stats.csv", "playstyle.csv", "hit_and_run.csv", "hit_and_run_nights.csv"];
+
+async function checkScenario(dir: string, scenario: ScenarioFile, base: HandWorld): Promise<ScenarioReport> {
   const checks: Check[] = [];
   const notCompared: string[] = [];
-  let world = scenarioWorld(base, scenario.name);
+  const timeZone = base.world.timeZone;
+  let world = scenarioWorld(base.world, scenario.name);
   let sheet: SettlementEntry[] | null = null;
   let summaryChecked = false;
 
@@ -551,12 +666,15 @@ async function checkScenario(dir: string, scenario: ScenarioFile, base: World): 
     if (step.exit !== 0) {
       checks.push({ name: `${step.kind} step`, detail: "", mismatches: [`the C++ app exited with ${step.exit}`] });
     }
-    const scope = scopeFromArgs(step.args, base.timeZone);
+    const scope = scopeFromArgs(step.args, timeZone);
     switch (step.kind) {
-      case "summary":
+      case "summary": {
         summaryChecked = true;
-        checks.push(await checkSummary(dir, world, scope));
+        const view = viewFor(base, world, scope);
+        checks.push(await checkSummary(dir, view));
+        checks.push(await checkRivals(dir, view));
         break;
+      }
       case "settle":
         sheet = runSettle(step.menu, world, scope).entries;
         break;
@@ -573,14 +691,22 @@ async function checkScenario(dir: string, scenario: ScenarioFile, base: World): 
         checks.push(await checkHistory(dir, step, world));
         break;
       case "startup":
-        checks.push(await checkStartup(dir, step, world));
+        checks.push(await checkStartup(dir, step, { ...base, world }));
         break;
       case "views":
         notCompared.push(`printed views (menus ${step.menu.filter((m) => m !== "").join(" ")})`);
         break;
-      case "handlog":
-        notCompared.push("hand-log outputs (hand logs are not ported yet)");
+      case "style":
+      case "playstyle":
+      case "hit-and-run": {
+        const view = viewFor(base, world, scope);
+        checks.push(...(await handChecks(step.kind, dir, view)));
+        // The standalone tool runs once, on the whole corpus, next to the menus.
+        if (step.kind === "hit-and-run" && step.args.length === 0) {
+          checks.push(...(await toolChecks(dir, viewFor(base, world, ALL_SCOPE), timeZone)));
+        }
         break;
+      }
       default:
         checks.push({ name: step.kind, detail: "", mismatches: [`unknown step kind "${step.kind}"`] });
     }
@@ -606,6 +732,7 @@ async function checkScenario(dir: string, scenario: ScenarioFile, base: World): 
     "player_summary.csv",
     "settlements.csv",
     "session_balances.csv",
+    ...HAND_EXPORTS,
     ...scenario.steps.map((s) => s.log),
   ]);
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -662,7 +789,7 @@ export async function runParity(referenceDir: string, dataRoot: string): Promise
     .sort();
   const inputs = await loadDataRoot(dataRoot);
   if (inputs.games.length === 0) throw new Error("the data root has no .csv files in its game folder");
-  const worlds = new Map<string, World>();
+  const worlds = new Map<string, HandWorld>();
   const scenarios: ScenarioReport[] = [];
   for (const folder of folders) {
     const dir = join(scenariosDir, folder);
@@ -671,7 +798,7 @@ export async function runParity(referenceDir: string, dataRoot: string): Promise
     const scenario = parseScenario(text, folder);
     let base = worlds.get(scenario.tz);
     if (base === undefined) {
-      base = buildWorld(inputs, scenario.tz);
+      base = buildHands(inputs, scenario.tz);
       worlds.set(scenario.tz, base);
     }
     scenarios.push(await checkScenario(dir, scenario, base));

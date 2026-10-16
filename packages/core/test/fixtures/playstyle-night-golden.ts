@@ -1,0 +1,9 @@
+// The playstyle.csv bytes the C++ app (playstyle::exportCSV) writes for the made-up night in
+// playstyle-night.ts, produced by a driver compiled against a copy of the C++ src. The test compares the
+// TypeScript export to it byte for byte.
+export const PLAYSTYLE_NIGHT_CSV = `player,games,hands,hands_voluntary,vpip_pct,vpip_n,pfr_pct,pfr_n,limp_pct,limp_n,open_pct,open_n,threebet_pct,threebet_n,fold_to_open_pct,fold_to_open_n,fold_to_3bet_pct,fold_to_3bet_n,steal_pct,steal_n,blind_defend_pct,blind_defend_n,cbet_pct,cbet_n,fold_to_cbet_pct,fold_to_cbet_n,checkraise_pct,checkraise_n,donk_pct,donk_n,af_flop,af_turn,af_river,wtsd_pct,wtsd_n,wsd_pct,wsd_n,showdowns_tabled,courtesy_reveals,bet_lt33_pct,bet_33_50_pct,bet_50_75_pct,bet_75_100_pct,bet_100_150_pct,bet_over150_pct,overbet_pct,bet_samples,all_ins,net,bb_per_100,biggest_pot,vpip_late_pct,vpip_late_n,vpip_blinds_pct,vpip_blinds_n,vpip_early_pct,vpip_early_n,hit_run,hit_run_reliable,hit_run_tag,normalized
+Ada,1,7,6,83.33,6,33.33,6,66.67,3,33.33,3,25.00,4,25.00,4,0.00,0,33.33,3,100.00,2,100.00,1,100.00,2,0.00,2,0.00,2,99.000,0.000,0.000,0.00,4,0.00,0,0,0,0.00,0.00,50.00,0.00,50.00,0.00,50.00,2,0,-13.50,-135.714,6.50,75.00,4,100.00,2,0.00,0,,no,,ada
+Bo,1,7,6,100.00,6,50.00,6,0.00,2,100.00,2,0.00,2,0.00,2,100.00,1,100.00,2,100.00,2,100.00,2,50.00,2,0.00,2,0.00,2,1.000,1.000,99.000,20.00,5,100.00,1,1,0,0.00,40.00,40.00,0.00,20.00,0.00,20.00,5,0,-16.50,-178.571,14.00,100.00,3,100.00,3,0.00,0,,no,,bo
+Cy,1,6,5,0.00,5,0.00,5,0.00,0,0.00,0,0.00,4,100.00,4,0.00,0,0.00,0,0.00,2,0.00,0,0.00,0,0.00,0,0.00,0,99.000,0.000,0.000,100.00,1,0.00,1,0,1,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0,0,2.00,-100.000,12.00,0.00,1,0.00,4,0.00,0,,no,,cy
+Dee,1,3,3,66.67,3,33.33,3,0.00,1,100.00,1,0.00,2,50.00,2,0.00,0,100.00,1,0.00,1,100.00,1,0.00,1,50.00,2,0.00,1,1.000,99.000,99.000,0.00,2,0.00,0,0,0,50.00,50.00,0.00,0.00,0.00,0.00,0.00,2,0,28.00,933.333,45.50,100.00,1,50.00,2,0.00,0,,no,,dee
+`;

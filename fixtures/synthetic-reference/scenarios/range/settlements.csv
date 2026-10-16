@@ -1,9 +1,9 @@
 from,to,amount,reason,from_normalized,to_normalized
 Zaqvin,Sybnari,15.89,preference,zaqvin,sybnari
 Gorvast,Sybnari,1.39,preference,gorvast,sybnari
-Dulvane,🎴,24.61,auto,dulvane,unnamedfakeid
-Dulvane,🎲Brask,3.64,auto,dulvane,brask
-Dulvane,Cavlorn,1.75,auto,dulvane,cavlorn
+Kaxtun,Hiltrex,23.74,auto,kaxtun,hiltrex
+Kaxtun,Wexlorn,10.20,auto,kaxtun,wexlorn
+Kaxtun,🎲Brask,3.64,auto,kaxtun,brask
 Gorvast,"Harlo, Dromm",29.16,auto,gorvast,harlodromm
 Ostrelin,Mirtavo,9.71,auto,ostrelin,mirtavo
 Ostrelin,"Harlo, Dromm",5.92,auto,ostrelin,harlodromm
@@ -11,15 +11,11 @@ Ombrix,Ekvarto,8.89,auto,ombrix,ekvarto
 Ombrix,Nuvrask,5.50,auto,ombrix,nuvrask
 "Quinn ""Q"" Varn",Nuvrask,2.26,auto,quinnqvarn,nuvrask
 "Quinn ""Q"" Varn",Bexrunn,1.00,auto,quinnqvarn,bexrunn
-Tarvelle,Frymoss,30.00,auto,tarvelle,frymoss
-Kaxtun,Quelzit,12.45,auto,kaxtun,quelzit
-Kaxtun,707070,7.08,auto,kaxtun,707070
-Kaxtun,Pindrel,2.24,auto,kaxtun,pindrel
-Kaxtun,Frymoss,0.81,auto,kaxtun,frymoss
-Ylmande,Frymoss,0.05,auto,ylmande,frymoss
-Rixmoot,Jolwick,40.15,auto,rixmoot,jolwick
-Lumqat,Plenkor,24.42,auto,lumqat,plenkor
-Lumqat,Wexlorn,5.44,auto,lumqat,wexlorn
-Quorin,Hiltrex,23.74,auto,quorin,hiltrex
-Quorin,Jolwick,4.85,auto,quorin,jolwick
-Quorin,Hespyre,0.74,auto,quorin,hespyre
+Rixmoot,Frymoss,30.86,auto,rixmoot,frymoss
+Rixmoot,Quelzit,9.29,auto,rixmoot,quelzit
+Quorin,Plenkor,24.42,auto,quorin,plenkor
+Quorin,Quelzit,3.16,auto,quorin,quelzit
+Quorin,Cavlorn,1.75,auto,quorin,cavlorn
+Lumqat,🎴,24.61,auto,lumqat,unnamedfakeid
+Lumqat,707070,5.25,auto,lumqat,707070
+Ylmande,Hespyre,0.05,auto,ylmande,hespyre

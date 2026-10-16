@@ -8,7 +8,9 @@ view the ledger side needs, so the TypeScript output can be compared with it to 
 
     npm run fixtures                                   # writes the made-up data (fixtures/synthetic)
     npm run reference -- --code <C++ repo> --data fixtures/synthetic --out fixtures/synthetic-reference
-    npm run reference -- --code <C++ repo> --data <C++ repo> --out local/reference-real
+    npm run reference -- --code <C++ repo> --data <C++ repo> --out local/reference-handlog-<date>
+    npm run parity                                     # made-up reference against the made-up data
+    npm run parity:handlog:real                        # the real reference (local/) against the C++ repo's data
     npm run check:privacy                              # scans what git would commit
 
 - `--code` is the C++ repo. Only `main.cpp`, `CMakeLists.txt`, `src/` and `tools/` are copied.
@@ -32,7 +34,7 @@ which git ignores, and must never be committed. Run `npm run check:privacy` befo
 
 ## What is recorded
 
-Each scenario is a folder under `<out>/scenarios/` (hand-log exports are under `<out>/handlog/`):
+Each scenario is a folder under `<out>/scenarios/`:
 
 | Scenario | What it runs |
 | --- | --- |
@@ -46,11 +48,18 @@ Each scenario is a folder under `<out>/scenarios/` (hand-log exports are under `
 | `history` | menu 3 for every player, rank order: `history/history_<n>.txt` |
 | `startup` | the text printed before the menu (merge suggestions, seat flags, duplicates, warnings) |
 | `views` | menus 6, 2, 8, 11, 16, 17 and 20 (list) |
-| `handlog` | menus 18, 21, 22 and the standalone `playstyle_report` (empty without hand logs) |
+| `handlog` | menus 18 (style table), 21 (playstyle) and 22 (hit & run) for the whole corpus, then the standalone `playstyle_report` (tool/) |
+| `handlog-folder-<name>` | the same three menus with `--folder` for each folder |
+
+The hand-log menus ask their questions only when a hand log (or a hit & run night) is in scope. A
+menu with nothing in scope answers its questions to the pause that follows, so one answer list
+serves every scope (`scenario_handlog` in `run.sh`). Each export is removed from the run copy first,
+so an export the app did not write can never be an old one.
 
 Inside each scenario folder:
 
-- the CSV exports the app wrote, and `showdown_rivals.csv` where it applies;
+- the CSV exports the app wrote: `player_summary.csv` (with the hand-log time columns),
+  `showdown_rivals.csv` (menu 12), and the hand-log exports of menus 18, 21 and 22;
 - `scenario.json`: the exact menu lines fed in, the app flags, each exit code, and the rows saved;
 - `logs/` (the app's output), `menus/` (the input files).
 

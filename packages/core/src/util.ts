@@ -559,3 +559,88 @@ function codePointOrReplacement(s: string, i: number): number {
   const cp = s.codePointAt(i) ?? 0xfffd;
   return cp >= 0xd800 && cp <= 0xdfff ? 0xfffd : cp;
 }
+
+// printf("%.<dp>f") for a double, exactly: the bits of x are read, so no floating-point rounding happens
+// here, and an exact tie goes to the even digit, as the C++ output does on macOS.
+function scaledRound(x: number, dp: number): bigint {
+  float64View.setFloat64(0, x);
+  const bits = float64View.getBigUint64(0);
+  const biased = Number((bits >> 52n) & 0x7ffn);
+  let mantissa = bits & ((1n << 52n) - 1n);
+  let exponent: number;
+  if (biased === 0) {
+    exponent = -1074; // zero and subnormals
+  } else {
+    mantissa |= 1n << 52n;
+    exponent = biased - 1075;
+  }
+  const scaled = mantissa * 10n ** BigInt(dp); // x * 10^dp = scaled * 2^exponent exactly
+  if (exponent >= 0) return scaled << BigInt(exponent);
+  const shift = BigInt(-exponent);
+  const whole = scaled >> shift;
+  const remainder = scaled - (whole << shift);
+  const half = 1n << (shift - 1n);
+  if (remainder > half || (remainder === half && (whole & 1n) === 1n)) return whole + 1n;
+  return whole;
+}
+
+// The C++ num(v, dp): std::fixed with setprecision(dp). "-0" and "-0.00" keep their sign, as ostream does.
+export function fixedText(x: number, dp: number): string {
+  if (Number.isNaN(x)) return "nan";
+  const negative = x < 0 || Object.is(x, -0);
+  const magnitude = Math.abs(x);
+  if (magnitude === Number.POSITIVE_INFINITY) return negative ? "-inf" : "inf";
+  const digits = scaledRound(magnitude, dp).toString();
+  const sign = negative ? "-" : "";
+  if (dp === 0) return sign + digits;
+  const padded = digits.padStart(dp + 1, "0");
+  return sign + padded.slice(0, padded.length - dp) + "." + padded.slice(padded.length - dp);
+}
+
+// ---- nights ------------------------------------------------------------------------------------
+
+// a * b + c with one rounding, as the C++ compiler fuses it. Exact: each double is read as an exact
+// integer times a power of two, the sum is formed exactly as a BigInt, and it is rounded once to the
+// nearest double (an exact tie goes to the even digit). Exact for finite inputs whose result is a
+// normal double, which covers the money and share sums here.
+export function fusedMulAdd(a: number, b: number, c: number): number {
+  if (!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(c)) return a * b + c;
+  const pa = decompose(a);
+  const pb = decompose(b);
+  const pc = decompose(c);
+  const pe = pa.e + pb.e;
+  const e0 = Math.min(pe, pc.e);
+  const sum = ((pa.m * pb.m) << BigInt(pe - e0)) + (pc.m << BigInt(pc.e - e0));
+  return roundToDouble(sum, e0);
+}
+
+// x = m * 2^e exactly, for a finite double x.
+function decompose(x: number): { m: bigint; e: number } {
+  float64View.setFloat64(0, x);
+  const bits = float64View.getBigUint64(0);
+  const negative = bits >> 63n === 1n;
+  const biased = Number((bits >> 52n) & 0x7ffn);
+  const frac = bits & ((1n << 52n) - 1n);
+  const mag = biased === 0 ? frac : frac | (1n << 52n);
+  const e = biased === 0 ? -1074 : biased - 1075;
+  return { m: negative ? -mag : mag, e };
+}
+
+// m * 2^e rounded to the nearest double, an exact tie to the even one.
+function roundToDouble(m: bigint, e: number): number {
+  if (m === 0n) return 0;
+  let a = m < 0n ? -m : m;
+  let exp = e;
+  const bitLength = a.toString(2).length;
+  if (bitLength > 53) {
+    const shift = BigInt(bitLength - 53);
+    let q = a >> shift;
+    const rem = a - (q << shift);
+    const half = 1n << (shift - 1n);
+    if (rem > half || (rem === half && (q & 1n) === 1n)) q += 1n;
+    a = q;
+    exp += bitLength - 53;
+  }
+  const v = Number(a) * 2 ** exp;
+  return m < 0n ? -v : v;
+}

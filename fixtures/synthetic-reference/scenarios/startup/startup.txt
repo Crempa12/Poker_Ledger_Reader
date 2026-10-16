@@ -1,14 +1,14 @@
 Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
 WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
 WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
-Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+Loaded 14 games (3 folders), 2 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
 WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
 WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
          They count for the name on the seat until you check them in menu 20.
 
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker off | pinned payments 2                                 |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP

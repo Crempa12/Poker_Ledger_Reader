@@ -1,0 +1,1581 @@
+entry,at,order
+-- ending hand #70 --,2026-10-03T17:46:04.000Z,1580
+"""Sable @ FAKEedge03"" collected 20.11 from pot with High Card, Q's (combination: Q♥, J♣, 9♠, 7♥, K♦)",2026-10-03T17:46:04.000Z,1579
+"""Pell @ FAKEedge10"" shows a T♠, 7♥.",2026-10-03T17:46:03.000Z,1578
+"""Pell @ FAKEedge10"" bets 0.50",2026-10-03T17:46:03.000Z,1577
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:46:03.000Z,1576
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:46:02.000Z,1575
+"River: [K♠, Q♦, 6♦, 4♠] [K♣]",2026-10-03T17:46:02.000Z,1574
+"""Pell @ FAKEedge10"" calls 2.00",2026-10-03T17:46:02.000Z,1573
+"""Sable @ FAKEedge03"" bets 2.00",2026-10-03T17:46:01.000Z,1572
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:46:01.000Z,1571
+"Turn: [K♠, Q♦, 6♦] [4♠]",2026-10-03T17:46:01.000Z,1570
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:46:00.000Z,1569
+"""Pell @ FAKEedge10"" calls 2.75",2026-10-03T17:46:00.000Z,1568
+"""Sable @ FAKEedge03"" calls 2.75",2026-10-03T17:46:00.000Z,1567
+"""Thorn @ FAKEedge04"" bets 2.75",2026-10-03T17:45:59.000Z,1566
+"Flop: [K♠, Q♦, 6♦]",2026-10-03T17:45:59.000Z,1565
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T17:45:59.000Z,1564
+"""Ondine @ FAKEedge09"" calls 0.50 (bomb pot bet)",2026-10-03T17:45:58.000Z,1563
+"""Pell @ FAKEedge10"" calls 0.50 (bomb pot bet)",2026-10-03T17:45:58.000Z,1562
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T17:45:58.000Z,1561
+"Your hand is 8♠, K♠",2026-10-03T17:45:57.000Z,1560
+"Player stacks: #5 ""Sable @ FAKEedge03"" (120.69) | #7 ""Pell @ FAKEedge10"" (85.73) | #8 ""Ondine @ FAKEedge09"" (44.11) | #9 ""Thorn @ FAKEedge04"" (113.85)",2026-10-03T17:45:57.000Z,1559
+"-- starting hand #70 (id: FAKEh00070) (dealer: ""Ondine @ FAKEedge09"")",2026-10-03T17:45:57.000Z,1558
+-- ending hand #69 --,2026-10-03T17:45:27.000Z,1557
+"""Thorn @ FAKEedge04"" collected 30.31 from pot with High Card, Q's (combination: 8♥, A♠, 8♦, K♠, J♠)",2026-10-03T17:45:27.000Z,1556
+"""Pell @ FAKEedge10"" collected 30.31 from pot with Three of a Kind, 7's (combination: A♦, A♠, T♣, 4♦, 3♣)",2026-10-03T17:45:27.000Z,1555
+"""Pell @ FAKEedge10"" shows a 9♦, 7♣.",2026-10-03T17:45:26.000Z,1554
+"""Thorn @ FAKEedge04"" shows a 8♥.",2026-10-03T17:45:26.000Z,1553
+"""Pell @ FAKEedge10"" bets 3.25",2026-10-03T17:45:26.000Z,1552
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:45:25.000Z,1551
+"River: [2♦, 9♦, 5♠, J♦] [K♥]",2026-10-03T17:45:25.000Z,1550
+"""Pell @ FAKEedge10"" calls 0.25",2026-10-03T17:45:25.000Z,1549
+"""Thorn @ FAKEedge04"" bets 0.25",2026-10-03T17:45:24.000Z,1548
+"Turn: [2♦, 9♦, 5♠] [J♦]",2026-10-03T17:45:24.000Z,1547
+"""Pell @ FAKEedge10"" raises to 0.50",2026-10-03T17:45:24.000Z,1546
+"""Thorn @ FAKEedge04"" bets 0.25",2026-10-03T17:45:23.000Z,1545
+"Flop: [2♦, 9♦, 5♠]",2026-10-03T17:45:23.000Z,1544
+All players in hand choose to run it twice,2026-10-03T17:45:23.000Z,1543
+"""Pell @ FAKEedge10"" calls 1.50",2026-10-03T17:45:22.000Z,1542
+"""Thorn @ FAKEedge04"" raises to 1.50",2026-10-03T17:45:22.000Z,1541
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:45:22.000Z,1540
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:45:21.000Z,1539
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T17:45:21.000Z,1538
+"""Thorn @ FAKEedge04"" posts a small blind of 0.25",2026-10-03T17:45:21.000Z,1537
+"Your hand is 5♦, Q♥",2026-10-03T17:45:20.000Z,1536
+"Player stacks: #1 ""Thorn @ FAKEedge04"" (135.28) | #3 ""Pell @ FAKEedge10"" (23.24) | #6 ""Sable @ FAKEedge03"" (58.51) | #7 ""Ondine @ FAKEedge09"" (133.52)",2026-10-03T17:45:20.000Z,1535
+-- starting hand #69 (id: FAKEh00069),2026-10-03T17:45:20.000Z,1534
+"""Thorn @ FAKEedge04"" shows a J♥, 4♠.",2026-10-03T17:44:36.000Z,1533
+-- ending hand #68 --,2026-10-03T17:44:35.000Z,1532
+"""Sable @ FAKEedge03"" collected 24.09 from pot",2026-10-03T17:44:35.000Z,1531
+"""Pell @ FAKEedge10"" shows a 7♠, 5♣.",2026-10-03T17:44:35.000Z,1530
+"""Sable @ FAKEedge03"" shows a 5♠, 5♣.",2026-10-03T17:44:34.000Z,1529
+"""Thorn @ FAKEedge04"" bets 1.25",2026-10-03T17:44:34.000Z,1528
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:44:34.000Z,1527
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:44:33.000Z,1526
+"River: [T♦, 2♠, 3♠, 4♠] [2♥]",2026-10-03T17:44:33.000Z,1525
+"""Thorn @ FAKEedge04"" calls 3.00",2026-10-03T17:44:33.000Z,1524
+"""Pell @ FAKEedge10"" bets 3.00",2026-10-03T17:44:32.000Z,1523
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:44:32.000Z,1522
+"Turn: [T♦, 2♠, 3♠] [4♠]",2026-10-03T17:44:32.000Z,1521
+"""Thorn @ FAKEedge04"" raises to 1.00",2026-10-03T17:44:31.000Z,1520
+"""Pell @ FAKEedge10"" raises to 0.50",2026-10-03T17:44:31.000Z,1519
+"""Sable @ FAKEedge03"" bets 0.25",2026-10-03T17:44:31.000Z,1518
+"Flop: [T♦, 2♠, 3♠]",2026-10-03T17:44:30.000Z,1517
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:44:30.000Z,1516
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T17:44:30.000Z,1515
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T17:44:29.000Z,1514
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:44:29.000Z,1513
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T17:44:29.000Z,1512
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T17:44:28.000Z,1511
+"Player stacks: #1 ""Sable @ FAKEedge03"" (144.61) | #5 ""Pell @ FAKEedge10"" (54.76) | #7 ""Ondine @ FAKEedge09"" (13.84) | #9 ""Thorn @ FAKEedge04"" (56.40)",2026-10-03T17:44:28.000Z,1510
+"-- starting hand #68 (id: FAKEh00068) (dealer: ""Thorn @ FAKEedge04"")",2026-10-03T17:44:28.000Z,1509
+-- ending hand #67 --,2026-10-03T17:43:40.000Z,1508
+"""Ondine @ FAKEedge09"" collected 5.80 from pot",2026-10-03T17:43:40.000Z,1507
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:43:40.000Z,1506
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:43:39.000Z,1505
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:43:39.000Z,1504
+"""Ondine @ FAKEedge09"" posts a big blind of 0.50",2026-10-03T17:43:39.000Z,1503
+"""Thorn @ FAKEedge04"" posts a small blind of 0.25",2026-10-03T17:43:38.000Z,1502
+"Player stacks: #2 ""Sable @ FAKEedge03"" (58.57) | #4 ""Thorn @ FAKEedge04"" (130.52) | #6 ""Ondine @ FAKEedge09"" (12.86) | #9 ""Pell @ FAKEedge10"" (98.85)",2026-10-03T17:43:38.000Z,1501
+"-- starting hand #67 (id: FAKEh00067) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T17:43:38.000Z,1500
+-- ending hand #66 --,2026-10-03T17:43:00.000Z,1499
+"""Pell @ FAKEedge10"" collected 41.53 from pot with High Card, Q's (combination: 3♥, 5♣, 8♥, 3♦, T♠)",2026-10-03T17:43:00.000Z,1498
+"""Pell @ FAKEedge10"" shows a 8♠, 2♥.",2026-10-03T17:43:00.000Z,1497
+"""Thorn @ FAKEedge04"" shows a 3♠, 6♦.",2026-10-03T17:42:59.000Z,1496
+"""Sable @ FAKEedge03"" shows a K♥, A♠.",2026-10-03T17:42:59.000Z,1495
+"""Ondine @ FAKEedge09"" shows a J♠.",2026-10-03T17:42:59.000Z,1494
+"""Sable @ FAKEedge03"" calls 3.25",2026-10-03T17:42:58.000Z,1493
+"""Ondine @ FAKEedge09"" calls 3.25",2026-10-03T17:42:58.000Z,1492
+"""Pell @ FAKEedge10"" calls 3.25",2026-10-03T17:42:58.000Z,1491
+"""Thorn @ FAKEedge04"" bets 3.25",2026-10-03T17:42:57.000Z,1490
+"River: [Q♦, 6♥, K♠, 4♥] [Q♣]",2026-10-03T17:42:57.000Z,1489
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:42:57.000Z,1488
+"""Ondine @ FAKEedge09"" checks",2026-10-03T17:42:56.000Z,1487
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:42:56.000Z,1486
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:42:56.000Z,1485
+"Turn: [Q♦, 6♥, K♠] [4♥]",2026-10-03T17:42:55.000Z,1484
+"""Sable @ FAKEedge03"" calls 3.75",2026-10-03T17:42:55.000Z,1483
+"""Ondine @ FAKEedge09"" bets 3.75",2026-10-03T17:42:55.000Z,1482
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:42:54.000Z,1481
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:42:54.000Z,1480
+"Flop: [Q♦, 6♥, K♠]",2026-10-03T17:42:54.000Z,1479
+"""Pell @ FAKEedge10"" calls 4.50",2026-10-03T17:42:53.000Z,1478
+"""Thorn @ FAKEedge04"" raises to 4.50 and go all in",2026-10-03T17:42:53.000Z,1477
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T17:42:53.000Z,1476
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T17:42:52.000Z,1475
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T17:42:52.000Z,1474
+"""Thorn @ FAKEedge04"" posts a small blind of 0.25",2026-10-03T17:42:52.000Z,1473
+"Your hand is 7♣, 6♦",2026-10-03T17:42:51.000Z,1472
+"Player stacks: #1 ""Ondine @ FAKEedge09"" (87.07) | #4 ""Sable @ FAKEedge03"" (118.82) | #5 ""Thorn @ FAKEedge04"" (80.71) | #8 ""Pell @ FAKEedge10"" (127.02)",2026-10-03T17:42:51.000Z,1471
+"-- starting hand #66 (id: FAKEh00066) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T17:42:51.000Z,1470
+-- ending hand #65 --,2026-10-03T17:41:55.000Z,1469
+"""Sable @ FAKEedge03"" collected 39.35 from pot with Full House, Q's full of 3's (combination: K♣, 4♠, 6♣, 7♥, 4♥)",2026-10-03T17:41:55.000Z,1468
+"""Pell @ FAKEedge10"" shows a 2♠, 3♥.",2026-10-03T17:41:55.000Z,1467
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:41:54.000Z,1466
+"""Sable @ FAKEedge03"" bets 4.00",2026-10-03T17:41:54.000Z,1465
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:41:54.000Z,1464
+"River: [7♣, 3♦, K♣, 4♦] [Q♣]",2026-10-03T17:41:53.000Z,1463
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:41:53.000Z,1462
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:41:53.000Z,1461
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:41:52.000Z,1460
+"Turn: [7♣, 3♦, K♣] [4♦]",2026-10-03T17:41:52.000Z,1459
+"""Thorn @ FAKEedge04"" calls 2.50",2026-10-03T17:41:52.000Z,1458
+"""Sable @ FAKEedge03"" raises to 2.50",2026-10-03T17:41:51.000Z,1457
+"""Pell @ FAKEedge10"" bets 1.25",2026-10-03T17:41:51.000Z,1456
+"Flop: [7♣, 3♦, K♣]",2026-10-03T17:41:51.000Z,1455
+"""Sable @ FAKEedge03"" calls 1.50",2026-10-03T17:41:50.000Z,1454
+"""Pell @ FAKEedge10"" raises to 1.50",2026-10-03T17:41:50.000Z,1453
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:41:50.000Z,1452
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T17:41:49.000Z,1451
+"""Sable @ FAKEedge03"" posts a big blind of 0.50",2026-10-03T17:41:49.000Z,1450
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T17:41:49.000Z,1449
+"Your hand is 3♠, J♣",2026-10-03T17:41:48.000Z,1448
+"Player stacks: #1 ""Thorn @ FAKEedge04"" (38.04) | #2 ""Ondine @ FAKEedge09"" (105.19) | #3 ""Pell @ FAKEedge10"" (97.80) | #7 ""Sable @ FAKEedge03"" (88.23)",2026-10-03T17:41:48.000Z,1447
+-- starting hand #65 (id: FAKEh00065),2026-10-03T17:41:48.000Z,1446
+-- ending hand #64 --,2026-10-03T17:41:24.000Z,1445
+"""Ondine @ FAKEedge09"" collected 6.04 from pot with High Card, Q's (combination: T♠, T♣, 8♦, 3♥, T♦)",2026-10-03T17:41:24.000Z,1444
+"""Pell @ FAKEedge10"" collected 6.04 from pot with High Card, Q's (combination: 3♦, Q♣, 6♠, 6♣, 4♦)",2026-10-03T17:41:23.000Z,1443
+"""Ondine @ FAKEedge09"" shows a A♥.",2026-10-03T17:41:23.000Z,1442
+"""Pell @ FAKEedge10"" shows a 2♥.",2026-10-03T17:41:23.000Z,1441
+"""Ondine @ FAKEedge09"" checks",2026-10-03T17:41:22.000Z,1440
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:41:22.000Z,1439
+"River: [4♥, 5♥, Q♥, 7♦] [2♣]",2026-10-03T17:41:22.000Z,1438
+"""Ondine @ FAKEedge09"" checks",2026-10-03T17:41:21.000Z,1437
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:41:21.000Z,1436
+"Turn: [4♥, 5♥, Q♥] [7♦]",2026-10-03T17:41:21.000Z,1435
+"""Ondine @ FAKEedge09"" calls 2.50",2026-10-03T17:41:20.000Z,1434
+"""Pell @ FAKEedge10"" bets 2.50",2026-10-03T17:41:20.000Z,1433
+"Flop: [4♥, 5♥, Q♥]",2026-10-03T17:41:20.000Z,1432
+All players in hand choose to run it twice,2026-10-03T17:41:19.000Z,1431
+"""Pell @ FAKEedge10"" calls 1.00",2026-10-03T17:41:19.000Z,1430
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:41:19.000Z,1429
+"""Ondine @ FAKEedge09"" raises to 1.00",2026-10-03T17:41:18.000Z,1428
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:41:18.000Z,1427
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T17:41:18.000Z,1426
+"""Thorn @ FAKEedge04"" posts a small blind of 0.25",2026-10-03T17:41:17.000Z,1425
+"Player stacks: #1 ""Pell @ FAKEedge10"" (148.18) | #2 ""Sable @ FAKEedge03"" (39.97) | #3 ""Ondine @ FAKEedge09"" (32.83) | #8 ""Thorn @ FAKEedge04"" (112.26)",2026-10-03T17:41:17.000Z,1424
+"-- starting hand #64 (id: FAKEh00064) (dealer: ""Ondine @ FAKEedge09"")",2026-10-03T17:41:17.000Z,1423
+-- ending hand #63 --,2026-10-03T17:40:00.000Z,1422
+"""Pell @ FAKEedge10"" collected 8.75 from pot",2026-10-03T17:40:00.000Z,1421
+"Uncalled bet of 0.50 returned to ""Pell @ FAKEedge10""",2026-10-03T17:40:00.000Z,1420
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:39:59.000Z,1419
+"""Pell @ FAKEedge10"" bets 1.00",2026-10-03T17:39:59.000Z,1418
+"Turn: [5♥, K♥, K♠] [T♦]",2026-10-03T17:39:59.000Z,1417
+"""Sable @ FAKEedge03"" raises to 2.00",2026-10-03T17:39:58.000Z,1416
+"""Pell @ FAKEedge10"" bets 1.00",2026-10-03T17:39:58.000Z,1415
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:39:58.000Z,1414
+"Flop: [5♥, K♥, K♠]",2026-10-03T17:39:57.000Z,1413
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:39:57.000Z,1412
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T17:39:57.000Z,1411
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T17:39:56.000Z,1410
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:39:56.000Z,1409
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T17:39:56.000Z,1408
+"""Thorn @ FAKEedge04"" posts a small blind of 0.25",2026-10-03T17:39:55.000Z,1407
+"Player stacks: #1 ""Thorn @ FAKEedge04"" (77.86) | #2 ""Pell @ FAKEedge10"" (108.64) | #6 ""Ondine @ FAKEedge09"" (26.28) | #7 ""Sable @ FAKEedge03"" (100.49)",2026-10-03T17:39:55.000Z,1406
+"-- starting hand #63 (id: FAKEh00063) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T17:39:55.000Z,1405
+-- ending hand #62 --,2026-10-03T17:38:47.000Z,1404
+"""Thorn @ FAKEedge04"" collected 42.11 from pot",2026-10-03T17:38:46.000Z,1403
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:38:46.000Z,1402
+"Flop: [7♠, 8♠, 3♣]",2026-10-03T17:38:46.000Z,1401
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:38:45.000Z,1400
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T17:38:45.000Z,1399
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:38:45.000Z,1398
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:38:44.000Z,1397
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T17:38:44.000Z,1396
+"""Ondine @ FAKEedge09"" posts a small blind of 0.25",2026-10-03T17:38:44.000Z,1395
+"Your hand is T♠, 6♥",2026-10-03T17:38:43.000Z,1394
+"Player stacks: #2 ""Pell @ FAKEedge10"" (120.36) | #3 ""Ondine @ FAKEedge09"" (128.65) | #6 ""Thorn @ FAKEedge04"" (108.72) | #7 ""Sable @ FAKEedge03"" (82.97)",2026-10-03T17:38:43.000Z,1393
+"-- starting hand #62 (id: FAKEh00062) (dealer: ""Pell @ FAKEedge10"")",2026-10-03T17:38:43.000Z,1392
+"The admin ""Oberon @ FAKEedge08"" enqueued the removal of the player ""Ondine @ FAKEedge09"".",2026-10-03T17:38:24.000Z,1391
+-- ending hand #61 --,2026-10-03T17:38:24.000Z,1390
+"""Rune @ FAKEedge02"" collected 8.34 from pot with Full House, Q's full of 3's (combination: 8♣, 3♣, 4♣, 2♠, Q♦)",2026-10-03T17:38:23.000Z,1389
+"""Pell @ FAKEedge10"" shows a J♦, 5♠.",2026-10-03T17:38:23.000Z,1388
+"""Sable @ FAKEedge03"" shows a 5♥, 7♠.",2026-10-03T17:38:23.000Z,1387
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:38:22.000Z,1386
+"""Rune @ FAKEedge02"" raises to 8.00",2026-10-03T17:38:22.000Z,1385
+"""Pell @ FAKEedge10"" bets 4.00",2026-10-03T17:38:22.000Z,1384
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:38:21.000Z,1383
+"River: [K♥, 4♣, 6♣, 9♦] [2♦]",2026-10-03T17:38:21.000Z,1382
+"""Thorn @ FAKEedge04"" calls 3.50",2026-10-03T17:38:21.000Z,1381
+"""Rune @ FAKEedge02"" calls 3.50",2026-10-03T17:38:20.000Z,1380
+"""Pell @ FAKEedge10"" bets 3.50",2026-10-03T17:38:20.000Z,1379
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:38:20.000Z,1378
+"Turn: [K♥, 4♣, 6♣] [9♦]",2026-10-03T17:38:19.000Z,1377
+"""Thorn @ FAKEedge04"" raises to 5.00",2026-10-03T17:38:19.000Z,1376
+"""Rune @ FAKEedge02"" calls 2.50",2026-10-03T17:38:19.000Z,1375
+"""Pell @ FAKEedge10"" bets 2.50",2026-10-03T17:38:18.000Z,1374
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:38:18.000Z,1373
+"Flop: [K♥, 4♣, 6♣]",2026-10-03T17:38:18.000Z,1372
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:38:17.000Z,1371
+"""Sable @ FAKEedge03"" calls 2.50",2026-10-03T17:38:17.000Z,1370
+"""Thorn @ FAKEedge04"" calls 2.50",2026-10-03T17:38:17.000Z,1369
+"""Rune @ FAKEedge02"" calls 2.50",2026-10-03T17:38:16.000Z,1368
+"""Pell @ FAKEedge10"" raises to 2.50 and go all in",2026-10-03T17:38:16.000Z,1367
+"""Ondine @ FAKEedge09"" posts a big blind of 0.50",2026-10-03T17:38:16.000Z,1366
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T17:38:15.000Z,1365
+"Player stacks: #1 ""Rune @ FAKEedge02"" (120.20) | #2 ""Thorn @ FAKEedge04"" (54.55) | #3 ""Sable @ FAKEedge03"" (131.31) | #8 ""Ondine @ FAKEedge09"" (30.54) | #9 ""Pell @ FAKEedge10"" (139.22)",2026-10-03T17:38:15.000Z,1364
+"-- starting hand #61 (id: FAKEh00061) (dealer: ""Thorn @ FAKEedge04"")",2026-10-03T17:38:15.000Z,1363
+-- ending hand #60 --,2026-10-03T17:23:26.000Z,1362
+"""Thorn @ FAKEedge04"" collected 27.23 from pot",2026-10-03T17:23:26.000Z,1361
+"""Rune @ FAKEedge02"" shows a A♠, 6♦.",2026-10-03T17:23:26.000Z,1360
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:23:25.000Z,1359
+"""Rune @ FAKEedge02"" bets 1.25",2026-10-03T17:23:25.000Z,1358
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:23:25.000Z,1357
+"River: [5♠, A♠, 7♦, 8♦] [A♦]",2026-10-03T17:23:24.000Z,1356
+"""Pell @ FAKEedge10"" bets 3.25",2026-10-03T17:23:24.000Z,1355
+"""Rune @ FAKEedge02"" checks",2026-10-03T17:23:24.000Z,1354
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:23:23.000Z,1353
+"Turn: [5♠, A♠, 7♦] [8♦]",2026-10-03T17:23:23.000Z,1352
+"""Pell @ FAKEedge10"" calls 1.75",2026-10-03T17:23:23.000Z,1351
+"""Rune @ FAKEedge02"" calls 1.75",2026-10-03T17:23:22.000Z,1350
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:23:22.000Z,1349
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:23:22.000Z,1348
+"""Thorn @ FAKEedge04"" bets 1.75",2026-10-03T17:23:21.000Z,1347
+"Flop: [5♠, A♠, 7♦]",2026-10-03T17:23:21.000Z,1346
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T17:23:21.000Z,1345
+"""Ondine @ FAKEedge09"" calls 0.50 (bomb pot bet)",2026-10-03T17:23:20.000Z,1344
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T17:23:20.000Z,1343
+"""Pell @ FAKEedge10"" calls 0.50 (bomb pot bet)",2026-10-03T17:23:20.000Z,1342
+"""Rune @ FAKEedge02"" calls 0.50 (bomb pot bet)",2026-10-03T17:23:19.000Z,1341
+"Player stacks: #3 ""Rune @ FAKEedge02"" (139.93) | #4 ""Pell @ FAKEedge10"" (14.79) | #6 ""Thorn @ FAKEedge04"" (98.17) | #9 ""Ondine @ FAKEedge09"" (28.68) | #10 ""Sable @ FAKEedge03"" (89.62)",2026-10-03T17:23:19.000Z,1340
+"-- starting hand #60 (id: FAKEh00060) (dealer: ""Pell @ FAKEedge10"")",2026-10-03T17:23:19.000Z,1339
+"""Thorn @ FAKEedge04"" paid 1.00 for the 7-2 bounty to ""Ondine @ FAKEedge09""",2026-10-03T17:22:51.000Z,1338
+-- ending hand #59 --,2026-10-03T17:22:51.000Z,1337
+"""Pell @ FAKEedge10"" collected 13.03 from pot",2026-10-03T17:22:51.000Z,1336
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:22:50.000Z,1335
+"""Pell @ FAKEedge10"" bets 1.00",2026-10-03T17:22:50.000Z,1334
+"River: [Q♥, 8♥, K♥, 2♣] [K♦]",2026-10-03T17:22:50.000Z,1333
+"""Sable @ FAKEedge03"" calls 0.25",2026-10-03T17:22:49.000Z,1332
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:22:49.000Z,1331
+"""Rune @ FAKEedge02"" folds",2026-10-03T17:22:49.000Z,1330
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:22:48.000Z,1329
+"""Pell @ FAKEedge10"" bets 0.25",2026-10-03T17:22:48.000Z,1328
+"Turn: [Q♥, 8♥, K♥] [2♣]",2026-10-03T17:22:48.000Z,1327
+"""Sable @ FAKEedge03"" raises to 11.00",2026-10-03T17:22:47.000Z,1326
+"""Thorn @ FAKEedge04"" raises to 5.50",2026-10-03T17:22:47.000Z,1325
+"""Rune @ FAKEedge02"" bets 2.75",2026-10-03T17:22:47.000Z,1324
+"""Ondine @ FAKEedge09"" checks",2026-10-03T17:22:46.000Z,1323
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:22:46.000Z,1322
+"Flop: [Q♥, 8♥, K♥]",2026-10-03T17:22:46.000Z,1321
+"""Ondine @ FAKEedge09"" calls 2.50",2026-10-03T17:22:45.000Z,1320
+"""Pell @ FAKEedge10"" calls 2.50",2026-10-03T17:22:45.000Z,1319
+"""Sable @ FAKEedge03"" calls 2.50",2026-10-03T17:22:45.000Z,1318
+"""Thorn @ FAKEedge04"" raises to 2.50",2026-10-03T17:22:44.000Z,1317
+"""Rune @ FAKEedge02"" raises to 1.50 and go all in",2026-10-03T17:22:44.000Z,1316
+"""Ondine @ FAKEedge09"" posts a big blind of 0.50",2026-10-03T17:22:44.000Z,1315
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T17:22:43.000Z,1314
+"Player stacks: #2 ""Rune @ FAKEedge02"" (65.50) | #3 ""Thorn @ FAKEedge04"" (109.00) | #6 ""Sable @ FAKEedge03"" (102.76) | #7 ""Pell @ FAKEedge10"" (49.92) | #8 ""Ondine @ FAKEedge09"" (133.89)",2026-10-03T17:22:43.000Z,1313
+-- starting hand #59 (id: FAKEh00059),2026-10-03T17:22:43.000Z,1312
+"""Sable @ FAKEedge03"" shows a A♠, 9♣.",2026-10-03T17:21:34.000Z,1311
+-- ending hand #58 --,2026-10-03T17:21:33.000Z,1310
+"""Rune @ FAKEedge02"" collected 4.99 from pot with Two Pair, A's and 8's (combination: 6♠, 6♥, 6♦, T♣, 6♣)",2026-10-03T17:21:33.000Z,1309
+"""Rune @ FAKEedge02"" shows a 7♦, 6♦.",2026-10-03T17:21:33.000Z,1308
+"""Thorn @ FAKEedge04"" shows a 3♣.",2026-10-03T17:21:32.000Z,1307
+"""Thorn @ FAKEedge04"" calls 1.25",2026-10-03T17:21:32.000Z,1306
+"""Rune @ FAKEedge02"" bets 1.25",2026-10-03T17:21:32.000Z,1305
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:21:31.000Z,1304
+"River: [7♠, 8♥, J♠, K♣] [4♥]",2026-10-03T17:21:31.000Z,1303
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:21:31.000Z,1302
+"""Rune @ FAKEedge02"" checks",2026-10-03T17:21:30.000Z,1301
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:21:30.000Z,1300
+"Turn: [7♠, 8♥, J♠] [K♣]",2026-10-03T17:21:30.000Z,1299
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:21:29.000Z,1298
+"""Rune @ FAKEedge02"" checks",2026-10-03T17:21:29.000Z,1297
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:21:29.000Z,1296
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:21:28.000Z,1295
+"Flop: [7♠, 8♥, J♠]",2026-10-03T17:21:28.000Z,1294
+"""Ondine @ FAKEedge09"" calls 1.50",2026-10-03T17:21:28.000Z,1293
+"""Sable @ FAKEedge03"" raises to 1.50 and go all in",2026-10-03T17:21:27.000Z,1292
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:21:27.000Z,1291
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T17:21:27.000Z,1290
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T17:21:26.000Z,1289
+"""Ondine @ FAKEedge09"" posts a big blind of 0.50",2026-10-03T17:21:26.000Z,1288
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T17:21:26.000Z,1287
+"Your hand is 5♠, 8♠",2026-10-03T17:21:25.000Z,1286
+"Player stacks: #3 ""Thorn @ FAKEedge04"" (23.95) | #4 ""Pell @ FAKEedge10"" (36.18) | #5 ""Sable @ FAKEedge03"" (115.84) | #6 ""Ondine @ FAKEedge09"" (146.56) | #8 ""Rune @ FAKEedge02"" (61.46)",2026-10-03T17:21:25.000Z,1285
+-- starting hand #58 (id: FAKEh00058),2026-10-03T17:21:25.000Z,1284
+-- ending hand #57 --,2026-10-03T17:20:09.000Z,1283
+"""Thorn @ FAKEedge04"" collected 11.50 from pot",2026-10-03T17:20:09.000Z,1282
+"""Thorn @ FAKEedge04"" collected 11.50 from pot",2026-10-03T17:20:08.000Z,1281
+"Uncalled bet of 0.50 returned to ""Thorn @ FAKEedge04""",2026-10-03T17:20:08.000Z,1280
+"""Rune @ FAKEedge02"" folds",2026-10-03T17:20:08.000Z,1279
+"""Thorn @ FAKEedge04"" bets 2.25",2026-10-03T17:20:07.000Z,1278
+"River: [2♣, 3♣, 4♥, 2♥] [6♠]",2026-10-03T17:20:07.000Z,1277
+"""Rune @ FAKEedge02"" bets 3.25",2026-10-03T17:20:07.000Z,1276
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:20:06.000Z,1275
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:20:06.000Z,1274
+"Turn: [2♣, 3♣, 4♥] [2♥]",2026-10-03T17:20:06.000Z,1273
+"""Rune @ FAKEedge02"" calls 3.50",2026-10-03T17:20:05.000Z,1272
+"""Sable @ FAKEedge03"" raises to 3.50",2026-10-03T17:20:05.000Z,1271
+"""Thorn @ FAKEedge04"" bets 1.75",2026-10-03T17:20:05.000Z,1270
+"Flop: [2♣, 3♣, 4♥]",2026-10-03T17:20:04.000Z,1269
+All players in hand choose to run it twice,2026-10-03T17:20:04.000Z,1268
+"""Thorn @ FAKEedge04"" raises to 2.00 and go all in",2026-10-03T17:20:04.000Z,1267
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:20:03.000Z,1266
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:20:03.000Z,1265
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T17:20:03.000Z,1264
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T17:20:02.000Z,1263
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T17:20:02.000Z,1262
+"""Ondine @ FAKEedge09"" posts a small blind of 0.25",2026-10-03T17:20:02.000Z,1261
+"Your hand is T♦, 2♠",2026-10-03T17:20:01.000Z,1260
+"Player stacks: #3 ""Pell @ FAKEedge10"" (25.18) | #6 ""Ondine @ FAKEedge09"" (45.07) | #7 ""Thorn @ FAKEedge04"" (34.53) | #8 ""Sable @ FAKEedge03"" (98.62) | #9 ""Rune @ FAKEedge02"" (69.37)",2026-10-03T17:20:01.000Z,1259
+"-- starting hand #57 (id: FAKEh00057) (dealer: ""Pell @ FAKEedge10"")",2026-10-03T17:20:01.000Z,1258
+-- ending hand #56 --,2026-10-03T17:18:42.000Z,1257
+"""Sable @ FAKEedge03"" collected 30.73 from pot with High Card, Q's (combination: 4♠, 4♣, 4♦, 9♣, 8♦)",2026-10-03T17:18:42.000Z,1256
+"""Rune @ FAKEedge02"" shows a 4♦, 8♥.",2026-10-03T17:18:42.000Z,1255
+"""Sable @ FAKEedge03"" bets 3.75",2026-10-03T17:18:41.000Z,1254
+"""Rune @ FAKEedge02"" checks",2026-10-03T17:18:41.000Z,1253
+"River: [A♦, 4♥, 2♠, 2♣] [T♦]",2026-10-03T17:18:41.000Z,1252
+"""Sable @ FAKEedge03"" calls 3.00",2026-10-03T17:18:40.000Z,1251
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:18:40.000Z,1250
+"""Rune @ FAKEedge02"" bets 3.00",2026-10-03T17:18:40.000Z,1249
+"Turn: [A♦, 4♥, 2♠] [2♣]",2026-10-03T17:18:39.000Z,1248
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:18:39.000Z,1247
+"""Ondine @ FAKEedge09"" checks",2026-10-03T17:18:39.000Z,1246
+"""Rune @ FAKEedge02"" checks",2026-10-03T17:18:38.000Z,1245
+"Flop: [A♦, 4♥, 2♠]",2026-10-03T17:18:38.000Z,1244
+"""Rune @ FAKEedge02"" raises to 4.50 and go all in",2026-10-03T17:18:38.000Z,1243
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:18:37.000Z,1242
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T17:18:37.000Z,1241
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:18:37.000Z,1240
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T17:18:36.000Z,1239
+"""Rune @ FAKEedge02"" posts a big blind of 0.50",2026-10-03T17:18:36.000Z,1238
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T17:18:36.000Z,1237
+"Your hand is 9♦, J♣",2026-10-03T17:18:35.000Z,1236
+"Player stacks: #1 ""Pell @ FAKEedge10"" (123.04) | #2 ""Rune @ FAKEedge02"" (116.20) | #5 ""Ondine @ FAKEedge09"" (64.31) | #8 ""Thorn @ FAKEedge04"" (34.47) | #9 ""Sable @ FAKEedge03"" (119.65)",2026-10-03T17:18:35.000Z,1235
+-- starting hand #56 (id: FAKEh00056),2026-10-03T17:18:35.000Z,1234
+-- ending hand #55 --,2026-10-03T17:17:34.000Z,1233
+"""Pell @ FAKEedge10"" collected 30.06 from pot",2026-10-03T17:17:34.000Z,1232
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:17:33.000Z,1231
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:17:33.000Z,1230
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:17:33.000Z,1229
+"""Rune @ FAKEedge02"" folds",2026-10-03T17:17:32.000Z,1228
+"""Pell @ FAKEedge10"" raises to 2.50",2026-10-03T17:17:32.000Z,1227
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T17:17:32.000Z,1226
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T17:17:31.000Z,1225
+"Player stacks: #1 ""Ondine @ FAKEedge09"" (58.48) | #2 ""Sable @ FAKEedge03"" (28.64) | #4 ""Thorn @ FAKEedge04"" (54.98) | #7 ""Pell @ FAKEedge10"" (21.41) | #10 ""Rune @ FAKEedge02"" (13.46)",2026-10-03T17:17:31.000Z,1224
+"-- starting hand #55 (id: FAKEh00055) (dealer: ""Ondine @ FAKEedge09"")",2026-10-03T17:17:31.000Z,1223
+-- ending hand #54 --,2026-10-03T17:16:22.000Z,1222
+"""Pell @ FAKEedge10"" collected 27.59 from pot",2026-10-03T17:16:22.000Z,1221
+"Uncalled bet of 0.50 returned to ""Pell @ FAKEedge10""",2026-10-03T17:16:22.000Z,1220
+"""Rune @ FAKEedge02"" folds",2026-10-03T17:16:21.000Z,1219
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:16:21.000Z,1218
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:16:21.000Z,1217
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:16:20.000Z,1216
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T17:16:20.000Z,1215
+"""Rune @ FAKEedge02"" posts a small blind of 0.25",2026-10-03T17:16:20.000Z,1214
+"Your hand is Q♣, 8♥",2026-10-03T17:16:19.000Z,1213
+"Player stacks: #1 ""Sable @ FAKEedge03"" (52.34) | #2 ""Thorn @ FAKEedge04"" (97.99) | #3 ""Ondine @ FAKEedge09"" (62.29) | #5 ""Rune @ FAKEedge02"" (58.62) | #8 ""Pell @ FAKEedge10"" (10.55)",2026-10-03T17:16:19.000Z,1212
+-- starting hand #54 (id: FAKEh00054),2026-10-03T17:16:19.000Z,1211
+-- ending hand #53 --,2026-10-03T17:15:54.000Z,1210
+"""Thorn @ FAKEedge04"" collected 42.06 from pot",2026-10-03T17:15:54.000Z,1209
+"Uncalled bet of 0.50 returned to ""Thorn @ FAKEedge04""",2026-10-03T17:15:53.000Z,1208
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:15:53.000Z,1207
+"River: [6♣, Q♦, A♣, 4♣] [7♣]",2026-10-03T17:15:53.000Z,1206
+"""Rune @ FAKEedge02"" folds",2026-10-03T17:15:52.000Z,1205
+"""Thorn @ FAKEedge04"" calls 1.25",2026-10-03T17:15:52.000Z,1204
+"""Pell @ FAKEedge10"" bets 1.25",2026-10-03T17:15:52.000Z,1203
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:15:51.000Z,1202
+"Turn: [6♣, Q♦, A♣] [4♣]",2026-10-03T17:15:51.000Z,1201
+"""Rune @ FAKEedge02"" bets 3.00",2026-10-03T17:15:51.000Z,1200
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:15:50.000Z,1199
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:15:50.000Z,1198
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:15:50.000Z,1197
+"Flop: [6♣, Q♦, A♣]",2026-10-03T17:15:49.000Z,1196
+"""Pell @ FAKEedge10"" checks",2026-10-03T17:15:49.000Z,1195
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T17:15:49.000Z,1194
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T17:15:48.000Z,1193
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T17:15:48.000Z,1192
+"""Wick @ FAKEedge05"" folds",2026-10-03T17:15:48.000Z,1191
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:15:47.000Z,1190
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T17:15:47.000Z,1189
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T17:15:47.000Z,1188
+"Your hand is 4♠, 9♦",2026-10-03T17:15:46.000Z,1187
+"Player stacks: #1 ""Thorn @ FAKEedge04"" (31.09) | #2 ""Rune @ FAKEedge02"" (142.17) | #3 ""Sable @ FAKEedge03"" (88.84) | #6 ""Pell @ FAKEedge10"" (109.94) | #8 ""Ondine @ FAKEedge09"" (67.00) | #10 ""Wick @ FAKEedge05"" (106.59)",2026-10-03T17:15:46.000Z,1186
+-- starting hand #53 (id: FAKEh00053),2026-10-03T17:15:46.000Z,1185
+"""Thorn @ FAKEedge04"" shows a 2♠, T♠.",2026-10-03T17:14:43.000Z,1184
+-- ending hand #52 --,2026-10-03T17:14:42.000Z,1183
+"""Wick @ FAKEedge05"" collected 5.19 from pot with Two Pair, A's and 8's (combination: A♥, 5♦, Q♦, T♦, A♦)",2026-10-03T17:14:42.000Z,1182
+"""Thorn @ FAKEedge04"" calls 4.00",2026-10-03T17:14:42.000Z,1181
+"""Wick @ FAKEedge05"" bets 4.00",2026-10-03T17:14:41.000Z,1180
+"River: [8♥, K♦, 2♥, 9♣] [8♣]",2026-10-03T17:14:41.000Z,1179
+"""Thorn @ FAKEedge04"" bets 2.00",2026-10-03T17:14:41.000Z,1178
+"""Wick @ FAKEedge05"" checks",2026-10-03T17:14:40.000Z,1177
+"Turn: [8♥, K♦, 2♥] [9♣]",2026-10-03T17:14:40.000Z,1176
+"""Thorn @ FAKEedge04"" bets 2.25",2026-10-03T17:14:40.000Z,1175
+"""Wick @ FAKEedge05"" checks",2026-10-03T17:14:39.000Z,1174
+"Flop: [8♥, K♦, 2♥]",2026-10-03T17:14:39.000Z,1173
+"""Wick @ FAKEedge05"" checks",2026-10-03T17:14:39.000Z,1172
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:14:38.000Z,1171
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T17:14:38.000Z,1170
+"""Rune @ FAKEedge02"" folds",2026-10-03T17:14:38.000Z,1169
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:14:37.000Z,1168
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:14:37.000Z,1167
+"""Wick @ FAKEedge05"" posts a big blind of 0.50",2026-10-03T17:14:37.000Z,1166
+"""Ondine @ FAKEedge09"" posts a small blind of 0.25",2026-10-03T17:14:36.000Z,1165
+"Player stacks: #1 ""Pell @ FAKEedge10"" (31.36) | #3 ""Sable @ FAKEedge03"" (20.09) | #5 ""Rune @ FAKEedge02"" (61.53) | #6 ""Thorn @ FAKEedge04"" (99.78) | #7 ""Ondine @ FAKEedge09"" (84.25) | #10 ""Wick @ FAKEedge05"" (141.36)",2026-10-03T17:14:36.000Z,1164
+"-- starting hand #52 (id: FAKEh00052) (dealer: ""Thorn @ FAKEedge04"")",2026-10-03T17:14:36.000Z,1163
+-- ending hand #51 --,2026-10-03T17:13:58.000Z,1162
+"""Thorn @ FAKEedge04"" collected 5.83 from pot",2026-10-03T17:13:58.000Z,1161
+"""Wick @ FAKEedge05"" collected 5.83 from pot with Full House, Q's full of 3's (combination: 8♦, 7♠, 7♦, 2♦, 7♣)",2026-10-03T17:13:58.000Z,1160
+"""Wick @ FAKEedge05"" checks",2026-10-03T17:13:57.000Z,1159
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:13:57.000Z,1158
+"River: [J♦, 2♦, A♥, J♠] [7♣]",2026-10-03T17:13:57.000Z,1157
+"""Wick @ FAKEedge05"" checks",2026-10-03T17:13:56.000Z,1156
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:13:56.000Z,1155
+"Turn: [J♦, 2♦, A♥] [J♠]",2026-10-03T17:13:56.000Z,1154
+"""Wick @ FAKEedge05"" checks",2026-10-03T17:13:55.000Z,1153
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:13:55.000Z,1152
+"Flop: [J♦, 2♦, A♥]",2026-10-03T17:13:55.000Z,1151
+All players in hand choose to run it twice,2026-10-03T17:13:54.000Z,1150
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:13:54.000Z,1149
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:13:54.000Z,1148
+"""Wick @ FAKEedge05"" calls 0.50",2026-10-03T17:13:53.000Z,1147
+"""Rune @ FAKEedge02"" folds",2026-10-03T17:13:53.000Z,1146
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:13:53.000Z,1145
+"""Ondine @ FAKEedge09"" folds",2026-10-03T17:13:52.000Z,1144
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T17:13:52.000Z,1143
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T17:13:52.000Z,1142
+"Your hand is 9♦, 5♦",2026-10-03T17:13:51.000Z,1141
+"Player stacks: #2 ""Thorn @ FAKEedge04"" (80.45) | #3 ""Ondine @ FAKEedge09"" (101.73) | #5 ""Sable @ FAKEedge03"" (131.93) | #7 ""Rune @ FAKEedge02"" (41.88) | #8 ""Wick @ FAKEedge05"" (128.90) | #10 ""Pell @ FAKEedge10"" (144.46)",2026-10-03T17:13:51.000Z,1140
+"-- starting hand #51 (id: FAKEh00051) (dealer: ""Wick @ FAKEedge05"")",2026-10-03T17:13:51.000Z,1139
+"""Wick @ FAKEedge05"" paid 1.00 for the 7-2 bounty to ""Rune @ FAKEedge02""",2026-10-03T17:12:40.000Z,1138
+-- ending hand #50 --,2026-10-03T17:12:40.000Z,1137
+"""Ondine @ FAKEedge09"" collected 37.64 from pot",2026-10-03T17:12:39.000Z,1136
+"""Rune @ FAKEedge02"" shows a T♣, J♦.",2026-10-03T17:12:39.000Z,1135
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T17:12:39.000Z,1134
+"""Wick @ FAKEedge05"" folds",2026-10-03T17:12:38.000Z,1133
+"""Rune @ FAKEedge02"" bets 0.50",2026-10-03T17:12:38.000Z,1132
+"River: [2♥, K♥, 8♥, A♣] [3♥]",2026-10-03T17:12:38.000Z,1131
+"""Ondine @ FAKEedge09"" checks",2026-10-03T17:12:37.000Z,1130
+"""Wick @ FAKEedge05"" checks",2026-10-03T17:12:37.000Z,1129
+"""Rune @ FAKEedge02"" checks",2026-10-03T17:12:37.000Z,1128
+"Turn: [2♥, K♥, 8♥] [A♣]",2026-10-03T17:12:36.000Z,1127
+"""Ondine @ FAKEedge09"" calls 6.50",2026-10-03T17:12:36.000Z,1126
+"""Wick @ FAKEedge05"" raises to 6.50",2026-10-03T17:12:36.000Z,1125
+"""Rune @ FAKEedge02"" bets 3.25",2026-10-03T17:12:35.000Z,1124
+"Flop: [2♥, K♥, 8♥]",2026-10-03T17:12:35.000Z,1123
+"""Wick @ FAKEedge05"" checks",2026-10-03T17:12:35.000Z,1122
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T17:12:34.000Z,1121
+"""Thorn @ FAKEedge04"" folds",2026-10-03T17:12:34.000Z,1120
+"""Sable @ FAKEedge03"" folds",2026-10-03T17:12:34.000Z,1119
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T17:12:33.000Z,1118
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:12:33.000Z,1117
+"""Wick @ FAKEedge05"" posts a big blind of 0.50",2026-10-03T17:12:33.000Z,1116
+"""Rune @ FAKEedge02"" posts a small blind of 0.25",2026-10-03T17:12:32.000Z,1115
+"Player stacks: #1 ""Ondine @ FAKEedge09"" (146.42) | #2 ""Sable @ FAKEedge03"" (148.39) | #4 ""Thorn @ FAKEedge04"" (91.97) | #8 ""Rune @ FAKEedge02"" (68.46) | #9 ""Wick @ FAKEedge05"" (87.20) | #10 ""Pell @ FAKEedge10"" (101.95)",2026-10-03T17:12:32.000Z,1114
+"-- starting hand #50 (id: FAKEh00050) (dealer: ""Thorn @ FAKEedge04"")",2026-10-03T17:12:32.000Z,1113
+"The admin updated the player ""Rune @ FAKEedge02"" stack from 60.00 to 20.00.",2026-10-03T17:11:20.000Z,1112
+-- ending hand #49 --,2026-10-03T17:11:20.000Z,1111
+"""Sable @ FAKEedge03"" collected 17.66 from pot with High Card, Q's (combination: 6♦, Q♥, 9♥, A♠, A♥)",2026-10-03T17:11:19.000Z,1110
+"""Sable @ FAKEedge03"" collected 17.66 from pot with Three of a Kind, 7's (combination: 6♦, 7♠, T♥, Q♣, A♥)",2026-10-03T17:11:19.000Z,1109
+"""Sable @ FAKEedge03"" shows a 3♣, 6♦.",2026-10-03T17:11:19.000Z,1108
+"""Thorn @ FAKEedge04"" shows a 2♠.",2026-10-03T17:11:18.000Z,1107
+"""Rune @ FAKEedge02"" raises to 5.00",2026-10-03T17:11:18.000Z,1106
+"""Thorn @ FAKEedge04"" calls 2.50",2026-10-03T17:11:18.000Z,1105
+"""Ondine @ FAKEedge09"" raises to 2.50",2026-10-03T17:11:17.000Z,1104
+"""Sable @ FAKEedge03"" bets 1.25",2026-10-03T17:11:17.000Z,1103
+"River: [9♥, 2♠, 8♦, T♠] [3♥]",2026-10-03T17:11:17.000Z,1102
+"""Rune @ FAKEedge02"" bets 1.75",2026-10-03T17:11:16.000Z,1101
+"""Thorn @ FAKEedge04"" checks",2026-10-03T17:11:16.000Z,1100
+"""Ondine @ FAKEedge09"" checks",2026-10-03T17:11:16.000Z,1099
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:11:15.000Z,1098
+"Turn: [9♥, 2♠, 8♦] [T♠]",2026-10-03T17:11:15.000Z,1097
+"""Rune @ FAKEedge02"" calls 5.50",2026-10-03T17:11:15.000Z,1096
+"""Thorn @ FAKEedge04"" raises to 5.50",2026-10-03T17:11:14.000Z,1095
+"""Ondine @ FAKEedge09"" bets 2.75",2026-10-03T17:11:14.000Z,1094
+"""Sable @ FAKEedge03"" checks",2026-10-03T17:11:14.000Z,1093
+"Flop: [9♥, 2♠, 8♦]",2026-10-03T17:11:13.000Z,1092
+All players in hand choose to run it twice,2026-10-03T17:11:13.000Z,1091
+"""Wick @ FAKEedge05"" folds",2026-10-03T17:11:13.000Z,1090
+"""Pell @ FAKEedge10"" folds",2026-10-03T17:11:12.000Z,1089
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T17:11:12.000Z,1088
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T17:11:12.000Z,1087
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T17:11:11.000Z,1086
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T17:11:11.000Z,1085
+"""Wick @ FAKEedge05"" posts a big blind of 0.50",2026-10-03T17:11:11.000Z,1084
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T17:11:10.000Z,1083
+"Player stacks: #2 ""Ondine @ FAKEedge09"" (10.09) | #3 ""Thorn @ FAKEedge04"" (53.12) | #4 ""Rune @ FAKEedge02"" (45.99) | #5 ""Pell @ FAKEedge10"" (18.44) | #6 ""Wick @ FAKEedge05"" (112.17) | #9 ""Sable @ FAKEedge03"" (83.93)",2026-10-03T17:11:10.000Z,1082
+"-- starting hand #49 (id: FAKEh00049) (dealer: ""Rune @ FAKEedge02"")",2026-10-03T17:11:10.000Z,1081
+"""Thorn @ FAKEedge04"" shows a Q♥, 3♣.",2026-10-03T16:57:48.000Z,1080
+-- ending hand #48 --,2026-10-03T16:57:48.000Z,1079
+"""Sable @ FAKEedge03"" collected 35.93 from pot with Full House, Q's full of 3's (combination: A♠, 7♥, 8♣, 4♦, A♥)",2026-10-03T16:57:47.000Z,1078
+"""Sable @ FAKEedge03"" collected 17.96 from pot with Two Pair, A's and 8's (combination: 3♣, 6♥, A♥, K♥, 8♦)",2026-10-03T16:57:47.000Z,1077
+"""Thorn @ FAKEedge04"" collected 17.96 from pot with Three of a Kind, 7's (combination: 7♦, Q♣, A♠, 2♦, 4♠)",2026-10-03T16:57:47.000Z,1076
+"""Sable @ FAKEedge03"" shows a A♠.",2026-10-03T16:57:46.000Z,1075
+"""Wick @ FAKEedge05"" shows a Q♦.",2026-10-03T16:57:46.000Z,1074
+"""Thorn @ FAKEedge04"" bets 4.00",2026-10-03T16:57:46.000Z,1073
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:57:45.000Z,1072
+"River: [6♦, 8♣, T♥, Q♣] [6♥]",2026-10-03T16:57:45.000Z,1071
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:57:45.000Z,1070
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:57:44.000Z,1069
+"Turn: [6♦, 8♣, T♥] [Q♣]",2026-10-03T16:57:44.000Z,1068
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:57:44.000Z,1067
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:57:43.000Z,1066
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:57:43.000Z,1065
+"""Sable @ FAKEedge03"" bets 0.50",2026-10-03T16:57:43.000Z,1064
+"Flop: [6♦, 8♣, T♥]",2026-10-03T16:57:42.000Z,1063
+All players in hand choose to run it twice,2026-10-03T16:57:42.000Z,1062
+"""Pell @ FAKEedge10"" calls 8.00",2026-10-03T16:57:42.000Z,1061
+"""Sable @ FAKEedge03"" raises to 8.00 and go all in",2026-10-03T16:57:41.000Z,1060
+"""Thorn @ FAKEedge04"" raises to 4.50 and go all in",2026-10-03T16:57:41.000Z,1059
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:57:41.000Z,1058
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T16:57:40.000Z,1057
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:57:40.000Z,1056
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T16:57:40.000Z,1055
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:57:39.000Z,1054
+"Player stacks: #2 ""Ondine @ FAKEedge09"" (105.82) | #4 ""Wick @ FAKEedge05"" (128.83) | #6 ""Thorn @ FAKEedge04"" (65.33) | #7 ""Sable @ FAKEedge03"" (42.36) | #8 ""Pell @ FAKEedge10"" (127.63) | #10 ""Rune @ FAKEedge02"" (17.97)",2026-10-03T16:57:39.000Z,1053
+"-- starting hand #48 (id: FAKEh00048) (dealer: ""Thorn @ FAKEedge04"")",2026-10-03T16:57:39.000Z,1052
+-- ending hand #47 --,2026-10-03T16:57:08.000Z,1051
+"""Pell @ FAKEedge10"" collected 19.21 from pot with Pair, K's (combination: Q♠, 9♣, 9♠, 7♥, J♣)",2026-10-03T16:57:07.000Z,1050
+"""Wick @ FAKEedge05"" shows a T♠, 4♠.",2026-10-03T16:57:07.000Z,1049
+"""Rune @ FAKEedge02"" shows a 5♦.",2026-10-03T16:57:07.000Z,1048
+"""Pell @ FAKEedge10"" shows a 9♥, 2♥.",2026-10-03T16:57:06.000Z,1047
+"""Sable @ FAKEedge03"" shows a 6♦, 2♦.",2026-10-03T16:57:06.000Z,1046
+"""Rune @ FAKEedge02"" calls 0.25",2026-10-03T16:57:06.000Z,1045
+"""Pell @ FAKEedge10"" calls 0.25",2026-10-03T16:57:05.000Z,1044
+"""Sable @ FAKEedge03"" bets 0.25",2026-10-03T16:57:05.000Z,1043
+"""Wick @ FAKEedge05"" checks",2026-10-03T16:57:05.000Z,1042
+"River: [6♠, 5♥, 3♦, 7♣] [9♣]",2026-10-03T16:57:04.000Z,1041
+"""Rune @ FAKEedge02"" calls 1.00",2026-10-03T16:57:04.000Z,1040
+"""Pell @ FAKEedge10"" bets 1.00",2026-10-03T16:57:04.000Z,1039
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:57:03.000Z,1038
+"""Wick @ FAKEedge05"" checks",2026-10-03T16:57:03.000Z,1037
+"Turn: [6♠, 5♥, 3♦] [7♣]",2026-10-03T16:57:03.000Z,1036
+"""Rune @ FAKEedge02"" calls 1.75",2026-10-03T16:57:02.000Z,1035
+"""Pell @ FAKEedge10"" calls 1.75",2026-10-03T16:57:02.000Z,1034
+"""Sable @ FAKEedge03"" bets 1.75",2026-10-03T16:57:02.000Z,1033
+"""Wick @ FAKEedge05"" checks",2026-10-03T16:57:01.000Z,1032
+"Flop: [6♠, 5♥, 3♦]",2026-10-03T16:57:01.000Z,1031
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:57:01.000Z,1030
+"""Wick @ FAKEedge05"" calls 2.50",2026-10-03T16:57:00.000Z,1029
+"""Rune @ FAKEedge02"" raises to 2.50 and go all in",2026-10-03T16:57:00.000Z,1028
+"""Pell @ FAKEedge10"" calls 1.50",2026-10-03T16:57:00.000Z,1027
+"""Sable @ FAKEedge03"" raises to 1.50",2026-10-03T16:56:59.000Z,1026
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:56:59.000Z,1025
+"""Ondine @ FAKEedge09"" posts a big blind of 0.50",2026-10-03T16:56:59.000Z,1024
+"""Wick @ FAKEedge05"" posts a small blind of 0.25",2026-10-03T16:56:58.000Z,1023
+"Player stacks: #2 ""Sable @ FAKEedge03"" (71.38) | #3 ""Pell @ FAKEedge10"" (117.66) | #5 ""Rune @ FAKEedge02"" (138.22) | #6 ""Wick @ FAKEedge05"" (136.79) | #8 ""Ondine @ FAKEedge09"" (16.11) | #10 ""Thorn @ FAKEedge04"" (113.92)",2026-10-03T16:56:58.000Z,1022
+"-- starting hand #47 (id: FAKEh00047) (dealer: ""Rune @ FAKEedge02"")",2026-10-03T16:56:58.000Z,1021
+"""Wick @ FAKEedge05"" shows a A♦, 7♦.",2026-10-03T16:56:07.000Z,1020
+-- ending hand #46 --,2026-10-03T16:56:07.000Z,1019
+"""Pell @ FAKEedge10"" collected 36.91 from pot",2026-10-03T16:56:06.000Z,1018
+"""Pell @ FAKEedge10"" shows a K♥.",2026-10-03T16:56:06.000Z,1017
+"""Sable @ FAKEedge03"" shows a Q♣, 6♠.",2026-10-03T16:56:06.000Z,1016
+"""Rune @ FAKEedge02"" calls 2.50",2026-10-03T16:56:05.000Z,1015
+"""Sable @ FAKEedge03"" raises to 2.50",2026-10-03T16:56:05.000Z,1014
+"""Wick @ FAKEedge05"" bets 1.25",2026-10-03T16:56:05.000Z,1013
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:56:04.000Z,1012
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:56:04.000Z,1011
+"River: [J♦, 9♣, 8♠, Q♥] [5♦]",2026-10-03T16:56:04.000Z,1010
+"""Rune @ FAKEedge02"" bets 1.75",2026-10-03T16:56:03.000Z,1009
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:56:03.000Z,1008
+"""Wick @ FAKEedge05"" checks",2026-10-03T16:56:03.000Z,1007
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:56:02.000Z,1006
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:56:02.000Z,1005
+"Turn: [J♦, 9♣, 8♠] [Q♥]",2026-10-03T16:56:02.000Z,1004
+"""Rune @ FAKEedge02"" calls 4.00",2026-10-03T16:56:01.000Z,1003
+"""Sable @ FAKEedge03"" raises to 4.00",2026-10-03T16:56:01.000Z,1002
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:56:01.000Z,1001
+"""Wick @ FAKEedge05"" calls 2.00",2026-10-03T16:56:00.000Z,1000
+"""Ondine @ FAKEedge09"" bets 2.00",2026-10-03T16:56:00.000Z,999
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:56:00.000Z,998
+"Flop: [J♦, 9♣, 8♠]",2026-10-03T16:55:59.000Z,997
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:59.000Z,996
+"""Wick @ FAKEedge05"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:59.000Z,995
+"""Ondine @ FAKEedge09"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:58.000Z,994
+"""Pell @ FAKEedge10"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:58.000Z,993
+"""Rune @ FAKEedge02"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:58.000Z,992
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:57.000Z,991
+"Player stacks: #3 ""Sable @ FAKEedge03"" (123.80) | #4 ""Rune @ FAKEedge02"" (68.11) | #5 ""Pell @ FAKEedge10"" (48.80) | #7 ""Ondine @ FAKEedge09"" (66.04) | #8 ""Wick @ FAKEedge05"" (88.34) | #9 ""Thorn @ FAKEedge04"" (22.22)",2026-10-03T16:55:57.000Z,990
+"-- starting hand #46 (id: FAKEh00046) (dealer: ""Rune @ FAKEedge02"")",2026-10-03T16:55:57.000Z,989
+-- ending hand #45 --,2026-10-03T16:55:17.000Z,988
+"""Pell @ FAKEedge10"" collected 11.56 from pot with Three of a Kind, 7's (combination: T♥, 3♠, A♠, 4♥, 2♣)",2026-10-03T16:55:17.000Z,987
+"""Thorn @ FAKEedge04"" shows a 7♣, K♣.",2026-10-03T16:55:16.000Z,986
+"""Pell @ FAKEedge10"" shows a Q♦, 9♦.",2026-10-03T16:55:16.000Z,985
+"""Pell @ FAKEedge10"" calls 2.50",2026-10-03T16:55:16.000Z,984
+"""Thorn @ FAKEedge04"" calls 2.50",2026-10-03T16:55:15.000Z,983
+"""Ondine @ FAKEedge09"" bets 2.50",2026-10-03T16:55:15.000Z,982
+"River: [Q♣, A♣, 2♦, A♥] [Q♦]",2026-10-03T16:55:15.000Z,981
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:55:14.000Z,980
+"""Pell @ FAKEedge10"" calls 5.00",2026-10-03T16:55:14.000Z,979
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:55:14.000Z,978
+"""Thorn @ FAKEedge04"" raises to 5.00",2026-10-03T16:55:13.000Z,977
+"""Ondine @ FAKEedge09"" bets 2.50",2026-10-03T16:55:13.000Z,976
+"Turn: [Q♣, A♣, 2♦] [A♥]",2026-10-03T16:55:13.000Z,975
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:55:12.000Z,974
+"""Sable @ FAKEedge03"" calls 15.00",2026-10-03T16:55:12.000Z,973
+"""Pell @ FAKEedge10"" raises to 15.00",2026-10-03T16:55:12.000Z,972
+"""Wick @ FAKEedge05"" raises to 7.50",2026-10-03T16:55:11.000Z,971
+"""Thorn @ FAKEedge04"" bets 3.75",2026-10-03T16:55:11.000Z,970
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:55:11.000Z,969
+"Flop: [Q♣, A♣, 2♦]",2026-10-03T16:55:10.000Z,968
+"""Wick @ FAKEedge05"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:10.000Z,967
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:10.000Z,966
+"""Ondine @ FAKEedge09"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:09.000Z,965
+"""Rune @ FAKEedge02"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:09.000Z,964
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:09.000Z,963
+"""Pell @ FAKEedge10"" calls 0.50 (bomb pot bet)",2026-10-03T16:55:08.000Z,962
+"Player stacks: #1 ""Pell @ FAKEedge10"" (97.73) | #2 ""Sable @ FAKEedge03"" (68.76) | #3 ""Rune @ FAKEedge02"" (103.91) | #4 ""Ondine @ FAKEedge09"" (139.37) | #9 ""Thorn @ FAKEedge04"" (44.74) | #10 ""Wick @ FAKEedge05"" (122.98)",2026-10-03T16:55:08.000Z,961
+"-- starting hand #45 (id: FAKEh00045) (dealer: ""Rune @ FAKEedge02"")",2026-10-03T16:55:08.000Z,960
+-- ending hand #44 --,2026-10-03T16:54:17.000Z,959
+"""Sable @ FAKEedge03"" collected 31.67 from pot with Two Pair, A's and 8's (combination: 4♠, 7♠, Q♣, 3♥, 8♥)",2026-10-03T16:54:17.000Z,958
+"""Sable @ FAKEedge03"" shows a K♦, 9♣.",2026-10-03T16:54:16.000Z,957
+"""Pell @ FAKEedge10"" shows a 6♠, Q♣.",2026-10-03T16:54:16.000Z,956
+"""Ondine @ FAKEedge09"" shows a J♥, J♣.",2026-10-03T16:54:16.000Z,955
+"""Ondine @ FAKEedge09"" calls 6.50",2026-10-03T16:54:15.000Z,954
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:54:15.000Z,953
+"""Sable @ FAKEedge03"" raises to 6.50",2026-10-03T16:54:15.000Z,952
+"""Pell @ FAKEedge10"" bets 3.25",2026-10-03T16:54:14.000Z,951
+"River: [8♣, T♠, 3♦, Q♦] [5♠]",2026-10-03T16:54:14.000Z,950
+"""Ondine @ FAKEedge09"" calls 7.50",2026-10-03T16:54:14.000Z,949
+"""Rune @ FAKEedge02"" raises to 7.50",2026-10-03T16:54:13.000Z,948
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:54:13.000Z,947
+"""Sable @ FAKEedge03"" calls 3.75",2026-10-03T16:54:13.000Z,946
+"""Pell @ FAKEedge10"" bets 3.75",2026-10-03T16:54:12.000Z,945
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:54:12.000Z,944
+"Turn: [8♣, T♠, 3♦] [Q♦]",2026-10-03T16:54:12.000Z,943
+"""Ondine @ FAKEedge09"" raises to 6.50",2026-10-03T16:54:11.000Z,942
+"""Rune @ FAKEedge02"" calls 3.25",2026-10-03T16:54:11.000Z,941
+"""Wick @ FAKEedge05"" calls 3.25",2026-10-03T16:54:11.000Z,940
+"""Sable @ FAKEedge03"" calls 3.25",2026-10-03T16:54:10.000Z,939
+"""Pell @ FAKEedge10"" calls 3.25",2026-10-03T16:54:10.000Z,938
+"""Thorn @ FAKEedge04"" bets 3.25",2026-10-03T16:54:10.000Z,937
+"Flop: [8♣, T♠, 3♦]",2026-10-03T16:54:09.000Z,936
+"""Wick @ FAKEedge05"" calls 0.50 (bomb pot bet)",2026-10-03T16:54:09.000Z,935
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T16:54:09.000Z,934
+"""Pell @ FAKEedge10"" calls 0.50 (bomb pot bet)",2026-10-03T16:54:08.000Z,933
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T16:54:08.000Z,932
+"""Ondine @ FAKEedge09"" calls 0.50 (bomb pot bet)",2026-10-03T16:54:08.000Z,931
+"""Rune @ FAKEedge02"" calls 0.50 (bomb pot bet)",2026-10-03T16:54:07.000Z,930
+"Player stacks: #2 ""Rune @ FAKEedge02"" (137.41) | #3 ""Ondine @ FAKEedge09"" (74.92) | #4 ""Thorn @ FAKEedge04"" (130.14) | #5 ""Pell @ FAKEedge10"" (27.45) | #9 ""Sable @ FAKEedge03"" (35.02) | #10 ""Wick @ FAKEedge05"" (114.23)",2026-10-03T16:54:07.000Z,929
+-- starting hand #44 (id: FAKEh00044),2026-10-03T16:54:07.000Z,928
+-- ending hand #43 --,2026-10-03T16:53:11.000Z,927
+"""Rune @ FAKEedge02"" collected 28.69 from pot with Full House, Q's full of 3's (combination: 9♦, 7♣, 4♦, K♦, 5♦)",2026-10-03T16:53:11.000Z,926
+"""Wick @ FAKEedge05"" shows a 4♦, 3♣.",2026-10-03T16:53:11.000Z,925
+"""Rune @ FAKEedge02"" shows a Q♥, Q♦.",2026-10-03T16:53:10.000Z,924
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:53:10.000Z,923
+"""Wick @ FAKEedge05"" checks",2026-10-03T16:53:10.000Z,922
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:53:09.000Z,921
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:53:09.000Z,920
+"River: [9♥, 2♦, K♠, T♥] [T♠]",2026-10-03T16:53:09.000Z,919
+"""Sable @ FAKEedge03"" calls 2.00",2026-10-03T16:53:08.000Z,918
+"""Wick @ FAKEedge05"" calls 2.00",2026-10-03T16:53:08.000Z,917
+"""Thorn @ FAKEedge04"" raises to 2.00",2026-10-03T16:53:08.000Z,916
+"""Rune @ FAKEedge02"" bets 1.00",2026-10-03T16:53:07.000Z,915
+"Turn: [9♥, 2♦, K♠] [T♥]",2026-10-03T16:53:07.000Z,914
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:53:07.000Z,913
+"""Sable @ FAKEedge03"" raises to 2.00",2026-10-03T16:53:06.000Z,912
+"""Wick @ FAKEedge05"" raises to 1.00",2026-10-03T16:53:06.000Z,911
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:53:06.000Z,910
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:53:05.000Z,909
+"""Rune @ FAKEedge02"" bets 0.50",2026-10-03T16:53:05.000Z,908
+"Flop: [9♥, 2♦, K♠]",2026-10-03T16:53:05.000Z,907
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T16:53:04.000Z,906
+"""Wick @ FAKEedge05"" calls 0.50 (bomb pot bet)",2026-10-03T16:53:04.000Z,905
+"""Pell @ FAKEedge10"" calls 0.50 (bomb pot bet)",2026-10-03T16:53:04.000Z,904
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T16:53:03.000Z,903
+"""Rune @ FAKEedge02"" calls 0.50 (bomb pot bet)",2026-10-03T16:53:03.000Z,902
+"""Ondine @ FAKEedge09"" calls 0.50 (bomb pot bet)",2026-10-03T16:53:03.000Z,901
+"Your hand is 9♠, 7♠",2026-10-03T16:53:02.000Z,900
+"Player stacks: #1 ""Ondine @ FAKEedge09"" (67.71) | #2 ""Rune @ FAKEedge02"" (142.15) | #4 ""Thorn @ FAKEedge04"" (146.16) | #6 ""Pell @ FAKEedge10"" (17.20) | #7 ""Wick @ FAKEedge05"" (127.13) | #10 ""Sable @ FAKEedge03"" (140.37)",2026-10-03T16:53:02.000Z,899
+"-- starting hand #43 (id: FAKEh00043) (dealer: ""Ondine @ FAKEedge09"")",2026-10-03T16:53:02.000Z,898
+-- ending hand #42 --,2026-10-03T16:52:27.000Z,897
+"""Sable @ FAKEedge03"" collected 2.82 from pot with Two Pair, A's and 8's (combination: A♠, K♣, 8♦, 6♥, 3♣)",2026-10-03T16:52:26.000Z,896
+"""Rune @ FAKEedge02"" collected 2.82 from pot with High Card, Q's (combination: T♥, 5♥, 8♦, 3♥, K♦)",2026-10-03T16:52:26.000Z,895
+"""Ondine @ FAKEedge09"" shows a 9♦, 6♠.",2026-10-03T16:52:26.000Z,894
+"""Sable @ FAKEedge03"" shows a 4♦, 7♠.",2026-10-03T16:52:25.000Z,893
+"""Rune @ FAKEedge02"" shows a 2♥, 7♦.",2026-10-03T16:52:25.000Z,892
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:52:25.000Z,891
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:52:24.000Z,890
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:52:24.000Z,889
+"River: [J♥, 4♥, 5♥, 5♠] [9♦]",2026-10-03T16:52:24.000Z,888
+"""Rune @ FAKEedge02"" calls 2.50",2026-10-03T16:52:23.000Z,887
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:52:23.000Z,886
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:52:23.000Z,885
+"""Ondine @ FAKEedge09"" raises to 2.50",2026-10-03T16:52:22.000Z,884
+"""Sable @ FAKEedge03"" bets 1.25",2026-10-03T16:52:22.000Z,883
+"Turn: [J♥, 4♥, 5♥] [5♠]",2026-10-03T16:52:22.000Z,882
+"""Rune @ FAKEedge02"" raises to 2.50",2026-10-03T16:52:21.000Z,881
+"""Wick @ FAKEedge05"" calls 1.25",2026-10-03T16:52:21.000Z,880
+"""Pell @ FAKEedge10"" bets 1.25",2026-10-03T16:52:21.000Z,879
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:52:20.000Z,878
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:52:20.000Z,877
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:52:20.000Z,876
+"Flop: [J♥, 4♥, 5♥]",2026-10-03T16:52:19.000Z,875
+"""Pell @ FAKEedge10"" calls 0.50 (bomb pot bet)",2026-10-03T16:52:19.000Z,874
+"""Ondine @ FAKEedge09"" calls 0.50 (bomb pot bet)",2026-10-03T16:52:19.000Z,873
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T16:52:18.000Z,872
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T16:52:18.000Z,871
+"""Rune @ FAKEedge02"" calls 0.50 (bomb pot bet)",2026-10-03T16:52:18.000Z,870
+"""Wick @ FAKEedge05"" calls 0.50 (bomb pot bet)",2026-10-03T16:52:17.000Z,869
+"Player stacks: #1 ""Wick @ FAKEedge05"" (128.50) | #3 ""Rune @ FAKEedge02"" (114.78) | #4 ""Sable @ FAKEedge03"" (42.30) | #6 ""Thorn @ FAKEedge04"" (91.34) | #9 ""Ondine @ FAKEedge09"" (37.68) | #10 ""Pell @ FAKEedge10"" (31.10)",2026-10-03T16:52:17.000Z,868
+"-- starting hand #42 (id: FAKEh00042) (dealer: ""Rune @ FAKEedge02"")",2026-10-03T16:52:17.000Z,867
+"""Sable @ FAKEedge03"" shows a 6♠, J♠.",2026-10-03T16:51:24.000Z,866
+-- ending hand #41 --,2026-10-03T16:51:23.000Z,865
+"""Rune @ FAKEedge02"" collected 41.00 from pot with Two Pair, A's and 8's (combination: A♠, J♦, 8♠, 3♣, 6♦)",2026-10-03T16:51:23.000Z,864
+"""Rune @ FAKEedge02"" shows a J♠, Q♦.",2026-10-03T16:51:23.000Z,863
+"""Thorn @ FAKEedge04"" shows a A♠.",2026-10-03T16:51:22.000Z,862
+"""Rune @ FAKEedge02"" bets 1.00",2026-10-03T16:51:22.000Z,861
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:51:22.000Z,860
+"River: [T♦, 5♠, 8♦, 4♦] [J♥]",2026-10-03T16:51:21.000Z,859
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:51:21.000Z,858
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:51:21.000Z,857
+"Turn: [T♦, 5♠, 8♦] [4♦]",2026-10-03T16:51:20.000Z,856
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:51:20.000Z,855
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:51:20.000Z,854
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:51:19.000Z,853
+"Flop: [T♦, 5♠, 8♦]",2026-10-03T16:51:19.000Z,852
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:51:19.000Z,851
+"""Ondine @ FAKEedge09"" raises to 4.00 and go all in",2026-10-03T16:51:18.000Z,850
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T16:51:18.000Z,849
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T16:51:18.000Z,848
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:51:17.000Z,847
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:51:17.000Z,846
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T16:51:17.000Z,845
+"""Ondine @ FAKEedge09"" posts a small blind of 0.25",2026-10-03T16:51:16.000Z,844
+"Player stacks: #1 ""Rune @ FAKEedge02"" (86.82) | #2 ""Ondine @ FAKEedge09"" (137.91) | #5 ""Pell @ FAKEedge10"" (37.67) | #6 ""Wick @ FAKEedge05"" (74.84) | #7 ""Thorn @ FAKEedge04"" (96.85) | #8 ""Sable @ FAKEedge03"" (65.90)",2026-10-03T16:51:16.000Z,843
+"-- starting hand #41 (id: FAKEh00041) (dealer: ""Rune @ FAKEedge02"")",2026-10-03T16:51:16.000Z,842
+-- ending hand #40 --,2026-10-03T16:50:02.000Z,841
+"""Sable @ FAKEedge03"" collected 16.77 from pot with Pair, K's (combination: 9♠, J♦, 7♣, 2♦, A♣)",2026-10-03T16:50:02.000Z,840
+"""Rune @ FAKEedge02"" collected 16.77 from pot with Full House, Q's full of 3's (combination: 5♥, K♥, 5♦, J♥, 8♠)",2026-10-03T16:50:02.000Z,839
+"""Pell @ FAKEedge10"" collected 33.54 from pot with Pair, K's (combination: 8♥, Q♥, Q♣, 2♦, 4♠)",2026-10-03T16:50:01.000Z,838
+"""Sable @ FAKEedge03"" shows a 3♣, 2♣.",2026-10-03T16:50:01.000Z,837
+"""Rune @ FAKEedge02"" shows a 9♣, 8♦.",2026-10-03T16:50:01.000Z,836
+"""Wick @ FAKEedge05"" shows a T♣.",2026-10-03T16:50:00.000Z,835
+"""Sable @ FAKEedge03"" bets 0.75",2026-10-03T16:50:00.000Z,834
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:50:00.000Z,833
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:49:59.000Z,832
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:49:59.000Z,831
+"River: [7♥, 3♠, 5♥, 2♣] [3♣]",2026-10-03T16:49:59.000Z,830
+"""Sable @ FAKEedge03"" calls 3.75",2026-10-03T16:49:58.000Z,829
+"""Rune @ FAKEedge02"" calls 3.75",2026-10-03T16:49:58.000Z,828
+"""Thorn @ FAKEedge04"" calls 3.75",2026-10-03T16:49:58.000Z,827
+"""Pell @ FAKEedge10"" bets 3.75",2026-10-03T16:49:57.000Z,826
+"Turn: [7♥, 3♠, 5♥] [2♣]",2026-10-03T16:49:57.000Z,825
+"""Sable @ FAKEedge03"" calls 3.75",2026-10-03T16:49:57.000Z,824
+"""Rune @ FAKEedge02"" bets 3.75",2026-10-03T16:49:56.000Z,823
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:49:56.000Z,822
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:49:56.000Z,821
+"Flop: [7♥, 3♠, 5♥]",2026-10-03T16:49:55.000Z,820
+All players in hand choose to run it twice,2026-10-03T16:49:55.000Z,819
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:49:55.000Z,818
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:49:54.000Z,817
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T16:49:54.000Z,816
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T16:49:54.000Z,815
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:49:53.000Z,814
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:49:53.000Z,813
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T16:49:53.000Z,812
+"""Ondine @ FAKEedge09"" posts a small blind of 0.25",2026-10-03T16:49:52.000Z,811
+"Player stacks: #1 ""Thorn @ FAKEedge04"" (88.29) | #3 ""Wick @ FAKEedge05"" (56.91) | #4 ""Rune @ FAKEedge02"" (32.80) | #8 ""Sable @ FAKEedge03"" (17.39) | #9 ""Ondine @ FAKEedge09"" (149.27) | #10 ""Pell @ FAKEedge10"" (141.51)",2026-10-03T16:49:52.000Z,810
+"-- starting hand #40 (id: FAKEh00040) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T16:49:52.000Z,809
+-- ending hand #39 --,2026-10-03T16:49:09.000Z,808
+"""Rune @ FAKEedge02"" collected 3.60 from pot",2026-10-03T16:49:09.000Z,807
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:49:08.000Z,806
+"""Rune @ FAKEedge02"" bets 2.25",2026-10-03T16:49:08.000Z,805
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:49:08.000Z,804
+"Flop: [J♠, 8♠, A♥]",2026-10-03T16:49:07.000Z,803
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:49:07.000Z,802
+"""Sable @ FAKEedge03"" calls 3.50",2026-10-03T16:49:07.000Z,801
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:49:06.000Z,800
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:49:06.000Z,799
+"""Ondine @ FAKEedge09"" raises to 3.50 and go all in",2026-10-03T16:49:06.000Z,798
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T16:49:05.000Z,797
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:49:05.000Z,796
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:49:05.000Z,795
+"Your hand is Q♠, T♥",2026-10-03T16:49:04.000Z,794
+"Player stacks: #2 ""Sable @ FAKEedge03"" (15.21) | #3 ""Thorn @ FAKEedge04"" (10.49) | #4 ""Rune @ FAKEedge02"" (99.64) | #8 ""Ondine @ FAKEedge09"" (62.44) | #9 ""Pell @ FAKEedge10"" (58.41) | #10 ""Wick @ FAKEedge05"" (133.95)",2026-10-03T16:49:04.000Z,793
+-- starting hand #39 (id: FAKEh00039),2026-10-03T16:49:04.000Z,792
+"""Pell @ FAKEedge10"" shows a 5♥, 8♥.",2026-10-03T16:48:22.000Z,791
+"""Wick @ FAKEedge05"" shows a 4♦, 9♠.",2026-10-03T16:48:22.000Z,790
+-- ending hand #38 --,2026-10-03T16:48:22.000Z,789
+"""Thorn @ FAKEedge04"" collected 9.10 from pot",2026-10-03T16:48:21.000Z,788
+"""Thorn @ FAKEedge04"" shows a 7♥, Q♥.",2026-10-03T16:48:21.000Z,787
+"""Wick @ FAKEedge05"" raises to 6.00",2026-10-03T16:48:21.000Z,786
+"""Thorn @ FAKEedge04"" raises to 3.00",2026-10-03T16:48:20.000Z,785
+"""Pell @ FAKEedge10"" bets 1.50",2026-10-03T16:48:20.000Z,784
+"River: [5♠, K♠, A♣, 4♥] [3♠]",2026-10-03T16:48:20.000Z,783
+"""Wick @ FAKEedge05"" calls 1.00",2026-10-03T16:48:19.000Z,782
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:48:19.000Z,781
+"""Thorn @ FAKEedge04"" calls 1.00",2026-10-03T16:48:19.000Z,780
+"""Pell @ FAKEedge10"" bets 1.00",2026-10-03T16:48:18.000Z,779
+"Turn: [5♠, K♠, A♣] [4♥]",2026-10-03T16:48:18.000Z,778
+"""Wick @ FAKEedge05"" raises to 7.00",2026-10-03T16:48:18.000Z,777
+"""Rune @ FAKEedge02"" calls 3.50",2026-10-03T16:48:17.000Z,776
+"""Thorn @ FAKEedge04"" calls 3.50",2026-10-03T16:48:17.000Z,775
+"""Pell @ FAKEedge10"" bets 3.50",2026-10-03T16:48:17.000Z,774
+"Flop: [5♠, K♠, A♣]",2026-10-03T16:48:16.000Z,773
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:48:16.000Z,772
+"""Pell @ FAKEedge10"" calls 0.50",2026-10-03T16:48:16.000Z,771
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:48:15.000Z,770
+"""Wick @ FAKEedge05"" calls 0.50",2026-10-03T16:48:15.000Z,769
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T16:48:15.000Z,768
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:48:14.000Z,767
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:48:14.000Z,766
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T16:48:14.000Z,765
+"Your hand is A♦, J♣",2026-10-03T16:48:13.000Z,764
+"Player stacks: #1 ""Rune @ FAKEedge02"" (55.99) | #2 ""Wick @ FAKEedge05"" (29.91) | #3 ""Ondine @ FAKEedge09"" (98.58) | #8 ""Pell @ FAKEedge10"" (11.37) | #9 ""Thorn @ FAKEedge04"" (77.79) | #10 ""Sable @ FAKEedge03"" (78.88)",2026-10-03T16:48:13.000Z,763
+-- starting hand #38 (id: FAKEh00038),2026-10-03T16:48:13.000Z,762
+"""Pell @ FAKEedge10"" paid 1.00 for the 7-2 bounty to ""Ondine @ FAKEedge09""",2026-10-03T16:47:19.000Z,761
+-- ending hand #37 --,2026-10-03T16:47:19.000Z,760
+"""Rune @ FAKEedge02"" collected 18.51 from pot",2026-10-03T16:47:18.000Z,759
+"Uncalled bet of 0.50 returned to ""Rune @ FAKEedge02""",2026-10-03T16:47:18.000Z,758
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:47:18.000Z,757
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:47:17.000Z,756
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:47:17.000Z,755
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:47:17.000Z,754
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:47:16.000Z,753
+"""Rune @ FAKEedge02"" raises to 2.50",2026-10-03T16:47:16.000Z,752
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:47:16.000Z,751
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:47:15.000Z,750
+"Player stacks: #2 ""Thorn @ FAKEedge04"" (23.91) | #3 ""Rune @ FAKEedge02"" (59.91) | #6 ""Wick @ FAKEedge05"" (112.03) | #7 ""Pell @ FAKEedge10"" (72.15) | #8 ""Ondine @ FAKEedge09"" (63.96) | #10 ""Sable @ FAKEedge03"" (148.22)",2026-10-03T16:47:15.000Z,749
+"-- starting hand #37 (id: FAKEh00037) (dealer: ""Ondine @ FAKEedge09"")",2026-10-03T16:47:15.000Z,748
+"""Pell @ FAKEedge10"" shows a 4♣, J♦.",2026-10-03T16:46:14.000Z,747
+-- ending hand #36 --,2026-10-03T16:46:14.000Z,746
+"""Ondine @ FAKEedge09"" collected 2.52 from pot with Three of a Kind, 7's (combination: T♣, 3♠, J♣, 8♥, 7♠)",2026-10-03T16:46:13.000Z,745
+"""Ondine @ FAKEedge09"" collected 2.52 from pot with High Card, Q's (combination: J♣, 7♠, J♦, 3♦, 4♠)",2026-10-03T16:46:13.000Z,744
+"""Ondine @ FAKEedge09"" shows a 3♥, 2♥.",2026-10-03T16:46:13.000Z,743
+"""Sable @ FAKEedge03"" shows a 2♦, A♥.",2026-10-03T16:46:12.000Z,742
+"""Ondine @ FAKEedge09"" calls 1.75",2026-10-03T16:46:12.000Z,741
+"""Sable @ FAKEedge03"" bets 1.75",2026-10-03T16:46:12.000Z,740
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:46:11.000Z,739
+"River: [Q♣, 9♦, 8♣, 9♥] [4♥]",2026-10-03T16:46:11.000Z,738
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:46:11.000Z,737
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:46:10.000Z,736
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:46:10.000Z,735
+"Turn: [Q♣, 9♦, 8♣] [9♥]",2026-10-03T16:46:10.000Z,734
+"""Ondine @ FAKEedge09"" calls 6.00",2026-10-03T16:46:09.000Z,733
+"""Sable @ FAKEedge03"" raises to 6.00",2026-10-03T16:46:09.000Z,732
+"""Pell @ FAKEedge10"" bets 3.00",2026-10-03T16:46:09.000Z,731
+"Flop: [Q♣, 9♦, 8♣]",2026-10-03T16:46:08.000Z,730
+All players in hand choose to run it twice,2026-10-03T16:46:08.000Z,729
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:46:08.000Z,728
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:46:07.000Z,727
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:46:07.000Z,726
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:46:07.000Z,725
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T16:46:06.000Z,724
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T16:46:06.000Z,723
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T16:46:06.000Z,722
+"""Rune @ FAKEedge02"" posts a small blind of 0.25",2026-10-03T16:46:05.000Z,721
+"Player stacks: #3 ""Rune @ FAKEedge02"" (71.28) | #5 ""Pell @ FAKEedge10"" (127.85) | #6 ""Sable @ FAKEedge03"" (123.31) | #7 ""Ondine @ FAKEedge09"" (138.14) | #8 ""Wick @ FAKEedge05"" (84.60) | #9 ""Thorn @ FAKEedge04"" (139.55)",2026-10-03T16:46:05.000Z,720
+"-- starting hand #36 (id: FAKEh00036) (dealer: ""Thorn @ FAKEedge04"")",2026-10-03T16:46:05.000Z,719
+-- ending hand #35 --,2026-10-03T16:45:22.000Z,718
+"""Thorn @ FAKEedge04"" collected 44.37 from pot",2026-10-03T16:45:22.000Z,717
+"Uncalled bet of 0.50 returned to ""Thorn @ FAKEedge04""",2026-10-03T16:45:21.000Z,716
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:45:21.000Z,715
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:45:21.000Z,714
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:45:20.000Z,713
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:45:20.000Z,712
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:45:20.000Z,711
+"""Thorn @ FAKEedge04"" raises to 5.00 and go all in",2026-10-03T16:45:19.000Z,710
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T16:45:19.000Z,709
+"""Ondine @ FAKEedge09"" posts a small blind of 0.25",2026-10-03T16:45:19.000Z,708
+"Your hand is 9♥, 5♥",2026-10-03T16:45:18.000Z,707
+"Player stacks: #1 ""Sable @ FAKEedge03"" (102.42) | #3 ""Rune @ FAKEedge02"" (33.16) | #4 ""Wick @ FAKEedge05"" (90.72) | #5 ""Ondine @ FAKEedge09"" (48.56) | #6 ""Pell @ FAKEedge10"" (34.47) | #10 ""Thorn @ FAKEedge04"" (83.95)",2026-10-03T16:45:18.000Z,706
+"-- starting hand #35 (id: FAKEh00035) (dealer: ""Wick @ FAKEedge05"")",2026-10-03T16:45:18.000Z,705
+-- ending hand #34 --,2026-10-03T16:44:36.000Z,704
+"""Thorn @ FAKEedge04"" collected 33.14 from pot",2026-10-03T16:44:36.000Z,703
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:44:35.000Z,702
+"""Thorn @ FAKEedge04"" bets 2.00",2026-10-03T16:44:35.000Z,701
+"River: [8♥, 4♥, 4♣, A♣] [3♠]",2026-10-03T16:44:35.000Z,700
+"""Sable @ FAKEedge03"" raises to 0.50",2026-10-03T16:44:34.000Z,699
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:44:34.000Z,698
+"""Thorn @ FAKEedge04"" bets 0.25",2026-10-03T16:44:34.000Z,697
+"Turn: [8♥, 4♥, 4♣] [A♣]",2026-10-03T16:44:33.000Z,696
+"""Sable @ FAKEedge03"" calls 1.00",2026-10-03T16:44:33.000Z,695
+"""Wick @ FAKEedge05"" bets 1.00",2026-10-03T16:44:33.000Z,694
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:44:32.000Z,693
+"Flop: [8♥, 4♥, 4♣]",2026-10-03T16:44:32.000Z,692
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:44:32.000Z,691
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:44:31.000Z,690
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T16:44:31.000Z,689
+"""Wick @ FAKEedge05"" calls 0.50",2026-10-03T16:44:31.000Z,688
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:44:30.000Z,687
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:44:30.000Z,686
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:44:30.000Z,685
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T16:44:29.000Z,684
+"Player stacks: #1 ""Thorn @ FAKEedge04"" (76.93) | #2 ""Ondine @ FAKEedge09"" (142.96) | #3 ""Rune @ FAKEedge02"" (72.99) | #7 ""Wick @ FAKEedge05"" (47.87) | #8 ""Sable @ FAKEedge03"" (77.51) | #10 ""Pell @ FAKEedge10"" (128.13)",2026-10-03T16:44:29.000Z,683
+"-- starting hand #34 (id: FAKEh00034) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T16:44:29.000Z,682
+"""Ondine @ FAKEedge09"" joins the table at seat #4.",2026-10-03T16:44:05.000Z,681
+"The admin ""Oberon @ FAKEedge08"" enqueued the removal of the player ""Sable @ FAKEedge03"".",2026-10-03T16:44:04.000Z,680
+"""Thorn @ FAKEedge04"" shows a 4♣, J♠.",2026-10-03T16:44:04.000Z,679
+-- ending hand #33 --,2026-10-03T16:44:04.000Z,678
+"""Rune @ FAKEedge02"" collected 44.30 from pot with Two Pair, A's and 8's (combination: 3♣, 2♣, 4♣, J♣, A♠)",2026-10-03T16:44:03.000Z,677
+"""Rune @ FAKEedge02"" shows a 4♣, 4♥.",2026-10-03T16:44:03.000Z,676
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:44:03.000Z,675
+"""Thorn @ FAKEedge04"" bets 1.25",2026-10-03T16:44:02.000Z,674
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:44:02.000Z,673
+"River: [J♥, T♥, T♦, 8♥] [T♣]",2026-10-03T16:44:02.000Z,672
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:44:01.000Z,671
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:44:01.000Z,670
+"""Pell @ FAKEedge10"" bets 0.75",2026-10-03T16:44:01.000Z,669
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:44:00.000Z,668
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:44:00.000Z,667
+"Turn: [J♥, T♥, T♦] [8♥]",2026-10-03T16:44:00.000Z,666
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:43:59.000Z,665
+"""Sable @ FAKEedge03"" calls 2.00",2026-10-03T16:43:59.000Z,664
+"""Ondine @ FAKEedge09"" raises to 2.00",2026-10-03T16:43:59.000Z,663
+"""Pell @ FAKEedge10"" calls 1.00",2026-10-03T16:43:58.000Z,662
+"""Thorn @ FAKEedge04"" calls 1.00",2026-10-03T16:43:58.000Z,661
+"""Rune @ FAKEedge02"" bets 1.00",2026-10-03T16:43:58.000Z,660
+"Flop: [J♥, T♥, T♦]",2026-10-03T16:43:57.000Z,659
+"""Pell @ FAKEedge10"" calls 0.50 (bomb pot bet)",2026-10-03T16:43:57.000Z,658
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T16:43:57.000Z,657
+"""Rune @ FAKEedge02"" calls 0.50 (bomb pot bet)",2026-10-03T16:43:56.000Z,656
+"""Wick @ FAKEedge05"" calls 0.50 (bomb pot bet)",2026-10-03T16:43:56.000Z,655
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T16:43:56.000Z,654
+"""Ondine @ FAKEedge09"" calls 0.50 (bomb pot bet)",2026-10-03T16:43:55.000Z,653
+"Player stacks: #1 ""Ondine @ FAKEedge09"" (114.53) | #3 ""Sable @ FAKEedge03"" (40.88) | #4 ""Wick @ FAKEedge05"" (89.98) | #6 ""Rune @ FAKEedge02"" (146.29) | #9 ""Thorn @ FAKEedge04"" (106.70) | #10 ""Pell @ FAKEedge10"" (49.30)",2026-10-03T16:43:55.000Z,652
+"-- starting hand #33 (id: FAKEh00033) (dealer: ""Wick @ FAKEedge05"")",2026-10-03T16:43:55.000Z,651
+-- ending hand #32 --,2026-10-03T16:43:19.000Z,650
+"""Wick @ FAKEedge05"" collected 43.89 from pot with Two Pair, A's and 8's (combination: 2♣, Q♠, 2♦, Q♥, A♥)",2026-10-03T16:43:19.000Z,649
+"""Wick @ FAKEedge05"" shows a 6♣, Q♥.",2026-10-03T16:43:18.000Z,648
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:43:18.000Z,647
+"""Wick @ FAKEedge05"" checks",2026-10-03T16:43:18.000Z,646
+"River: [7♣, 8♠, A♠, K♠] [3♦]",2026-10-03T16:43:17.000Z,645
+"""Thorn @ FAKEedge04"" calls 2.00",2026-10-03T16:43:17.000Z,644
+"""Wick @ FAKEedge05"" bets 2.00",2026-10-03T16:43:17.000Z,643
+"Turn: [7♣, 8♠, A♠] [K♠]",2026-10-03T16:43:16.000Z,642
+"""Thorn @ FAKEedge04"" calls 3.25",2026-10-03T16:43:16.000Z,641
+"""Wick @ FAKEedge05"" bets 3.25",2026-10-03T16:43:16.000Z,640
+"Flop: [7♣, 8♠, A♠]",2026-10-03T16:43:15.000Z,639
+"""Wick @ FAKEedge05"" checks",2026-10-03T16:43:15.000Z,638
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:43:15.000Z,637
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:43:14.000Z,636
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:43:14.000Z,635
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:43:14.000Z,634
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:43:13.000Z,633
+"""Wick @ FAKEedge05"" posts a big blind of 0.50",2026-10-03T16:43:13.000Z,632
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T16:43:13.000Z,631
+"Your hand is 4♣, 9♣",2026-10-03T16:43:12.000Z,630
+"Player stacks: #2 ""Wick @ FAKEedge05"" (16.11) | #4 ""Ondine @ FAKEedge09"" (115.92) | #5 ""Thorn @ FAKEedge04"" (45.15) | #6 ""Sable @ FAKEedge03"" (79.48) | #7 ""Rune @ FAKEedge02"" (22.11) | #10 ""Pell @ FAKEedge10"" (125.03)",2026-10-03T16:43:12.000Z,629
+-- starting hand #32 (id: FAKEh00032),2026-10-03T16:43:12.000Z,628
+-- ending hand #31 --,2026-10-03T16:42:23.000Z,627
+"""Ondine @ FAKEedge09"" collected 30.10 from pot",2026-10-03T16:42:23.000Z,626
+"Uncalled bet of 0.50 returned to ""Ondine @ FAKEedge09""",2026-10-03T16:42:22.000Z,625
+"""Thorn @ FAKEedge04"" shows a 2♣.",2026-10-03T16:42:22.000Z,624
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:42:22.000Z,623
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:42:21.000Z,622
+"""Ondine @ FAKEedge09"" bets 1.75",2026-10-03T16:42:21.000Z,621
+"Turn: [7♣, K♣, 9♠] [J♣]",2026-10-03T16:42:21.000Z,620
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:42:20.000Z,619
+"""Sable @ FAKEedge03"" bets 1.75",2026-10-03T16:42:20.000Z,618
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:42:20.000Z,617
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:42:19.000Z,616
+"Flop: [7♣, K♣, 9♠]",2026-10-03T16:42:19.000Z,615
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:42:19.000Z,614
+"""Ondine @ FAKEedge09"" raises to 2.50",2026-10-03T16:42:18.000Z,613
+"""Pell @ FAKEedge10"" calls 0.50",2026-10-03T16:42:18.000Z,612
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T16:42:18.000Z,611
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:42:17.000Z,610
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T16:42:17.000Z,609
+"""Wick @ FAKEedge05"" posts a big blind of 0.50",2026-10-03T16:42:17.000Z,608
+"""Ondine @ FAKEedge09"" posts a missing small blind of 0.25",2026-10-03T16:42:16.000Z,607
+"Player stacks: #1 ""Wick @ FAKEedge05"" (145.92) | #3 ""Rune @ FAKEedge02"" (76.30) | #5 ""Thorn @ FAKEedge04"" (60.27) | #7 ""Sable @ FAKEedge03"" (41.15) | #9 ""Pell @ FAKEedge10"" (134.88) | #10 ""Ondine @ FAKEedge09"" (131.24)",2026-10-03T16:42:16.000Z,606
+-- starting hand #31 (id: FAKEh00031),2026-10-03T16:42:16.000Z,605
+-- ending hand #30 --,2026-10-03T16:41:22.000Z,604
+"""Pell @ FAKEedge10"" collected 14.23 from pot with High Card, Q's (combination: K♥, 5♥, Q♣, 9♦, J♠)",2026-10-03T16:41:22.000Z,603
+"""Wick @ FAKEedge05"" collected 14.23 from pot with Pair, K's (combination: J♣, 2♥, 2♠, 6♥, K♣)",2026-10-03T16:41:21.000Z,602
+"""Wick @ FAKEedge05"" collected 28.47 from pot with Two Pair, A's and 8's (combination: Q♥, 3♥, A♥, A♠, 8♣)",2026-10-03T16:41:21.000Z,601
+"""Thorn @ FAKEedge04"" shows a 5♣.",2026-10-03T16:41:21.000Z,600
+"""Wick @ FAKEedge05"" calls 4.00",2026-10-03T16:41:20.000Z,599
+"""Thorn @ FAKEedge04"" calls 4.00",2026-10-03T16:41:20.000Z,598
+"""Pell @ FAKEedge10"" bets 4.00",2026-10-03T16:41:20.000Z,597
+"River: [K♦, J♥, A♠, 4♠] [Q♦]",2026-10-03T16:41:19.000Z,596
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:41:19.000Z,595
+"""Wick @ FAKEedge05"" calls 1.50",2026-10-03T16:41:19.000Z,594
+"""Thorn @ FAKEedge04"" calls 1.50",2026-10-03T16:41:18.000Z,593
+"""Pell @ FAKEedge10"" bets 1.50",2026-10-03T16:41:18.000Z,592
+"Turn: [K♦, J♥, A♠] [4♠]",2026-10-03T16:41:18.000Z,591
+"""Sable @ FAKEedge03"" bets 1.75",2026-10-03T16:41:17.000Z,590
+"""Wick @ FAKEedge05"" checks",2026-10-03T16:41:17.000Z,589
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:41:17.000Z,588
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:41:16.000Z,587
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:41:16.000Z,586
+"Flop: [K♦, J♥, A♠]",2026-10-03T16:41:16.000Z,585
+All players in hand choose to run it twice,2026-10-03T16:41:15.000Z,584
+"""Pell @ FAKEedge10"" calls 1.50",2026-10-03T16:41:15.000Z,583
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:41:15.000Z,582
+"""Sable @ FAKEedge03"" calls 1.50",2026-10-03T16:41:14.000Z,581
+"""Wick @ FAKEedge05"" calls 1.50",2026-10-03T16:41:14.000Z,580
+"""Ondine @ FAKEedge09"" raises to 1.50",2026-10-03T16:41:14.000Z,579
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:41:13.000Z,578
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T16:41:13.000Z,577
+"""Rune @ FAKEedge02"" posts a small blind of 0.25",2026-10-03T16:41:13.000Z,576
+"Your hand is Q♥, 5♣",2026-10-03T16:41:12.000Z,575
+"Player stacks: #1 ""Wick @ FAKEedge05"" (28.52) | #2 ""Sable @ FAKEedge03"" (135.63) | #3 ""Rune @ FAKEedge02"" (30.74) | #4 ""Pell @ FAKEedge10"" (17.15) | #5 ""Thorn @ FAKEedge04"" (33.52) | #8 ""Ondine @ FAKEedge09"" (41.38)",2026-10-03T16:41:12.000Z,574
+"-- starting hand #30 (id: FAKEh00030) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T16:41:12.000Z,573
+"""Rune @ FAKEedge02"" paid 1.00 for the 7-2 bounty to ""Thorn @ FAKEedge04""",2026-10-03T16:27:49.000Z,572
+-- ending hand #29 --,2026-10-03T16:27:49.000Z,571
+"""Rune @ FAKEedge02"" collected 2.25 from pot",2026-10-03T16:27:48.000Z,570
+"""Pell @ FAKEedge10"" shows a 7♣.",2026-10-03T16:27:48.000Z,569
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:27:48.000Z,568
+"Turn: [4♠, Q♠, 2♦] [6♥]",2026-10-03T16:27:47.000Z,567
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:27:47.000Z,566
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:27:47.000Z,565
+"Flop: [4♠, Q♠, 2♦]",2026-10-03T16:27:46.000Z,564
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:27:46.000Z,563
+"""Sable @ FAKEedge03"" raises to 2.00",2026-10-03T16:27:46.000Z,562
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:27:45.000Z,561
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:27:45.000Z,560
+"""Rune @ FAKEedge02"" raises to 1.50 and go all in",2026-10-03T16:27:45.000Z,559
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:27:44.000Z,558
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T16:27:44.000Z,557
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:27:44.000Z,556
+"Your hand is 4♣, 9♥",2026-10-03T16:27:43.000Z,555
+"Player stacks: #1 ""Ondine @ FAKEedge09"" (20.95) | #2 ""Wick @ FAKEedge05"" (89.82) | #4 ""Sable @ FAKEedge03"" (59.60) | #6 ""Pell @ FAKEedge10"" (26.28) | #8 ""Thorn @ FAKEedge04"" (95.90) | #9 ""Rune @ FAKEedge02"" (33.20)",2026-10-03T16:27:43.000Z,554
+"-- starting hand #29 (id: FAKEh00029) (dealer: ""Wick @ FAKEedge05"")",2026-10-03T16:27:43.000Z,553
+-- ending hand #28 --,2026-10-03T16:27:20.000Z,552
+"""Sable @ FAKEedge03"" collected 13.34 from pot",2026-10-03T16:27:20.000Z,551
+"""Ondine @ FAKEedge09"" collected 13.34 from pot with Two Pair, A's and 8's (combination: Q♥, Q♦, 2♥, 4♥, 4♣)",2026-10-03T16:27:20.000Z,550
+"""Ondine @ FAKEedge09"" shows a Q♣, 8♠.",2026-10-03T16:27:19.000Z,549
+"""Sable @ FAKEedge03"" shows a 7♥, 3♠.",2026-10-03T16:27:19.000Z,548
+"""Ondine @ FAKEedge09"" raises to 8.00",2026-10-03T16:27:19.000Z,547
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:27:18.000Z,546
+"""Sable @ FAKEedge03"" bets 4.00",2026-10-03T16:27:18.000Z,545
+"River: [4♣, T♠, 3♣, J♥] [3♦]",2026-10-03T16:27:18.000Z,544
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:27:17.000Z,543
+"""Ondine @ FAKEedge09"" calls 2.25",2026-10-03T16:27:17.000Z,542
+"""Rune @ FAKEedge02"" bets 2.25",2026-10-03T16:27:17.000Z,541
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:27:16.000Z,540
+"Turn: [4♣, T♠, 3♣] [J♥]",2026-10-03T16:27:16.000Z,539
+"""Thorn @ FAKEedge04"" calls 0.75",2026-10-03T16:27:16.000Z,538
+"""Ondine @ FAKEedge09"" calls 0.75",2026-10-03T16:27:15.000Z,537
+"""Rune @ FAKEedge02"" bets 0.75",2026-10-03T16:27:15.000Z,536
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:27:15.000Z,535
+"Flop: [4♣, T♠, 3♣]",2026-10-03T16:27:14.000Z,534
+All players in hand choose to run it twice,2026-10-03T16:27:14.000Z,533
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:27:14.000Z,532
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T16:27:13.000Z,531
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:27:13.000Z,530
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:27:13.000Z,529
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:27:12.000Z,528
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T16:27:12.000Z,527
+"""Rune @ FAKEedge02"" posts a big blind of 0.50",2026-10-03T16:27:12.000Z,526
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:27:11.000Z,525
+"Player stacks: #3 ""Thorn @ FAKEedge04"" (81.65) | #4 ""Pell @ FAKEedge10"" (34.02) | #5 ""Sable @ FAKEedge03"" (135.04) | #6 ""Rune @ FAKEedge02"" (98.94) | #8 ""Ondine @ FAKEedge09"" (116.52) | #9 ""Wick @ FAKEedge05"" (92.13)",2026-10-03T16:27:11.000Z,524
+"-- starting hand #28 (id: FAKEh00028) (dealer: ""Pell @ FAKEedge10"")",2026-10-03T16:27:11.000Z,523
+"""Pell @ FAKEedge10"" shows a T♥, 5♦.",2026-10-03T16:26:52.000Z,522
+-- ending hand #27 --,2026-10-03T16:26:52.000Z,521
+"""Rune @ FAKEedge02"" collected 11.41 from pot with Full House, Q's full of 3's (combination: 7♣, T♣, Q♦, J♠, 4♦)",2026-10-03T16:26:52.000Z,520
+"""Pell @ FAKEedge10"" collected 11.41 from pot",2026-10-03T16:26:51.000Z,519
+"""Ondine @ FAKEedge09"" shows a 3♥.",2026-10-03T16:26:51.000Z,518
+"""Sable @ FAKEedge03"" shows a 6♠.",2026-10-03T16:26:51.000Z,517
+"""Rune @ FAKEedge02"" shows a J♠, 7♠.",2026-10-03T16:26:50.000Z,516
+"""Pell @ FAKEedge10"" raises to 10.00",2026-10-03T16:26:50.000Z,515
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:26:50.000Z,514
+"""Ondine @ FAKEedge09"" raises to 5.00",2026-10-03T16:26:49.000Z,513
+"""Sable @ FAKEedge03"" bets 2.50",2026-10-03T16:26:49.000Z,512
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:26:49.000Z,511
+"River: [5♠, 7♥, 3♦, 9♥] [2♦]",2026-10-03T16:26:48.000Z,510
+"""Pell @ FAKEedge10"" calls 6.00",2026-10-03T16:26:48.000Z,509
+"""Wick @ FAKEedge05"" raises to 6.00",2026-10-03T16:26:48.000Z,508
+"""Ondine @ FAKEedge09"" calls 3.00",2026-10-03T16:26:47.000Z,507
+"""Sable @ FAKEedge03"" raises to 3.00",2026-10-03T16:26:47.000Z,506
+"""Rune @ FAKEedge02"" bets 1.50",2026-10-03T16:26:47.000Z,505
+"Turn: [5♠, 7♥, 3♦] [9♥]",2026-10-03T16:26:46.000Z,504
+"""Pell @ FAKEedge10"" calls 3.00",2026-10-03T16:26:46.000Z,503
+"""Wick @ FAKEedge05"" calls 3.00",2026-10-03T16:26:46.000Z,502
+"""Ondine @ FAKEedge09"" raises to 3.00",2026-10-03T16:26:45.000Z,501
+"""Sable @ FAKEedge03"" calls 1.50",2026-10-03T16:26:45.000Z,500
+"""Rune @ FAKEedge02"" bets 1.50",2026-10-03T16:26:45.000Z,499
+"Flop: [5♠, 7♥, 3♦]",2026-10-03T16:26:44.000Z,498
+"""Sable @ FAKEedge03"" calls 2.00",2026-10-03T16:26:44.000Z,497
+"""Rune @ FAKEedge02"" calls 2.00",2026-10-03T16:26:44.000Z,496
+"""Pell @ FAKEedge10"" raises to 2.00",2026-10-03T16:26:43.000Z,495
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:26:43.000Z,494
+"""Wick @ FAKEedge05"" calls 0.50",2026-10-03T16:26:43.000Z,493
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T16:26:42.000Z,492
+"""Sable @ FAKEedge03"" posts a big blind of 0.50",2026-10-03T16:26:42.000Z,491
+"""Rune @ FAKEedge02"" posts a small blind of 0.25",2026-10-03T16:26:42.000Z,490
+"Your hand is T♣, A♥",2026-10-03T16:26:41.000Z,489
+"Player stacks: #1 ""Thorn @ FAKEedge04"" (89.95) | #2 ""Pell @ FAKEedge10"" (146.36) | #4 ""Rune @ FAKEedge02"" (141.26) | #7 ""Sable @ FAKEedge03"" (81.59) | #9 ""Ondine @ FAKEedge09"" (149.72) | #10 ""Wick @ FAKEedge05"" (14.42)",2026-10-03T16:26:41.000Z,488
+"-- starting hand #27 (id: FAKEh00027) (dealer: ""Pell @ FAKEedge10"")",2026-10-03T16:26:41.000Z,487
+-- ending hand #26 --,2026-10-03T16:25:24.000Z,486
+"""Wick @ FAKEedge05"" collected 27.26 from pot with Pair, K's (combination: 2♥, J♠, 5♠, 4♣, K♦)",2026-10-03T16:25:24.000Z,485
+"""Ondine @ FAKEedge09"" shows a T♦, J♦.",2026-10-03T16:25:23.000Z,484
+"""Pell @ FAKEedge10"" shows a Q♥, T♣.",2026-10-03T16:25:23.000Z,483
+"""Rune @ FAKEedge02"" shows a Q♣, T♣.",2026-10-03T16:25:23.000Z,482
+"""Wick @ FAKEedge05"" raises to 7.50",2026-10-03T16:25:22.000Z,481
+"""Rune @ FAKEedge02"" calls 3.75",2026-10-03T16:25:22.000Z,480
+"""Ondine @ FAKEedge09"" calls 3.75",2026-10-03T16:25:22.000Z,479
+"""Pell @ FAKEedge10"" bets 3.75",2026-10-03T16:25:21.000Z,478
+"River: [8♠, 4♥, 3♥, K♣] [J♦]",2026-10-03T16:25:21.000Z,477
+"""Wick @ FAKEedge05"" calls 0.25",2026-10-03T16:25:21.000Z,476
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:25:20.000Z,475
+"""Rune @ FAKEedge02"" bets 0.25",2026-10-03T16:25:20.000Z,474
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:25:20.000Z,473
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:25:19.000Z,472
+"Turn: [8♠, 4♥, 3♥] [K♣]",2026-10-03T16:25:19.000Z,471
+"""Wick @ FAKEedge05"" raises to 5.50",2026-10-03T16:25:19.000Z,470
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:25:18.000Z,469
+"""Thorn @ FAKEedge04"" bets 2.75",2026-10-03T16:25:18.000Z,468
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:25:18.000Z,467
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:25:17.000Z,466
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:25:17.000Z,465
+"Flop: [8♠, 4♥, 3♥]",2026-10-03T16:25:17.000Z,464
+"""Ondine @ FAKEedge09"" calls 0.50 (bomb pot bet)",2026-10-03T16:25:16.000Z,463
+"""Pell @ FAKEedge10"" calls 0.50 (bomb pot bet)",2026-10-03T16:25:16.000Z,462
+"""Wick @ FAKEedge05"" calls 0.50 (bomb pot bet)",2026-10-03T16:25:16.000Z,461
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T16:25:15.000Z,460
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T16:25:15.000Z,459
+"""Rune @ FAKEedge02"" calls 0.50 (bomb pot bet)",2026-10-03T16:25:15.000Z,458
+"Your hand is 9♦, 9♥",2026-10-03T16:25:14.000Z,457
+"Player stacks: #2 ""Rune @ FAKEedge02"" (56.53) | #3 ""Thorn @ FAKEedge04"" (110.20) | #5 ""Sable @ FAKEedge03"" (27.39) | #6 ""Wick @ FAKEedge05"" (132.57) | #7 ""Pell @ FAKEedge10"" (28.40) | #10 ""Ondine @ FAKEedge09"" (80.90)",2026-10-03T16:25:14.000Z,456
+"-- starting hand #26 (id: FAKEh00026) (dealer: ""Wick @ FAKEedge05"")",2026-10-03T16:25:14.000Z,455
+-- ending hand #25 --,2026-10-03T16:24:24.000Z,454
+"""Wick @ FAKEedge05"" collected 25.74 from pot",2026-10-03T16:24:24.000Z,453
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:24:23.000Z,452
+"""Wick @ FAKEedge05"" checks",2026-10-03T16:24:23.000Z,451
+"Turn: [6♥, 3♦, 2♣] [7♦]",2026-10-03T16:24:23.000Z,450
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:24:22.000Z,449
+"""Wick @ FAKEedge05"" checks",2026-10-03T16:24:22.000Z,448
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:24:22.000Z,447
+"Flop: [6♥, 3♦, 2♣]",2026-10-03T16:24:21.000Z,446
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:24:21.000Z,445
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:24:21.000Z,444
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:24:20.000Z,443
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T16:24:20.000Z,442
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:24:20.000Z,441
+"""Wick @ FAKEedge05"" calls 0.50",2026-10-03T16:24:19.000Z,440
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T16:24:19.000Z,439
+"""Thorn @ FAKEedge04"" posts a small blind of 0.25",2026-10-03T16:24:19.000Z,438
+"Your hand is 4♠, 5♣",2026-10-03T16:24:18.000Z,437
+"Player stacks: #1 ""Ondine @ FAKEedge09"" (62.30) | #2 ""Rune @ FAKEedge02"" (15.64) | #6 ""Sable @ FAKEedge03"" (109.05) | #8 ""Thorn @ FAKEedge04"" (19.12) | #9 ""Pell @ FAKEedge10"" (97.95) | #10 ""Wick @ FAKEedge05"" (22.75)",2026-10-03T16:24:18.000Z,436
+-- starting hand #25 (id: FAKEh00025),2026-10-03T16:24:18.000Z,435
+-- ending hand #24 --,2026-10-03T16:23:46.000Z,434
+"""Ondine @ FAKEedge09"" collected 21.02 from pot",2026-10-03T16:23:45.000Z,433
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:23:45.000Z,432
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:23:45.000Z,431
+"Flop: [2♠, 5♦, 5♥]",2026-10-03T16:23:44.000Z,430
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:23:44.000Z,429
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:23:44.000Z,428
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:23:43.000Z,427
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:23:43.000Z,426
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:23:43.000Z,425
+"""Wick @ FAKEedge05"" calls 0.50",2026-10-03T16:23:42.000Z,424
+"""Ondine @ FAKEedge09"" posts a big blind of 0.50",2026-10-03T16:23:42.000Z,423
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:23:42.000Z,422
+"Your hand is A♦, 4♥",2026-10-03T16:23:41.000Z,421
+"Player stacks: #1 ""Thorn @ FAKEedge04"" (111.49) | #4 ""Rune @ FAKEedge02"" (73.80) | #5 ""Pell @ FAKEedge10"" (80.59) | #6 ""Sable @ FAKEedge03"" (86.14) | #7 ""Ondine @ FAKEedge09"" (66.58) | #10 ""Wick @ FAKEedge05"" (115.10)",2026-10-03T16:23:41.000Z,420
+"-- starting hand #24 (id: FAKEh00024) (dealer: ""Pell @ FAKEedge10"")",2026-10-03T16:23:41.000Z,419
+-- ending hand #23 --,2026-10-03T16:23:09.000Z,418
+"""Sable @ FAKEedge03"" collected 18.59 from pot with High Card, Q's (combination: Q♥, 7♠, 5♥, T♣, K♣)",2026-10-03T16:23:09.000Z,417
+"""Rune @ FAKEedge02"" collected 18.59 from pot with Three of a Kind, 7's (combination: J♥, T♣, 7♦, 4♥, T♥)",2026-10-03T16:23:09.000Z,416
+"""Rune @ FAKEedge02"" collected 37.18 from pot with High Card, Q's (combination: 6♠, K♥, 5♣, 3♦, J♠)",2026-10-03T16:23:08.000Z,415
+"""Sable @ FAKEedge03"" shows a 6♣, 3♥.",2026-10-03T16:23:08.000Z,414
+"""Rune @ FAKEedge02"" calls 1.75",2026-10-03T16:23:08.000Z,413
+"""Sable @ FAKEedge03"" bets 1.75",2026-10-03T16:23:07.000Z,412
+"River: [3♥, J♠, 8♥, Q♦] [3♦]",2026-10-03T16:23:07.000Z,411
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:23:07.000Z,410
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:23:06.000Z,409
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:23:06.000Z,408
+"Turn: [3♥, J♠, 8♥] [Q♦]",2026-10-03T16:23:06.000Z,407
+"""Rune @ FAKEedge02"" calls 3.00",2026-10-03T16:23:05.000Z,406
+"""Sable @ FAKEedge03"" calls 3.00",2026-10-03T16:23:05.000Z,405
+"""Thorn @ FAKEedge04"" bets 3.00",2026-10-03T16:23:05.000Z,404
+"Flop: [3♥, J♠, 8♥]",2026-10-03T16:23:04.000Z,403
+All players in hand choose to run it twice,2026-10-03T16:23:04.000Z,402
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:23:04.000Z,401
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:23:03.000Z,400
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:23:03.000Z,399
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T16:23:03.000Z,398
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T16:23:02.000Z,397
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:23:02.000Z,396
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:23:02.000Z,395
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T16:23:01.000Z,394
+"Player stacks: #1 ""Rune @ FAKEedge02"" (146.98) | #2 ""Wick @ FAKEedge05"" (13.94) | #4 ""Pell @ FAKEedge10"" (45.53) | #5 ""Thorn @ FAKEedge04"" (52.72) | #6 ""Ondine @ FAKEedge09"" (24.46) | #9 ""Sable @ FAKEedge03"" (135.55)",2026-10-03T16:23:01.000Z,393
+"-- starting hand #23 (id: FAKEh00023) (dealer: ""Wick @ FAKEedge05"")",2026-10-03T16:23:01.000Z,392
+-- ending hand #22 --,2026-10-03T16:21:41.000Z,391
+"""Pell @ FAKEedge10"" collected 12.29 from pot with Pair, K's (combination: 3♥, 5♠, J♠, 8♣, 9♣)",2026-10-03T16:21:40.000Z,390
+"""Ondine @ FAKEedge09"" shows a A♣, 5♦.",2026-10-03T16:21:40.000Z,389
+"""Pell @ FAKEedge10"" shows a T♦, Q♦.",2026-10-03T16:21:40.000Z,388
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:21:39.000Z,387
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:21:39.000Z,386
+"River: [Q♣, 8♣, K♦, 7♣] [9♠]",2026-10-03T16:21:39.000Z,385
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:21:38.000Z,384
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:21:38.000Z,383
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:21:38.000Z,382
+"Turn: [Q♣, 8♣, K♦] [7♣]",2026-10-03T16:21:37.000Z,381
+"""Ondine @ FAKEedge09"" bets 1.75",2026-10-03T16:21:37.000Z,380
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:21:37.000Z,379
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:21:36.000Z,378
+"Flop: [Q♣, 8♣, K♦]",2026-10-03T16:21:36.000Z,377
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:21:36.000Z,376
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T16:21:35.000Z,375
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:21:35.000Z,374
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T16:21:35.000Z,373
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:21:34.000Z,372
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:21:34.000Z,371
+"""Pell @ FAKEedge10"" posts a big blind of 0.50",2026-10-03T16:21:34.000Z,370
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:21:33.000Z,369
+"Player stacks: #2 ""Sable @ FAKEedge03"" (109.54) | #3 ""Pell @ FAKEedge10"" (61.60) | #4 ""Wick @ FAKEedge05"" (96.42) | #5 ""Rune @ FAKEedge02"" (114.72) | #7 ""Ondine @ FAKEedge09"" (52.19) | #10 ""Thorn @ FAKEedge04"" (80.79)",2026-10-03T16:21:33.000Z,368
+"-- starting hand #22 (id: FAKEh00022) (dealer: ""Thorn @ FAKEedge04"")",2026-10-03T16:21:33.000Z,367
+-- ending hand #21 --,2026-10-03T16:20:13.000Z,366
+"""Pell @ FAKEedge10"" collected 20.75 from pot with Two Pair, A's and 8's (combination: 9♦, 9♠, 2♠, 2♣, 6♣)",2026-10-03T16:20:12.000Z,365
+"""Sable @ FAKEedge03"" shows a 5♠, K♣.",2026-10-03T16:20:12.000Z,364
+"""Pell @ FAKEedge10"" raises to 6.00",2026-10-03T16:20:12.000Z,363
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:20:11.000Z,362
+"""Sable @ FAKEedge03"" bets 3.00",2026-10-03T16:20:11.000Z,361
+"River: [7♠, 8♣, 6♠, 8♦] [7♦]",2026-10-03T16:20:11.000Z,360
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:20:10.000Z,359
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:20:10.000Z,358
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:20:10.000Z,357
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:20:09.000Z,356
+"Turn: [7♠, 8♣, 6♠] [8♦]",2026-10-03T16:20:09.000Z,355
+"""Pell @ FAKEedge10"" raises to 9.00",2026-10-03T16:20:09.000Z,354
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:20:08.000Z,353
+"""Thorn @ FAKEedge04"" raises to 4.50",2026-10-03T16:20:08.000Z,352
+"""Ondine @ FAKEedge09"" bets 2.25",2026-10-03T16:20:08.000Z,351
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:20:07.000Z,350
+"Flop: [7♠, 8♣, 6♠]",2026-10-03T16:20:07.000Z,349
+"""Ondine @ FAKEedge09"" calls 4.00",2026-10-03T16:20:07.000Z,348
+"""Sable @ FAKEedge03"" calls 4.00",2026-10-03T16:20:06.000Z,347
+"""Pell @ FAKEedge10"" raises to 4.00 and go all in",2026-10-03T16:20:06.000Z,346
+"""Wick @ FAKEedge05"" calls 0.50",2026-10-03T16:20:06.000Z,345
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:20:05.000Z,344
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:20:05.000Z,343
+"""Ondine @ FAKEedge09"" posts a big blind of 0.50",2026-10-03T16:20:05.000Z,342
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:20:04.000Z,341
+"Player stacks: #1 ""Ondine @ FAKEedge09"" (72.28) | #2 ""Rune @ FAKEedge02"" (118.86) | #3 ""Thorn @ FAKEedge04"" (40.06) | #4 ""Wick @ FAKEedge05"" (116.37) | #5 ""Pell @ FAKEedge10"" (68.37) | #8 ""Sable @ FAKEedge03"" (140.11)",2026-10-03T16:20:04.000Z,340
+"-- starting hand #21 (id: FAKEh00021) (dealer: ""Pell @ FAKEedge10"")",2026-10-03T16:20:04.000Z,339
+-- ending hand #20 --,2026-10-03T16:18:47.000Z,338
+"""Thorn @ FAKEedge04"" collected 31.88 from pot",2026-10-03T16:18:47.000Z,337
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:18:47.000Z,336
+"Turn: [2♠, 8♥, 5♠] [T♦]",2026-10-03T16:18:46.000Z,335
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:18:46.000Z,334
+"""Thorn @ FAKEedge04"" raises to 0.50",2026-10-03T16:18:46.000Z,333
+"""Ondine @ FAKEedge09"" bets 0.25",2026-10-03T16:18:45.000Z,332
+"Flop: [2♠, 8♥, 5♠]",2026-10-03T16:18:45.000Z,331
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:18:45.000Z,330
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:18:44.000Z,329
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:18:44.000Z,328
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:18:44.000Z,327
+"""Wick @ FAKEedge05"" calls 0.50",2026-10-03T16:18:43.000Z,326
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:18:43.000Z,325
+"""Ondine @ FAKEedge09"" posts a big blind of 0.50",2026-10-03T16:18:43.000Z,324
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:18:42.000Z,323
+"Player stacks: #3 ""Rune @ FAKEedge02"" (134.15) | #6 ""Sable @ FAKEedge03"" (127.47) | #7 ""Ondine @ FAKEedge09"" (94.29) | #8 ""Thorn @ FAKEedge04"" (100.69) | #9 ""Wick @ FAKEedge05"" (114.98) | #10 ""Pell @ FAKEedge10"" (123.54)",2026-10-03T16:18:42.000Z,322
+"-- starting hand #20 (id: FAKEh00020) (dealer: ""Rune @ FAKEedge02"")",2026-10-03T16:18:42.000Z,321
+"""Sable @ FAKEedge03"" paid 1.00 for the 7-2 bounty to ""Thorn @ FAKEedge04""",2026-10-03T16:18:09.000Z,320
+-- ending hand #19 --,2026-10-03T16:18:08.000Z,319
+"""Sable @ FAKEedge03"" collected 13.27 from pot",2026-10-03T16:18:08.000Z,318
+"""Sable @ FAKEedge03"" collected 13.27 from pot",2026-10-03T16:18:08.000Z,317
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:18:07.000Z,316
+"""Sable @ FAKEedge03"" bets 3.00",2026-10-03T16:18:07.000Z,315
+"Turn: [6♠, K♥, 4♣] [3♣]",2026-10-03T16:18:07.000Z,314
+"""Ondine @ FAKEedge09"" checks",2026-10-03T16:18:06.000Z,313
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:18:06.000Z,312
+"Flop: [6♠, K♥, 4♣]",2026-10-03T16:18:06.000Z,311
+All players in hand choose to run it twice,2026-10-03T16:18:05.000Z,310
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:18:05.000Z,309
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:18:05.000Z,308
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:18:04.000Z,307
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:18:04.000Z,306
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:18:04.000Z,305
+"""Ondine @ FAKEedge09"" calls 0.50",2026-10-03T16:18:03.000Z,304
+"""Sable @ FAKEedge03"" posts a big blind of 0.50",2026-10-03T16:18:03.000Z,303
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T16:18:03.000Z,302
+"Your hand is Q♣, 4♣",2026-10-03T16:18:02.000Z,301
+"Player stacks: #1 ""Pell @ FAKEedge10"" (132.36) | #3 ""Sable @ FAKEedge03"" (86.40) | #5 ""Ondine @ FAKEedge09"" (95.67) | #6 ""Wick @ FAKEedge05"" (149.34) | #8 ""Rune @ FAKEedge02"" (55.56) | #9 ""Thorn @ FAKEedge04"" (134.18)",2026-10-03T16:18:02.000Z,300
+-- starting hand #19 (id: FAKEh00019),2026-10-03T16:18:02.000Z,299
+-- ending hand #18 --,2026-10-03T16:17:02.000Z,298
+"""Thorn @ FAKEedge04"" collected 13.38 from pot",2026-10-03T16:17:01.000Z,297
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:17:01.000Z,296
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:17:01.000Z,295
+"Flop: [6♦, 5♣, 4♦]",2026-10-03T16:17:00.000Z,294
+"""Thorn @ FAKEedge04"" calls 1.00",2026-10-03T16:17:00.000Z,293
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:17:00.000Z,292
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:16:59.000Z,291
+"""Sable @ FAKEedge03"" raises to 1.00",2026-10-03T16:16:59.000Z,290
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:16:59.000Z,289
+"""Ondine @ FAKEedge09"" folds",2026-10-03T16:16:58.000Z,288
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:16:58.000Z,287
+"""Rune @ FAKEedge02"" posts a small blind of 0.25",2026-10-03T16:16:58.000Z,286
+"Your hand is 3♠, K♠",2026-10-03T16:16:57.000Z,285
+"Player stacks: #2 ""Pell @ FAKEedge10"" (67.69) | #4 ""Sable @ FAKEedge03"" (88.69) | #5 ""Wick @ FAKEedge05"" (123.83) | #6 ""Rune @ FAKEedge02"" (56.23) | #7 ""Thorn @ FAKEedge04"" (139.68) | #10 ""Ondine @ FAKEedge09"" (118.94)",2026-10-03T16:16:57.000Z,284
+"-- starting hand #18 (id: FAKEh00018) (dealer: ""Wick @ FAKEedge05"")",2026-10-03T16:16:57.000Z,283
+"""Sable @ FAKEedge03"" shows a T♠, 6♣.",2026-10-03T16:15:55.000Z,282
+-- ending hand #17 --,2026-10-03T16:15:55.000Z,281
+"""Pell @ FAKEedge10"" collected 10.80 from pot with High Card, Q's (combination: A♠, J♥, Q♥, J♠, 9♦)",2026-10-03T16:15:55.000Z,280
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:15:54.000Z,279
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:15:54.000Z,278
+"River: [2♦, A♥, K♠, 2♠] [T♦]",2026-10-03T16:15:54.000Z,277
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:15:53.000Z,276
+"""Pell @ FAKEedge10"" bets 2.25",2026-10-03T16:15:53.000Z,275
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:15:53.000Z,274
+"Turn: [2♦, A♥, K♠] [2♠]",2026-10-03T16:15:52.000Z,273
+"""Wick @ FAKEedge05"" folds",2026-10-03T16:15:52.000Z,272
+"""Rune @ FAKEedge02"" calls 2.75",2026-10-03T16:15:52.000Z,271
+"""Pell @ FAKEedge10"" bets 2.75",2026-10-03T16:15:51.000Z,270
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:15:51.000Z,269
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:15:51.000Z,268
+"Flop: [2♦, A♥, K♠]",2026-10-03T16:15:50.000Z,267
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T16:15:50.000Z,266
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T16:15:50.000Z,265
+"""Wick @ FAKEedge05"" calls 0.50 (bomb pot bet)",2026-10-03T16:15:49.000Z,264
+"""Rune @ FAKEedge02"" calls 0.50 (bomb pot bet)",2026-10-03T16:15:49.000Z,263
+"""Pell @ FAKEedge10"" calls 0.50 (bomb pot bet)",2026-10-03T16:15:49.000Z,262
+"Your hand is 5♠, 9♠",2026-10-03T16:15:48.000Z,261
+"Player stacks: #1 ""Pell @ FAKEedge10"" (101.85) | #3 ""Rune @ FAKEedge02"" (137.82) | #4 ""Wick @ FAKEedge05"" (12.29) | #8 ""Thorn @ FAKEedge04"" (41.14) | #10 ""Sable @ FAKEedge03"" (140.98)",2026-10-03T16:15:48.000Z,260
+"-- starting hand #17 (id: FAKEh00017) (dealer: ""Wick @ FAKEedge05"")",2026-10-03T16:15:48.000Z,259
+-- ending hand #16 --,2026-10-03T16:14:30.000Z,258
+"""Rune @ FAKEedge02"" collected 3.36 from pot with Full House, Q's full of 3's (combination: A♠, J♥, K♦, 6♦, 9♣)",2026-10-03T16:14:29.000Z,257
+"""Rune @ FAKEedge02"" shows a 3♣, 7♥.",2026-10-03T16:14:29.000Z,256
+"""Thorn @ FAKEedge04"" shows a 8♣, 2♦.",2026-10-03T16:14:29.000Z,255
+"""Thorn @ FAKEedge04"" bets 3.00",2026-10-03T16:14:28.000Z,254
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:14:28.000Z,253
+"River: [2♦, K♣, K♦, 5♠] [7♣]",2026-10-03T16:14:28.000Z,252
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:14:27.000Z,251
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:14:27.000Z,250
+"Turn: [2♦, K♣, K♦] [5♠]",2026-10-03T16:14:27.000Z,249
+"""Thorn @ FAKEedge04"" calls 2.25",2026-10-03T16:14:26.000Z,248
+"""Rune @ FAKEedge02"" bets 2.25",2026-10-03T16:14:26.000Z,247
+"Flop: [2♦, K♣, K♦]",2026-10-03T16:14:26.000Z,246
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:14:25.000Z,245
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:14:25.000Z,244
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:14:25.000Z,243
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T16:14:24.000Z,242
+"""Sable @ FAKEedge03"" posts a big blind of 0.50",2026-10-03T16:14:24.000Z,241
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T16:14:24.000Z,240
+"Your hand is 4♦, 5♠",2026-10-03T16:14:23.000Z,239
+"Player stacks: #1 ""Thorn @ FAKEedge04"" (79.30) | #2 ""Pell @ FAKEedge10"" (110.53) | #3 ""Sable @ FAKEedge03"" (79.56) | #7 ""Rune @ FAKEedge02"" (47.66)",2026-10-03T16:14:23.000Z,238
+"-- starting hand #16 (id: FAKEh00016) (dealer: ""Thorn @ FAKEedge04"")",2026-10-03T16:14:23.000Z,237
+"The admin ""Oberon @ FAKEedge08"" forced the player ""Rune @ FAKEedge02"" to away mode in the next hand.",2026-10-03T16:13:50.000Z,236
+-- ending hand #15 --,2026-10-03T16:13:49.000Z,235
+"""Thorn @ FAKEedge04"" collected 40.10 from pot",2026-10-03T16:13:49.000Z,234
+"""Pell @ FAKEedge10"" folds",2026-10-03T16:13:49.000Z,233
+"Flop: [5♥, J♥, Q♣]",2026-10-03T16:13:48.000Z,232
+"""Thorn @ FAKEedge04"" raises to 3.00",2026-10-03T16:13:48.000Z,231
+"""Pell @ FAKEedge10"" raises to 1.00",2026-10-03T16:13:48.000Z,230
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:13:47.000Z,229
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:13:47.000Z,228
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:13:47.000Z,227
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T16:13:46.000Z,226
+"Player stacks: #2 ""Pell @ FAKEedge10"" (113.09) | #3 ""Thorn @ FAKEedge04"" (68.33) | #9 ""Rune @ FAKEedge02"" (74.69) | #10 ""Sable @ FAKEedge03"" (142.74)",2026-10-03T16:13:46.000Z,225
+"-- starting hand #15 (id: FAKEh00015) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T16:13:46.000Z,224
+"""Ondine @ FAKEedge09"" joins the table at seat #4.",2026-10-03T16:13:07.000Z,223
+"""Thorn @ FAKEedge04"" shows a 4♥, J♣.",2026-10-03T16:13:07.000Z,222
+-- ending hand #14 --,2026-10-03T16:13:07.000Z,221
+"""Rune @ FAKEedge02"" collected 10.47 from pot",2026-10-03T16:13:06.000Z,220
+"""Pell @ FAKEedge10"" shows a 7♠, 7♣.",2026-10-03T16:13:06.000Z,219
+"""Rune @ FAKEedge02"" shows a 6♣.",2026-10-03T16:13:06.000Z,218
+"""Rune @ FAKEedge02"" bets 3.25",2026-10-03T16:13:05.000Z,217
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:13:05.000Z,216
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:13:05.000Z,215
+"River: [8♦, 9♠, K♥, 2♥] [2♠]",2026-10-03T16:13:04.000Z,214
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:13:04.000Z,213
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:13:04.000Z,212
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:13:03.000Z,211
+"Turn: [8♦, 9♠, K♥] [2♥]",2026-10-03T16:13:03.000Z,210
+"""Rune @ FAKEedge02"" bets 2.75",2026-10-03T16:13:03.000Z,209
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:13:02.000Z,208
+"""Pell @ FAKEedge10"" checks",2026-10-03T16:13:02.000Z,207
+"Flop: [8♦, 9♠, K♥]",2026-10-03T16:13:02.000Z,206
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:13:01.000Z,205
+"""Pell @ FAKEedge10"" calls 0.50",2026-10-03T16:13:01.000Z,204
+"""Rune @ FAKEedge02"" calls 0.50",2026-10-03T16:13:01.000Z,203
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:13:00.000Z,202
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:13:00.000Z,201
+"""Pell @ FAKEedge10"" posts a small blind of 0.25",2026-10-03T16:13:00.000Z,200
+"Your hand is 7♣, 3♦",2026-10-03T16:12:59.000Z,199
+"Player stacks: #1 ""Rune @ FAKEedge02"" (76.99) | #3 ""Pell @ FAKEedge10"" (11.48) | #8 ""Thorn @ FAKEedge04"" (87.00) | #9 ""Sable @ FAKEedge03"" (16.90)",2026-10-03T16:12:59.000Z,198
+-- starting hand #14 (id: FAKEh00014),2026-10-03T16:12:59.000Z,197
+-- ending hand #13 --,2026-10-03T16:11:58.000Z,196
+"""Rune @ FAKEedge02"" collected 14.97 from pot",2026-10-03T16:11:58.000Z,195
+"""Quill @ FAKEedge01"" folds",2026-10-03T16:11:57.000Z,194
+"""Rune @ FAKEedge02"" bets 1.75",2026-10-03T16:11:57.000Z,193
+"River: [J♥, 5♠, 4♣, 7♠] [3♦]",2026-10-03T16:11:57.000Z,192
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:11:56.000Z,191
+"""Quill @ FAKEedge01"" bets 1.75",2026-10-03T16:11:56.000Z,190
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:11:56.000Z,189
+"Turn: [J♥, 5♠, 4♣] [7♠]",2026-10-03T16:11:55.000Z,188
+"""Thorn @ FAKEedge04"" bets 1.00",2026-10-03T16:11:55.000Z,187
+"""Quill @ FAKEedge01"" checks",2026-10-03T16:11:55.000Z,186
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:11:54.000Z,185
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:11:54.000Z,184
+"Flop: [J♥, 5♠, 4♣]",2026-10-03T16:11:54.000Z,183
+"""Sable @ FAKEedge03"" calls 4.00",2026-10-03T16:11:53.000Z,182
+"""Rune @ FAKEedge02"" raises to 4.00 and go all in",2026-10-03T16:11:53.000Z,181
+"""Thorn @ FAKEedge04"" calls 1.00",2026-10-03T16:11:53.000Z,180
+"""Quill @ FAKEedge01"" raises to 1.00",2026-10-03T16:11:52.000Z,179
+"""Sable @ FAKEedge03"" posts a big blind of 0.50",2026-10-03T16:11:52.000Z,178
+"""Rune @ FAKEedge02"" posts a small blind of 0.25",2026-10-03T16:11:52.000Z,177
+"Your hand is K♣, 9♦",2026-10-03T16:11:51.000Z,176
+"Player stacks: #1 ""Thorn @ FAKEedge04"" (144.90) | #5 ""Rune @ FAKEedge02"" (56.63) | #7 ""Sable @ FAKEedge03"" (80.84) | #9 ""Quill @ FAKEedge01"" (100.52)",2026-10-03T16:11:51.000Z,175
+-- starting hand #13 (id: FAKEh00013),2026-10-03T16:11:51.000Z,174
+"The admin ""Oberon @ FAKEedge08"" enqueued the removal of the player ""Sable @ FAKEedge03"".",2026-10-03T16:10:58.000Z,173
+-- ending hand #12 --,2026-10-03T16:10:58.000Z,172
+"""Thorn @ FAKEedge04"" collected 42.93 from pot",2026-10-03T16:10:58.000Z,171
+"Uncalled bet of 0.50 returned to ""Thorn @ FAKEedge04""",2026-10-03T16:10:57.000Z,170
+"""Sable @ FAKEedge03"" shows a 4♣.",2026-10-03T16:10:57.000Z,169
+"""Rune @ FAKEedge02"" folds",2026-10-03T16:10:57.000Z,168
+"Flop: [T♠, 6♠, 5♥]",2026-10-03T16:10:56.000Z,167
+"""Rune @ FAKEedge02"" checks",2026-10-03T16:10:56.000Z,166
+"""Quill @ FAKEedge01"" folds",2026-10-03T16:10:56.000Z,165
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:10:55.000Z,164
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:10:55.000Z,163
+"""Rune @ FAKEedge02"" posts a big blind of 0.50",2026-10-03T16:10:55.000Z,162
+"""Quill @ FAKEedge01"" posts a small blind of 0.25",2026-10-03T16:10:54.000Z,161
+"Player stacks: #2 ""Sable @ FAKEedge03"" (66.92) | #4 ""Quill @ FAKEedge01"" (72.57) | #8 ""Rune @ FAKEedge02"" (110.16) | #9 ""Thorn @ FAKEedge04"" (64.21)",2026-10-03T16:10:54.000Z,160
+"-- starting hand #12 (id: FAKEh00012) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T16:10:54.000Z,159
+"""Quill @ FAKEedge01"" shows a A♠, 8♠.",2026-10-03T16:10:07.000Z,158
+"""Sable @ FAKEedge03"" shows a A♣, T♣.",2026-10-03T16:10:07.000Z,157
+-- ending hand #11 --,2026-10-03T16:10:06.000Z,156
+"""Sable @ FAKEedge03"" collected 25.31 from pot with Three of a Kind, 7's (combination: A♠, 5♥, 8♥, 7♠, 6♣)",2026-10-03T16:10:06.000Z,155
+"""Quill @ FAKEedge01"" calls 0.25",2026-10-03T16:10:06.000Z,154
+"""Sable @ FAKEedge03"" bets 0.25",2026-10-03T16:10:05.000Z,153
+"River: [5♦, 3♥, Q♥, 6♣] [4♦]",2026-10-03T16:10:05.000Z,152
+"""Quill @ FAKEedge01"" calls 0.25",2026-10-03T16:10:05.000Z,151
+"""Sable @ FAKEedge03"" bets 0.25",2026-10-03T16:10:04.000Z,150
+"Turn: [5♦, 3♥, Q♥] [6♣]",2026-10-03T16:10:04.000Z,149
+"""Quill @ FAKEedge01"" bets 3.25",2026-10-03T16:10:04.000Z,148
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:10:03.000Z,147
+"Flop: [5♦, 3♥, Q♥]",2026-10-03T16:10:03.000Z,146
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:10:03.000Z,145
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:10:02.000Z,144
+"""Quill @ FAKEedge01"" calls 0.50",2026-10-03T16:10:02.000Z,143
+"""Sable @ FAKEedge03"" posts a big blind of 0.50",2026-10-03T16:10:02.000Z,142
+"""Thorn @ FAKEedge04"" posts a small blind of 0.25",2026-10-03T16:10:01.000Z,141
+"Player stacks: #1 ""Sable @ FAKEedge03"" (59.25) | #7 ""Quill @ FAKEedge01"" (126.21) | #8 ""Thorn @ FAKEedge04"" (135.62)",2026-10-03T16:10:01.000Z,140
+-- starting hand #11 (id: FAKEh00011),2026-10-03T16:10:01.000Z,139
+-- ending hand #10 --,2026-10-03T16:08:46.000Z,138
+"""Quill @ FAKEedge01"" collected 5.83 from pot",2026-10-03T16:08:45.000Z,137
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:08:45.000Z,136
+"""Quill @ FAKEedge01"" bets 1.75",2026-10-03T16:08:45.000Z,135
+"River: [J♣, 5♠, 3♠, 5♥] [4♦]",2026-10-03T16:08:44.000Z,134
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:08:44.000Z,133
+"""Quill @ FAKEedge01"" checks",2026-10-03T16:08:44.000Z,132
+"Turn: [J♣, 5♠, 3♠] [5♥]",2026-10-03T16:08:43.000Z,131
+"""Sable @ FAKEedge03"" calls 2.75",2026-10-03T16:08:43.000Z,130
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:08:43.000Z,129
+"""Quill @ FAKEedge01"" bets 2.75",2026-10-03T16:08:42.000Z,128
+"Flop: [J♣, 5♠, 3♠]",2026-10-03T16:08:42.000Z,127
+"""Thorn @ FAKEedge04"" raises to 5.00",2026-10-03T16:08:42.000Z,126
+"""Quill @ FAKEedge01"" raises to 4.50",2026-10-03T16:08:41.000Z,125
+"""Sable @ FAKEedge03"" raises to 2.50 and go all in",2026-10-03T16:08:41.000Z,124
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:08:41.000Z,123
+"""Quill @ FAKEedge01"" posts a small blind of 0.25",2026-10-03T16:08:40.000Z,122
+"Player stacks: #1 ""Sable @ FAKEedge03"" (133.85) | #6 ""Quill @ FAKEedge01"" (22.06) | #9 ""Thorn @ FAKEedge04"" (33.17)",2026-10-03T16:08:40.000Z,121
+-- starting hand #10 (id: FAKEh00010),2026-10-03T16:08:40.000Z,120
+"""Thorn @ FAKEedge04"" paid 1.00 for the 7-2 bounty to ""Sable @ FAKEedge03""",2026-10-03T16:08:09.000Z,119
+-- ending hand #9 --,2026-10-03T16:08:08.000Z,118
+"""Thorn @ FAKEedge04"" collected 33.21 from pot",2026-10-03T16:08:08.000Z,117
+"""Thorn @ FAKEedge04"" collected 33.21 from pot",2026-10-03T16:08:08.000Z,116
+"Uncalled bet of 0.50 returned to ""Thorn @ FAKEedge04""",2026-10-03T16:08:07.000Z,115
+"""Quill @ FAKEedge01"" folds",2026-10-03T16:08:07.000Z,114
+"Flop: [K♦, 5♠, 6♣]",2026-10-03T16:08:07.000Z,113
+All players in hand choose to run it twice,2026-10-03T16:08:06.000Z,112
+"""Thorn @ FAKEedge04"" raises to 2.00 and go all in",2026-10-03T16:08:06.000Z,111
+"""Quill @ FAKEedge01"" calls 0.50",2026-10-03T16:08:06.000Z,110
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:08:05.000Z,109
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:08:05.000Z,108
+"""Quill @ FAKEedge01"" posts a small blind of 0.25",2026-10-03T16:08:05.000Z,107
+"Your hand is 3♦, 7♦",2026-10-03T16:08:04.000Z,106
+"Player stacks: #4 ""Quill @ FAKEedge01"" (42.93) | #7 ""Thorn @ FAKEedge04"" (149.07) | #10 ""Sable @ FAKEedge03"" (19.66)",2026-10-03T16:08:04.000Z,105
+"-- starting hand #9 (id: FAKEh00009) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T16:08:04.000Z,104
+-- ending hand #8 --,2026-10-03T16:06:55.000Z,103
+"""Sable @ FAKEedge03"" collected 44.91 from pot",2026-10-03T16:06:54.000Z,102
+"Uncalled bet of 0.50 returned to ""Sable @ FAKEedge03""",2026-10-03T16:06:54.000Z,101
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:06:54.000Z,100
+"""Sable @ FAKEedge03"" bets 3.75",2026-10-03T16:06:53.000Z,99
+"Flop: [3♦, K♣, 2♣]",2026-10-03T16:06:53.000Z,98
+"""Thorn @ FAKEedge04"" calls 0.50 (bomb pot bet)",2026-10-03T16:06:53.000Z,97
+"""Sable @ FAKEedge03"" calls 0.50 (bomb pot bet)",2026-10-03T16:06:52.000Z,96
+"Player stacks: #3 ""Sable @ FAKEedge03"" (109.29) | #4 ""Thorn @ FAKEedge04"" (147.50)",2026-10-03T16:06:52.000Z,95
+"-- starting hand #8 (id: FAKEh00008) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T16:06:52.000Z,94
+"""Sable @ FAKEedge03"" shows a 4♦, 4♥.",2026-10-03T16:05:40.000Z,93
+-- ending hand #7 --,2026-10-03T16:05:40.000Z,92
+"""Sable @ FAKEedge03"" collected 19.36 from pot with High Card, Q's (combination: 5♥, Q♠, 5♣, 9♦, 6♦)",2026-10-03T16:05:40.000Z,91
+"""Thorn @ FAKEedge04"" collected 19.36 from pot with Two Pair, A's and 8's (combination: 2♦, K♥, A♦, K♦, 8♦)",2026-10-03T16:05:39.000Z,90
+"""Thorn @ FAKEedge04"" shows a 2♠.",2026-10-03T16:05:39.000Z,89
+"""Thorn @ FAKEedge04"" calls 1.50",2026-10-03T16:05:39.000Z,88
+"""Sable @ FAKEedge03"" bets 1.50",2026-10-03T16:05:38.000Z,87
+"River: [A♠, Q♣, Q♠, K♦] [9♥]",2026-10-03T16:05:38.000Z,86
+"""Thorn @ FAKEedge04"" calls 1.50",2026-10-03T16:05:38.000Z,85
+"""Sable @ FAKEedge03"" bets 1.50",2026-10-03T16:05:37.000Z,84
+"Turn: [A♠, Q♣, Q♠] [K♦]",2026-10-03T16:05:37.000Z,83
+"""Thorn @ FAKEedge04"" raises to 2.00",2026-10-03T16:05:37.000Z,82
+"""Sable @ FAKEedge03"" bets 1.00",2026-10-03T16:05:36.000Z,81
+"Flop: [A♠, Q♣, Q♠]",2026-10-03T16:05:36.000Z,80
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:05:36.000Z,79
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T16:05:35.000Z,78
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:05:35.000Z,77
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:05:35.000Z,76
+"Your hand is Q♣, 4♠",2026-10-03T16:05:34.000Z,75
+"Player stacks: #9 ""Thorn @ FAKEedge04"" (141.73) | #10 ""Sable @ FAKEedge03"" (94.53)",2026-10-03T16:05:34.000Z,74
+-- starting hand #7 (id: FAKEh00007),2026-10-03T16:05:34.000Z,73
+-- ending hand #6 --,2026-10-03T16:05:03.000Z,72
+"""Sable @ FAKEedge03"" collected 32.68 from pot",2026-10-03T16:05:02.000Z,71
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:05:02.000Z,70
+"""Sable @ FAKEedge03"" posts a big blind of 0.50",2026-10-03T16:05:02.000Z,69
+"""Thorn @ FAKEedge04"" posts a small blind of 0.25",2026-10-03T16:05:01.000Z,68
+"Player stacks: #4 ""Thorn @ FAKEedge04"" (79.25) | #5 ""Sable @ FAKEedge03"" (29.27)",2026-10-03T16:05:01.000Z,67
+-- starting hand #6 (id: FAKEh00006),2026-10-03T16:05:01.000Z,66
+-- ending hand #5 --,2026-10-03T16:04:30.000Z,65
+"""Thorn @ FAKEedge04"" collected 26.08 from pot",2026-10-03T16:04:29.000Z,64
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:04:29.000Z,63
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:04:29.000Z,62
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:04:28.000Z,61
+"Player stacks: #3 ""Sable @ FAKEedge03"" (73.34) | #9 ""Thorn @ FAKEedge04"" (109.96)",2026-10-03T16:04:28.000Z,60
+"-- starting hand #5 (id: FAKEh00005) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T16:04:28.000Z,59
+"""Sable @ FAKEedge03"" paid 1.00 for the 7-2 bounty to ""Thorn @ FAKEedge04""",2026-10-03T16:03:16.000Z,58
+"""Sable @ FAKEedge03"" shows a 7♣, 3♦.",2026-10-03T16:03:15.000Z,57
+-- ending hand #4 --,2026-10-03T16:03:15.000Z,56
+"""Sable @ FAKEedge03"" collected 20.65 from pot with Three of a Kind, 7's (combination: 9♣, 8♣, 2♥, 3♥, K♦)",2026-10-03T16:03:15.000Z,55
+"""Sable @ FAKEedge03"" collected 20.65 from pot with Three of a Kind, 7's (combination: 9♦, 6♠, 8♠, 9♥, 3♦)",2026-10-03T16:03:14.000Z,54
+"""Thorn @ FAKEedge04"" shows a T♦, 3♠.",2026-10-03T16:03:14.000Z,53
+"""Thorn @ FAKEedge04"" bets 1.50",2026-10-03T16:03:14.000Z,52
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:03:13.000Z,51
+"River: [9♦, 4♣, Q♦, 6♣] [T♥]",2026-10-03T16:03:13.000Z,50
+"""Thorn @ FAKEedge04"" bets 1.00",2026-10-03T16:03:13.000Z,49
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:03:12.000Z,48
+"Turn: [9♦, 4♣, Q♦] [6♣]",2026-10-03T16:03:12.000Z,47
+"""Thorn @ FAKEedge04"" bets 0.75",2026-10-03T16:03:12.000Z,46
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:03:11.000Z,45
+"Flop: [9♦, 4♣, Q♦]",2026-10-03T16:03:11.000Z,44
+All players in hand choose to run it twice,2026-10-03T16:03:11.000Z,43
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:03:10.000Z,42
+"""Sable @ FAKEedge03"" calls 0.50",2026-10-03T16:03:10.000Z,41
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:03:10.000Z,40
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:03:09.000Z,39
+"Player stacks: #2 ""Sable @ FAKEedge03"" (141.14) | #3 ""Thorn @ FAKEedge04"" (146.69)",2026-10-03T16:03:09.000Z,38
+"-- starting hand #4 (id: FAKEh00004) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T16:03:09.000Z,37
+-- ending hand #3 --,2026-10-03T16:02:07.000Z,36
+"""Thorn @ FAKEedge04"" collected 22.56 from pot",2026-10-03T16:02:07.000Z,35
+"Uncalled bet of 0.50 returned to ""Thorn @ FAKEedge04""",2026-10-03T16:02:07.000Z,34
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:02:06.000Z,33
+"""Thorn @ FAKEedge04"" checks",2026-10-03T16:02:06.000Z,32
+"Turn: [T♦, J♣, 6♥] [Q♥]",2026-10-03T16:02:06.000Z,31
+"""Sable @ FAKEedge03"" calls 3.25",2026-10-03T16:02:05.000Z,30
+"""Thorn @ FAKEedge04"" bets 3.25",2026-10-03T16:02:05.000Z,29
+"Flop: [T♦, J♣, 6♥]",2026-10-03T16:02:05.000Z,28
+"""Sable @ FAKEedge03"" checks",2026-10-03T16:02:04.000Z,27
+"""Thorn @ FAKEedge04"" calls 0.50",2026-10-03T16:02:04.000Z,26
+"""Sable @ FAKEedge03"" posts a big blind of 0.50",2026-10-03T16:02:04.000Z,25
+"""Thorn @ FAKEedge04"" posts a small blind of 0.25",2026-10-03T16:02:03.000Z,24
+"Player stacks: #5 ""Sable @ FAKEedge03"" (111.47) | #6 ""Thorn @ FAKEedge04"" (10.77)",2026-10-03T16:02:03.000Z,23
+-- starting hand #3 (id: FAKEh00003),2026-10-03T16:02:03.000Z,22
+-- ending hand #2 --,2026-10-03T16:01:03.000Z,21
+"""Thorn @ FAKEedge04"" collected 42.77 from pot",2026-10-03T16:01:03.000Z,20
+"""Sable @ FAKEedge03"" shows a 6♣.",2026-10-03T16:01:02.000Z,19
+"""Sable @ FAKEedge03"" folds",2026-10-03T16:01:02.000Z,18
+"""Thorn @ FAKEedge04"" posts a big blind of 0.50",2026-10-03T16:01:02.000Z,17
+"""Sable @ FAKEedge03"" posts a small blind of 0.25",2026-10-03T16:01:01.000Z,16
+"Player stacks: #5 ""Sable @ FAKEedge03"" (18.36) | #10 ""Thorn @ FAKEedge04"" (76.50)",2026-10-03T16:01:01.000Z,15
+"-- starting hand #2 (id: FAKEh00002) (dealer: ""Sable @ FAKEedge03"")",2026-10-03T16:01:01.000Z,14
+"The player ""Thorn @ FAKEedge04"" rebought. New stack 20.00.",2026-10-03T16:00:04.000Z,13
+"The player ""Thorn @ FAKEedge04"" requested a rebuy of 20.00.",2026-10-03T16:00:03.000Z,12
+-- ending hand #1 --,2026-10-03T16:00:03.000Z,11
+"""Sable @ FAKEedge03"" collected 8.32 from pot",2026-10-03T16:00:03.000Z,10
+"Uncalled bet of 0.50 returned to ""Sable @ FAKEedge03""",2026-10-03T16:00:02.000Z,9
+"""Thorn @ FAKEedge04"" folds",2026-10-03T16:00:02.000Z,8
+"Flop: [3♦, 9♥, Q♦]",2026-10-03T16:00:02.000Z,7
+"""Sable @ FAKEedge03"" calls 2.50",2026-10-03T16:00:01.000Z,6
+"""Thorn @ FAKEedge04"" raises to 2.50 and go all in",2026-10-03T16:00:01.000Z,5
+"""Sable @ FAKEedge03"" posts a big blind of 0.50",2026-10-03T16:00:01.000Z,4
+"""Thorn @ FAKEedge04"" posts a small blind of 0.25",2026-10-03T16:00:00.000Z,3
+"Player stacks: #1 ""Sable @ FAKEedge03"" (76.98) | #9 ""Thorn @ FAKEedge04"" (11.83)",2026-10-03T16:00:00.000Z,2
+"-- starting hand #1 (id: FAKEh00001) (dealer: ""Thorn @ FAKEedge04"")",2026-10-03T16:00:00.000Z,1

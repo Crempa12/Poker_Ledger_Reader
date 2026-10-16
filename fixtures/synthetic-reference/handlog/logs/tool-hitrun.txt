@@ -1,7 +1,0 @@
-Games loaded: 12   in scope: 12   hand logs in scope: 0
-Hands analysed: 0
-
-No hand logs in scope, so no nights to judge. Download "poker_now_log_<id>.csv" from PokerNow
-and drop it next to the matching ledger (menu 19 files it).
-
-Wrote <out>/handlog/tool/hit_and_run_nights_tool.csv

@@ -1,0 +1,135 @@
+entry,at,order
+-- ending hand #7 --,2026-11-01T03:15:51.000Z,134
+"""Wenrick @ FAKEid0091"" collected 1.00 from pot",2026-11-01T03:15:48.000Z,133
+"Uncalled bet of 1.00 returned to ""Wenrick @ FAKEid0091""",2026-11-01T03:15:45.000Z,132
+"""Quillan @ FAKEid0092"" folds",2026-11-01T03:15:42.000Z,131
+"""Wenrick @ FAKEid0091"" bets 1.00",2026-11-01T03:15:39.000Z,130
+"Turn: [5♣, 6♠, Q♥] [A♣]",2026-11-01T03:15:36.000Z,129
+"""Wenrick @ FAKEid0091"" checks",2026-11-01T03:15:33.000Z,128
+"""Quillan @ FAKEid0092"" checks",2026-11-01T03:15:30.000Z,127
+"Flop: [5♣, 6♠, Q♥]",2026-11-01T03:15:27.000Z,126
+"""Wenrick @ FAKEid0091"" checks",2026-11-01T03:15:24.000Z,125
+"""Quillan @ FAKEid0092"" calls 0.50",2026-11-01T03:15:21.000Z,124
+"""Kelvane @ FAKEid0089"" folds",2026-11-01T03:15:18.000Z,123
+"""Ostravan @ FAKEid0087"" folds",2026-11-01T03:15:15.000Z,122
+"""Vexlor @ FAKEid0086"" folds",2026-11-01T03:15:12.000Z,121
+"""Wenrick @ FAKEid0091"" posts a big blind of 0.50",2026-11-01T03:15:09.000Z,120
+"""Quillan @ FAKEid0092"" posts a small blind of 0.25",2026-11-01T03:15:06.000Z,119
+"Player stacks: #1 ""Wenrick @ FAKEid0091"" (22.50) | #2 ""Vexlor @ FAKEid0086"" (27.50) | #3 ""Ostravan @ FAKEid0087"" (23.00) | #4 ""Kelvane @ FAKEid0089"" (47.00) | #5 ""Quillan @ FAKEid0092"" (18.50)",2026-11-01T03:15:03.000Z,118
+"-- starting hand #7 (id: FAKEh1507) (dealer: ""Kelvane @ FAKEid0089"")",2026-11-01T03:15:00.000Z,117
+"""Ulvane @ FAKEid0090"" quits the game with a stack of 16.50.",2026-11-01T02:00:00.000Z,116
+-- ending hand #6 --,2026-11-01T00:30:48.000Z,115
+"""Kelvane @ FAKEid0089"" collected 1.00 from pot",2026-11-01T00:30:45.000Z,114
+"Uncalled bet of 2.00 returned to ""Kelvane @ FAKEid0089""",2026-11-01T00:30:42.000Z,113
+"""Ostravan @ FAKEid0087"" folds",2026-11-01T00:30:39.000Z,112
+"""Kelvane @ FAKEid0089"" bets 2.00",2026-11-01T00:30:36.000Z,111
+"""Ostravan @ FAKEid0087"" checks",2026-11-01T00:30:33.000Z,110
+"Flop: [4♣, 4♦, 9♥]",2026-11-01T00:30:30.000Z,109
+"""Kelvane @ FAKEid0089"" checks",2026-11-01T00:30:27.000Z,108
+"""Ostravan @ FAKEid0087"" calls 0.50",2026-11-01T00:30:24.000Z,107
+"""Vexlor @ FAKEid0086"" folds",2026-11-01T00:30:21.000Z,106
+"""Wenrick @ FAKEid0091"" folds",2026-11-01T00:30:18.000Z,105
+"""Quillan @ FAKEid0092"" folds",2026-11-01T00:30:15.000Z,104
+"""Ulvane @ FAKEid0090"" folds",2026-11-01T00:30:12.000Z,103
+"""Kelvane @ FAKEid0089"" posts a big blind of 0.50",2026-11-01T00:30:09.000Z,102
+"""Ostravan @ FAKEid0087"" posts a small blind of 0.25",2026-11-01T00:30:06.000Z,101
+"Player stacks: #1 ""Wenrick @ FAKEid0091"" (22.50) | #2 ""Vexlor @ FAKEid0086"" (27.50) | #3 ""Ostravan @ FAKEid0087"" (23.50) | #4 ""Kelvane @ FAKEid0089"" (46.50) | #5 ""Ulvane @ FAKEid0090"" (16.50) | #6 ""Quillan @ FAKEid0092"" (18.50)",2026-11-01T00:30:03.000Z,100
+"-- starting hand #6 (id: FAKEh1506) (dealer: ""Vexlor @ FAKEid0086"")",2026-11-01T00:30:00.000Z,99
+-- ending hand #5 --,2026-11-01T00:05:48.000Z,98
+"""Vexlor @ FAKEid0086"" collected 1.50 from pot",2026-11-01T00:05:45.000Z,97
+"Uncalled bet of 1.00 returned to ""Vexlor @ FAKEid0086""",2026-11-01T00:05:42.000Z,96
+"""Ulvane @ FAKEid0090"" folds",2026-11-01T00:05:39.000Z,95
+"""Ostravan @ FAKEid0087"" folds",2026-11-01T00:05:36.000Z,94
+"""Vexlor @ FAKEid0086"" bets 1.00",2026-11-01T00:05:33.000Z,93
+"Flop: [Q♠, 7♦, 2♥]",2026-11-01T00:05:30.000Z,92
+"""Ostravan @ FAKEid0087"" checks",2026-11-01T00:05:27.000Z,91
+"""Vexlor @ FAKEid0086"" calls 0.50",2026-11-01T00:05:24.000Z,90
+"""Wenrick @ FAKEid0091"" folds",2026-11-01T00:05:21.000Z,89
+"""Quillan @ FAKEid0092"" folds",2026-11-01T00:05:18.000Z,88
+"""Ulvane @ FAKEid0090"" calls 0.50",2026-11-01T00:05:15.000Z,87
+"""Kelvane @ FAKEid0089"" folds",2026-11-01T00:05:12.000Z,86
+"""Ostravan @ FAKEid0087"" posts a big blind of 0.50",2026-11-01T00:05:09.000Z,85
+"""Vexlor @ FAKEid0086"" posts a small blind of 0.25",2026-11-01T00:05:06.000Z,84
+"Player stacks: #1 ""Wenrick @ FAKEid0091"" (22.50) | #2 ""Vexlor @ FAKEid0086"" (26.50) | #3 ""Ostravan @ FAKEid0087"" (24.00) | #4 ""Kelvane @ FAKEid0089"" (46.50) | #5 ""Ulvane @ FAKEid0090"" (17.00) | #6 ""Quillan @ FAKEid0092"" (18.50)",2026-11-01T00:05:03.000Z,83
+"-- starting hand #5 (id: FAKEh1505) (dealer: ""Wenrick @ FAKEid0091"")",2026-11-01T00:05:00.000Z,82
+-- ending hand #4 --,2026-10-31T23:40:36.000Z,81
+"""Vexlor @ FAKEid0086"" collected 1.25 from pot",2026-10-31T23:40:33.000Z,80
+"Uncalled bet of 1.50 returned to ""Vexlor @ FAKEid0086""",2026-10-31T23:40:30.000Z,79
+"""Ulvane @ FAKEid0090"" folds",2026-10-31T23:40:27.000Z,78
+"""Kelvane @ FAKEid0089"" folds",2026-10-31T23:40:24.000Z,77
+"""Ostravan @ FAKEid0087"" folds",2026-10-31T23:40:21.000Z,76
+"""Vexlor @ FAKEid0086"" raises to 2.00",2026-10-31T23:40:18.000Z,75
+"""Wenrick @ FAKEid0091"" folds",2026-10-31T23:40:15.000Z,74
+"""Quillan @ FAKEid0092"" folds",2026-10-31T23:40:12.000Z,73
+"""Ulvane @ FAKEid0090"" posts a big blind of 0.50",2026-10-31T23:40:09.000Z,72
+"""Kelvane @ FAKEid0089"" posts a small blind of 0.25",2026-10-31T23:40:06.000Z,71
+"Player stacks: #1 ""Wenrick @ FAKEid0091"" (22.50) | #2 ""Vexlor @ FAKEid0086"" (25.75) | #3 ""Ostravan @ FAKEid0087"" (24.00) | #4 ""Kelvane @ FAKEid0089"" (46.75) | #5 ""Ulvane @ FAKEid0090"" (17.50) | #6 ""Quillan @ FAKEid0092"" (18.50)",2026-10-31T23:40:03.000Z,70
+"-- starting hand #4 (id: FAKEh1504) (dealer: ""Ostravan @ FAKEid0087"")",2026-10-31T23:40:00.000Z,69
+"""Ulvane @ FAKEid0090"" paid 1.00 for the 7-2 bounty to ""Ostravan @ FAKEid0087""",2026-10-31T23:32:27.000Z,68
+"""Vexlor @ FAKEid0086"" paid 1.00 for the 7-2 bounty to ""Ostravan @ FAKEid0087""",2026-10-31T23:32:24.000Z,67
+"""Kelvane @ FAKEid0089"" paid 1.00 for the 7-2 bounty to ""Ostravan @ FAKEid0087""",2026-10-31T23:32:21.000Z,66
+-- ending hand #3 --,2026-10-31T23:32:18.000Z,65
+"""Ostravan @ FAKEid0087"" collected 4.00 from pot with Pair, 2's (combination: 2♦, 2♣, K♥, J♣, 8♥)",2026-10-31T23:32:15.000Z,64
+"""Wenrick @ FAKEid0091"" shows a A♥, 3♣.",2026-10-31T23:32:12.000Z,63
+"""Ostravan @ FAKEid0087"" shows a 7♠, 2♦.",2026-10-31T23:32:09.000Z,62
+"""Ostravan @ FAKEid0087"" checks",2026-10-31T23:32:06.000Z,61
+"""Wenrick @ FAKEid0091"" checks",2026-10-31T23:32:03.000Z,60
+"River: [8♥, 5♦, J♣, K♥] [2♣]",2026-10-31T23:32:00.000Z,59
+"""Ostravan @ FAKEid0087"" checks",2026-10-31T23:31:57.000Z,58
+"""Wenrick @ FAKEid0091"" checks",2026-10-31T23:31:54.000Z,57
+"Turn: [8♥, 5♦, J♣] [K♥]",2026-10-31T23:31:51.000Z,56
+"""Wenrick @ FAKEid0091"" calls 1.00",2026-10-31T23:31:48.000Z,55
+"""Quillan @ FAKEid0092"" folds",2026-10-31T23:31:45.000Z,54
+"""Ostravan @ FAKEid0087"" bets 1.00",2026-10-31T23:31:42.000Z,53
+"""Wenrick @ FAKEid0091"" checks",2026-10-31T23:31:39.000Z,52
+"""Quillan @ FAKEid0092"" checks",2026-10-31T23:31:36.000Z,51
+"""Ulvane @ FAKEid0090"" folds",2026-10-31T23:31:33.000Z,50
+"Flop: [8♥, 5♦, J♣]",2026-10-31T23:31:30.000Z,49
+"""Quillan @ FAKEid0092"" checks",2026-10-31T23:31:27.000Z,48
+"""Ulvane @ FAKEid0090"" calls 0.50",2026-10-31T23:31:24.000Z,47
+"""Kelvane @ FAKEid0089"" folds",2026-10-31T23:31:21.000Z,46
+"""Ostravan @ FAKEid0087"" calls 0.50",2026-10-31T23:31:18.000Z,45
+"""Vexlor @ FAKEid0086"" folds",2026-10-31T23:31:15.000Z,44
+"""Wenrick @ FAKEid0091"" calls 0.50",2026-10-31T23:31:12.000Z,43
+"""Quillan @ FAKEid0092"" posts a big blind of 0.50",2026-10-31T23:31:09.000Z,42
+"""Ulvane @ FAKEid0090"" posts a small blind of 0.25",2026-10-31T23:31:06.000Z,41
+"Player stacks: #1 ""Wenrick @ FAKEid0091"" (24.00) | #2 ""Vexlor @ FAKEid0086"" (26.75) | #3 ""Ostravan @ FAKEid0087"" (18.50) | #4 ""Kelvane @ FAKEid0089"" (47.75) | #5 ""Ulvane @ FAKEid0090"" (19.00) | #6 ""Quillan @ FAKEid0092"" (19.00)",2026-10-31T23:31:03.000Z,40
+"-- starting hand #3 (id: FAKEh1503) (dealer: ""Kelvane @ FAKEid0089"")",2026-10-31T23:31:00.000Z,39
+-- ending hand #2 --,2026-10-31T23:21:12.000Z,38
+"""Kelvane @ FAKEid0089"" collected 10.00 from pot with Full House, K's over 9's (combination: K♠, K♥, K♦, 9♠, 9♦)",2026-10-31T23:21:09.000Z,37
+"""Vexlor @ FAKEid0086"" shows a Q♣, 2♦.",2026-10-31T23:21:06.000Z,36
+"""Kelvane @ FAKEid0089"" shows a K♠, K♥.",2026-10-31T23:21:03.000Z,35
+"""Kelvane @ FAKEid0089"" checks",2026-10-31T23:21:00.000Z,34
+"""Vexlor @ FAKEid0086"" checks",2026-10-31T23:20:57.000Z,33
+"River: [9♠, 9♦, 3♣, 6♥] [K♦]",2026-10-31T23:20:54.000Z,32
+"""Kelvane @ FAKEid0089"" checks",2026-10-31T23:20:51.000Z,31
+"""Vexlor @ FAKEid0086"" checks",2026-10-31T23:20:48.000Z,30
+"Turn: [9♠, 9♦, 3♣] [6♥]",2026-10-31T23:20:45.000Z,29
+"""Quillan @ FAKEid0092"" folds",2026-10-31T23:20:42.000Z,28
+"""Ulvane @ FAKEid0090"" folds",2026-10-31T23:20:39.000Z,27
+"""Ostravan @ FAKEid0087"" folds",2026-10-31T23:20:36.000Z,26
+"""Wenrick @ FAKEid0091"" folds",2026-10-31T23:20:33.000Z,25
+"""Vexlor @ FAKEid0086"" calls 2.00",2026-10-31T23:20:30.000Z,24
+"""Kelvane @ FAKEid0089"" bets 2.00",2026-10-31T23:20:27.000Z,23
+"Flop: [9♠, 9♦, 3♣]",2026-10-31T23:20:24.000Z,22
+"""Vexlor @ FAKEid0086"" calls 1.00 (bomb pot bet)",2026-10-31T23:20:21.000Z,21
+"""Wenrick @ FAKEid0091"" calls 1.00 (bomb pot bet)",2026-10-31T23:20:18.000Z,20
+"""Quillan @ FAKEid0092"" calls 1.00 (bomb pot bet)",2026-10-31T23:20:15.000Z,19
+"""Ulvane @ FAKEid0090"" calls 1.00 (bomb pot bet)",2026-10-31T23:20:12.000Z,18
+"""Kelvane @ FAKEid0089"" calls 1.00 (bomb pot bet)",2026-10-31T23:20:09.000Z,17
+"""Ostravan @ FAKEid0087"" bets 1.00 (bomb pot bet)",2026-10-31T23:20:06.000Z,16
+"Player stacks: #1 ""Wenrick @ FAKEid0091"" (25.00) | #2 ""Vexlor @ FAKEid0086"" (29.75) | #3 ""Ostravan @ FAKEid0087"" (19.50) | #4 ""Kelvane @ FAKEid0089"" (40.75) | #5 ""Ulvane @ FAKEid0090"" (20.00) | #6 ""Quillan @ FAKEid0092"" (20.00)",2026-10-31T23:20:03.000Z,15
+"-- starting hand #2 (id: FAKEh1502) (dealer: ""Vexlor @ FAKEid0086"")",2026-10-31T23:20:00.000Z,14
+-- ending hand #1 --,2026-10-31T23:12:36.000Z,13
+"""Kelvane @ FAKEid0089"" collected 1.25 from pot",2026-10-31T23:12:33.000Z,12
+"Uncalled bet of 1.00 returned to ""Kelvane @ FAKEid0089""",2026-10-31T23:12:30.000Z,11
+"""Ostravan @ FAKEid0087"" folds",2026-10-31T23:12:27.000Z,10
+"""Vexlor @ FAKEid0086"" folds",2026-10-31T23:12:24.000Z,9
+"""Wenrick @ FAKEid0091"" folds",2026-10-31T23:12:21.000Z,8
+"""Quillan @ FAKEid0092"" folds",2026-10-31T23:12:18.000Z,7
+"""Ulvane @ FAKEid0090"" folds",2026-10-31T23:12:15.000Z,6
+"""Kelvane @ FAKEid0089"" raises to 1.50",2026-10-31T23:12:12.000Z,5
+"""Ostravan @ FAKEid0087"" posts a big blind of 0.50",2026-10-31T23:12:09.000Z,4
+"""Vexlor @ FAKEid0086"" posts a small blind of 0.25",2026-10-31T23:12:06.000Z,3
+"Player stacks: #1 ""Wenrick @ FAKEid0091"" (25.00) | #2 ""Vexlor @ FAKEid0086"" (30.00) | #3 ""Ostravan @ FAKEid0087"" (20.00) | #4 ""Kelvane @ FAKEid0089"" (40.00) | #5 ""Ulvane @ FAKEid0090"" (20.00) | #6 ""Quillan @ FAKEid0092"" (20.00)",2026-10-31T23:12:03.000Z,2
+"-- starting hand #1 (id: FAKEh1501) (dealer: ""Wenrick @ FAKEid0091"")",2026-10-31T23:12:00.000Z,1

@@ -1,0 +1,90 @@
+Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
+WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
+WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
+Loaded 14 games (3 folders), 2 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
+WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
+         They count for the name on the seat until you check them in menu 20.
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   6 games | Feb 25 - Nov 1 | folder "Synthetic Autumn"        |
+| 43 players | hand logs 2/6 | books balanced                                |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+Hit & run for folder "Synthetic Autumn".
+
+-- Hit & run: how early they leave when winning ----------------------------------------------------
+2 nights with a hand log, measured hand by hand.
+4 nights in scope have no hand log and are left out: a ledger cannot say when
+someone stopped playing.
+
+Player           Nights  Play Stay  Up Down Bust Rebuy Back When up When dn   Hit  H&R  Tag
+----------------------------------------------------------------------------------------------------
+Dorrig                1   78%    1   0    0    0     0    0      0%      0%    0%  (0)              
+Kelvane               1  100%    1   0    0    0     0    0       -      0%     -    -              
+Morvak                1   89%    1   0    0    0     0    0       -      0%     -    -              
+Ostravan              1  100%    1   0    0    0     0    0       -      0%     -    -              
+Pethra                1  100%    1   0    0    0     1    0       -      0%     -    -              
+Quillan               1  100%    1   0    0    0     0    0       -      0%     -    -              
+Sorrel                1  100%    1   0    0    0     0    0      0%      0%    0%  (0)              
+Tovrin                1  100%    1   0    0    0     0    0      0%      0%    0%  (0)              
+Ulvane                1   86%    1   0    0    0     0    0      0%      0%    0%  (0)              
+Vexlor                1  100%    1   0    0    0     0    0      0%      0%    0%  (0)              
+Wenrick               1  100%    1   0    0    0     0    0       -      0%     -    -              
+Ysolde                1  100%    1   0    0    0     0    0       -      0%     -    -              
+----------------------------------------------------------------------------------------------------
+Each night ends in one exit, judged on the LAST time they left (a break they came back from is not).
+Stay = dealt in during the night's last 10 hands.  Play = share of each night's hands dealt to them.
+Up / Down = left for good with chips, 5+ big blinds ahead / behind.
+(About even, and taken out by the admin: in the player view.)
+Bust = went under 1 big blind and went home.  Rebuy = busted and bought back in.
+Back = gone 30+ hands, then dealt in again.
+When up = share of the night (from their sit-down) still to come when they left, on nights they
+finished ahead, weighted by the win (50+ big blinds counts fully).  Staying counts as 0%.
+When dn = the same on nights they finished behind with chips.
+Hit = the part of When up that came right after their best point of the night, with most of it
+kept: full credit leaving at the peak, half 20 hands later, a sixteenth 80 hands later.
+All three lean toward the pool's average for a player with few such nights.
+H&R = 100 x (When up + how much When up exceeds When dn + Hit) / 3.
+An H&R in (brackets) has fewer than 3 winning nights; the only tag it can get is Busts out.
+
+Show every night for one player? (y/n): Export to Saved_Data/hit_and_run.csv and hit_and_run_nights.csv? (y/n): Exported to <work>/runs/handlog-folder-synthetic-autumn/hit-and-run/Saved_Data/hit_and_run.csv
+Exported to <work>/runs/handlog-folder-synthetic-autumn/hit-and-run/Saved_Data/hit_and_run_nights.csv
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   6 games | Feb 25 - Nov 1 | folder "Synthetic Autumn"        |
+| 43 players | hand logs 2/6 | books balanced                                |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Saved merge rules, preferences, settings, seat owners and session balances. Bye.

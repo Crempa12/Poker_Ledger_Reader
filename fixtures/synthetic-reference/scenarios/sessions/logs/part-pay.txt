@@ -1,14 +1,14 @@
 Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
 WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
 WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
-Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+Loaded 14 games (3 folders), 2 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
 WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
 WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
          They count for the name on the seat until you check them in menu 20.
 
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker off | pinned payments 2                                 |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP
@@ -32,40 +32,49 @@ WARNING: 3 buy-ins look like they were made on someone else's account or under s
 --------------------------------------------------------------------------------------------
    1  Winter 2026 sheet     Mirtavo         Zaqvin               $25.00      $10.00  partial
    2  Winter 2026 sheet     Zaqvin          Plenkor              $40.00      $40.00  open
-   3  reference-all         707070          Plenkor               $7.87       $7.87  open
-   4  reference-all         Dulvane         Frymoss              $24.94      $24.94  open
-   5  reference-all         Dulvane         🎴                    $5.06       $5.06  open
-   6  reference-all         Ekvarto         Jolwick              $37.52      $37.52  open
-   7  reference-all         Fenquor         Vextor               $33.06      $33.06  open
-   8  reference-all         Harlo, Dromm    Gorvast              $22.71      $22.71  open
-   9  reference-all         Harlo, Dromm    Mirtavo              $29.53      $29.53  open
-  10  reference-all         Lumqat          Hiltrex               $1.50       $1.50  open
-  11  reference-all         Lumqat          Jolwick              $11.25      $11.25  open
-  12  reference-all         Lumqat          Ylmande               $0.50       $0.50  open
-  13  reference-all         Nuvrask         Pindrel               $5.59       $5.59  open
-  14  reference-all         Nuvrask         Vorndal              $35.41      $35.41  open
-  15  reference-all         Ombrix          Gorvast              $54.56      $54.56  open
-  16  reference-all         Ostrelin        Bexrunn               $1.50       $1.50  open
-  17  reference-all         Ostrelin        🎴                   $19.55      $19.55  open
-  18  reference-all         Quelzit         Hespyre              $22.47      $22.47  open
-  19  reference-all         Quelzit         Vextor                $7.63       $7.63  open
-  20  reference-all         Quinn "Q" Varn  Plenkor               $3.26       $3.26  open
-  21  reference-all         Quorin         Plenkor              $46.85      $46.85  open
-  22  reference-all         Rixmoot         Cavlorn               $5.00       $5.00  open
-  23  reference-all         Rixmoot         Frymoss Two           $1.08       $1.08  open
-  24  reference-all         Rixmoot         Mari Quenby           $2.82       $2.82  open
-  25  reference-all         Rixmoot         Vextor                $0.85       $0.85  open
-  26  reference-all         Tarvelle        🎲Brask              $21.85      $21.85  open
-  27  reference-all         Tarvelle        Pindrel               $8.15       $8.15  open
-  28  reference-all         Wexlorn         Gorvast               $0.92       $0.92  open
-  29  reference-all         Wexlorn         Sybnari              $14.25      $14.25  open
-  30  reference-all         Zaqvin          Sybnari              $77.22      $77.22  open
+   3  reference-all         707070          Mari Quenby           $2.82       $2.82  open
+   4  reference-all         707070          Plenkor               $3.42       $3.42  open
+   5  reference-all         707070          Vorndal               $1.63       $1.63  open
+   6  reference-all         Dulvane         Cavlorn               $5.00       $5.00  open
+   7  reference-all         Dulvane         Ulvane                $5.00       $5.00  open
+   8  reference-all         Dulvane         Vexlor               $20.00      $20.00  open
+   9  reference-all         Ekvarto         Jolwick              $37.52      $37.52  open
+  10  reference-all         Fenquor         Vorndal              $33.06      $33.06  open
+  11  reference-all         Harlo, Dromm    Gorvast              $52.24      $52.24  open
+  12  reference-all         Kelvane         Frymoss Two           $0.75       $0.75  open
+  13  reference-all         Kelvane         Sybnari              $14.25      $14.25  open
+  14  reference-all         Lumqat          Bexrunn               $1.50       $1.50  open
+  15  reference-all         Lumqat          Jolwick              $11.25      $11.25  open
+  16  reference-all         Lumqat          Ylmande               $0.50       $0.50  open
+  17  reference-all         Morvak          Frymoss              $24.94      $24.94  open
+  18  reference-all         Morvak          🎴                    $5.06       $5.06  open
+  19  reference-all         Nuvrask         Mirtavo              $29.53      $29.53  open
+  20  reference-all         Nuvrask         Sorrel               $11.47      $11.47  open
+  21  reference-all         Ombrix          Plenkor              $54.56      $54.56  open
+  22  reference-all         Ostravan        Dorrig               $10.00      $10.00  open
+  23  reference-all         Ostrelin        Hiltrex               $1.50       $1.50  open
+  24  reference-all         Ostrelin        🎴                   $19.55      $19.55  open
+  25  reference-all         Pethra          Pindrel              $12.00      $12.00  open
+  26  reference-all         Quelzit         Vextor               $30.10      $30.10  open
+  27  reference-all         Quinn "Q" Varn  Frymoss Two           $0.33       $0.33  open
+  28  reference-all         Quinn "Q" Varn  Gorvast               $0.64       $0.64  open
+  29  reference-all         Quinn "Q" Varn  Pindrel               $1.18       $1.18  open
+  30  reference-all         Quinn "Q" Varn  Vorndal               $0.72       $0.72  open
+  31  reference-all         Quorin         🎲Brask              $21.85      $21.85  open
+  32  reference-all         Quorin         Tovrin               $25.00      $25.00  open
+  33  reference-all         Rixmoot         Gorvast              $10.14      $10.14  open
+  34  reference-all         Tarvelle        Hespyre              $22.47      $22.47  open
+  35  reference-all         Tarvelle        Sorrel                $7.53       $7.53  open
+  36  reference-all         Wexlorn         Gorvast              $15.17      $15.17  open
+  37  reference-all         Ysolde          Pindrel               $0.56       $0.56  open
+  38  reference-all         Ysolde          Vextor               $11.44      $11.44  open
+  39  reference-all         Zaqvin          Sybnari              $77.22      $77.22  open
 --------------------------------------------------------------------------------------------
-Choose a balance to update (0 to cancel): Amount paid (remaining $7.87, Enter 0 to cancel): Payment recorded. Status is now "partial".
+Choose a balance to update (0 to cancel): Amount paid (remaining $2.82, Enter 0 to cancel): Payment recorded. Status is now "partial".
 
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker off | pinned payments 2                                 |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP

@@ -230,22 +230,6 @@ IFS=$'\t' read -r FROM TO < <("${PY[@]}" range "$PRISTINE/Games" "$TZ_NAME")
 scenario_settle all \
   "Everything in the data: player summary (menu 12) and the settlement sheet (menu 5, option 3)."
 
-# One scenario per folder: the same two exports, scoped with --folder.
-"${PY[@]}" folders "$PRISTINE/Games" > "$WORK/folders.txt" || fail "cannot list the folders"
-USED=" "
-while IFS= read -r folder; do
-  [ -n "$folder" ] || continue
-  slug="$(printf '%s' "$folder" | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
-  [ -n "$slug" ] || slug="folder"
-  base="$slug"; n=2
-  while case "$USED" in *" $slug "*) true ;; *) false ;; esac; do
-    slug="$base-$n"; n=$((n + 1))
-  done
-  USED="$USED$slug "
-  NOTE="" scenario_settle "folder-$slug" \
-    "One folder: player summary and settlement sheet for that folder only (--folder)." --folder "$folder"
-done < "$WORK/folders.txt"
-
 NOTE="range: the middle third of the game nights (the picks tools/validate.py makes): $FROM to $TO" \
   scenario_settle range \
   "Dates from $FROM to $TO: player summary and settlement sheet for that stretch (--from, --to)." \
@@ -354,51 +338,70 @@ scenario_history() {
 }
 scenario_history
 
-# Hand-log exports for later steps (kept as they were): menus 18, 21, 22 and the standalone tool.
-# With no hand logs in the data, these files are empty or are not written.
-scenario_handlog() {
-  local sdir="$OUT/handlog" hasLogs="no"
+# Hand-log exports: menu 18 (style table), menu 21 (playstyle profiles) and menu 22 (hit & run),
+# with the answers each menu can ask. scenario_handlog <name> <description> [app flags...]
+# The answers serve every scope. When no hand log (or no hit & run night) is in scope, the menu asks
+# nothing: the pause after it reads the first answer, and the menu loop then reads the rest, which
+# are a blank line and a repeated choice it ignores, before the 0 that quits. Each export is removed
+# from the copy first, so a file the app did not write cannot be an old one from the data.
+# Without app flags (the whole corpus) the standalone playstyle_report runs too.
+scenario_handlog() { # scenario_handlog <name> <description> [app flags...]
+  local name="$1" desc="$2" sdir a
+  local flags=()
+  shift 2
+  sdir="$OUT/scenarios/$name"
+  for a in "$@"; do flags+=("--flag=$a"); done
   mkdir -p "$sdir/menus" "$sdir/logs" "$sdir/tool" || fail "cannot create $sdir"
-  # Without a hand log the menus stop before their questions, so the answers are left out.
-  if [ -n "$(find "$PRISTINE/Games" -name 'poker_now_log_*' -print -quit)" ]; then
-    hasLogs="yes"
-    write_menu "$sdir/menus/style.txt" 18 y "" 0
-    write_menu "$sdir/menus/playstyle.txt" 21 n y "" 0
-    write_menu "$sdir/menus/hit-and-run.txt" 22 n y "" 0
-  else
-    write_menu "$sdir/menus/style.txt" 18 "" 0
-    write_menu "$sdir/menus/playstyle.txt" 21 "" 0
-    write_menu "$sdir/menus/hit-and-run.txt" 22 "" 0
-  fi
+  write_menu "$sdir/menus/style.txt" 18 y "" 0
+  write_menu "$sdir/menus/playstyle.txt" 21 n y "" 0
+  write_menu "$sdir/menus/hit-and-run.txt" 22 n y "" 0
 
-  fresh_root "handlog/style"
-  step "$sdir" style logs/style.txt "$sdir/menus/style.txt"
+  fresh_root "$name/style"
+  rm -f "$ROOT/Saved_Data/style_stats.csv"
+  step "$sdir" style logs/style.txt "$sdir/menus/style.txt" "$@"
   grab "$sdir" "$ROOT" style_stats.csv
 
-  fresh_root "handlog/playstyle"
-  step "$sdir" playstyle logs/playstyle.txt "$sdir/menus/playstyle.txt"
+  fresh_root "$name/playstyle"
+  rm -f "$ROOT/Saved_Data/playstyle.csv"
+  step "$sdir" playstyle logs/playstyle.txt "$sdir/menus/playstyle.txt" "$@"
   grab "$sdir" "$ROOT" playstyle.csv
 
-  fresh_root "handlog/hit-and-run"
-  step "$sdir" hit-and-run logs/hit-and-run.txt "$sdir/menus/hit-and-run.txt"
+  fresh_root "$name/hit-and-run"
+  rm -f "$ROOT/Saved_Data/hit_and_run.csv" "$ROOT/Saved_Data/hit_and_run_nights.csv"
+  step "$sdir" hit-and-run logs/hit-and-run.txt "$sdir/menus/hit-and-run.txt" "$@"
   grab "$sdir" "$ROOT" hit_and_run.csv hit_and_run_nights.csv
 
-  fresh_root "handlog/tool"
-  tool_run "$sdir/logs/tool-hitrun.txt" "$BIN/playstyle_report" --root "$ROOT" --hitrun \
-    --csv "$sdir/tool/hit_and_run_nights_tool.csv"
-  tool_run "$sdir/logs/tool-playstyle.txt" "$BIN/playstyle_report" --root "$ROOT" \
-    --csv "$sdir/tool/playstyle_tool.csv"
-
-  # Written by menu 12 in the all-data run (the hand-log side of the same export).
-  # Only when the all-data run wrote it: a missing file is left out, a failed copy stops the run.
-  if [ -f "$OUT/scenarios/all/showdown_rivals.csv" ]; then
-    cp -p "$OUT/scenarios/all/showdown_rivals.csv" "$sdir/showdown_rivals.csv" || fail "cannot copy showdown_rivals.csv"
+  if [ "$#" -eq 0 ]; then
+    fresh_root "$name/tool"
+    tool_run "$sdir/logs/tool-hitrun.txt" "$BIN/playstyle_report" --root "$ROOT" --hitrun \
+      --csv "$sdir/tool/hit_and_run_nights_tool.csv"
+    tool_run "$sdir/logs/tool-playstyle.txt" "$BIN/playstyle_report" --root "$ROOT" \
+      --csv "$sdir/tool/playstyle_tool.csv"
   fi
-  finish "$sdir" handlog \
-    "Hand-log exports (menus 18, 21, 22, the standalone playstyle_report, showdown rivals). Empty when the data has no hand logs." \
-    --note="hand-log files in the data: $hasLogs"
+
+  finish "$sdir" "$name" "$desc" ${flags[@]+"${flags[@]}"} --note="scope: ${*:-the whole corpus}"
 }
-scenario_handlog
+scenario_handlog handlog \
+  "Hand-log exports for the whole corpus: style table (18), playstyle (21), hit & run (22), and the standalone playstyle_report."
+
+# One scenario per folder: the same exports as the whole corpus, scoped with --folder (the player
+# summary with its time columns and the showdown rivals, and the three hand-log exports).
+"${PY[@]}" folders "$PRISTINE/Games" > "$WORK/folders.txt" || fail "cannot list the folders"
+USED=" "
+while IFS= read -r folder; do
+  [ -n "$folder" ] || continue
+  slug="$(printf '%s' "$folder" | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
+  [ -n "$slug" ] || slug="folder"
+  base="$slug"; n=2
+  while case "$USED" in *" $slug "*) true ;; *) false ;; esac; do
+    slug="$base-$n"; n=$((n + 1))
+  done
+  USED="$USED$slug "
+  NOTE="" scenario_settle "folder-$slug" \
+    "One folder: player summary and settlement sheet for that folder only (--folder)." --folder "$folder"
+  scenario_handlog "handlog-folder-$slug" \
+    "One folder: hand-log exports (menus 18, 21, 22) for that folder only (--folder)." --folder "$folder"
+done < "$WORK/folders.txt"
 
 # ---- manifest, sanitizing, and the no-change checks -------------------------------------------
 

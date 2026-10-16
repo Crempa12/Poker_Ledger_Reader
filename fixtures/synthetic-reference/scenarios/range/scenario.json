@@ -1,18 +1,18 @@
 {
   "name": "range",
-  "description": "Dates from 2026-02-25 to 2026-05-02: player summary and settlement sheet for that stretch (--from, --to).",
+  "description": "Dates from 2026-03-14 to 2026-05-02: player summary and settlement sheet for that stretch (--from, --to).",
   "status": "ok",
   "code": "Poker_Ledger_Reader",
   "data": "fixtures/synthetic",
   "tz": "America/New_York",
   "flags": [
     "--from",
-    "2026-02-25",
+    "2026-03-14",
     "--to",
     "2026-05-02"
   ],
   "notes": [
-    "range: the middle third of the game nights (the picks tools/validate.py makes): 2026-02-25 to 2026-05-02"
+    "range: the middle third of the game nights (the picks tools/validate.py makes): 2026-03-14 to 2026-05-02"
   ],
   "expected_exports": [
     "player_summary.csv",
@@ -27,7 +27,7 @@
       "exit": 0,
       "args": [
         "--from",
-        "2026-02-25",
+        "2026-03-14",
         "--to",
         "2026-05-02"
       ],
@@ -43,7 +43,7 @@
       "exit": 0,
       "args": [
         "--from",
-        "2026-02-25",
+        "2026-03-14",
         "--to",
         "2026-05-02"
       ],
@@ -61,11 +61,11 @@
   "exports": [
     {
       "file": "player_summary.csv",
-      "data_rows": 31
+      "data_rows": 27
     },
     {
       "file": "settlements.csv",
-      "data_rows": 24
+      "data_rows": 20
     },
     {
       "file": "showdown_rivals.csv",

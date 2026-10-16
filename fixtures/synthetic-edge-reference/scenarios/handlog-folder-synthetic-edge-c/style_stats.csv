@@ -1,0 +1,6 @@
+player,normalized,games,hands,vpip_pct,pfr_pct,saw_flop_pct,wtsd_pct,wsd_pct,fold_to_raise_pct,aggression,hands_won,biggest_pot_won,net_from_log,bounties_net,all_ins,style,hit_run,hit_run_reliable,hit_run_tag,saw_flop,showdowns,showdowns_voluntary,showdown_wins,courtesy_reveals
+Pell,pell,1,40,37.84,16.22,54.05,35.00,37.50,50.00,6.00,14,38.24,-76.14,0.00,3,Loose-aggressive,25.95,no,,20,8,7,3,1
+Quill,quill,1,40,45.95,5.41,59.46,68.18,66.67,42.86,2.36,14,74.96,94.26,0.00,1,Loose,,no,,22,15,15,10,4
+Ondine,ondine,1,35,50.00,5.88,58.82,60.00,66.67,42.86,2.11,10,60.12,-123.98,0.00,1,Loose,,no,,20,12,12,8,4
+Wick,wick,1,30,48.28,10.34,51.72,60.00,40.00,33.33,1.08,7,44.48,-94.47,0.00,1,Loose-passive (calls a lot),,no,,15,10,9,4,3
+Sable,sable,1,9,66.67,11.11,66.67,50.00,100.00,0.00,0.75,4,87.70,19.34,0.00,1,(few hands),33.69,no,,6,3,3,3,1

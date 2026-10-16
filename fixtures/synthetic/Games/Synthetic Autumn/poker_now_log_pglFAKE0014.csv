@@ -1,0 +1,169 @@
+entry,at,order
+"""Pethra @ FAKEid0084"" raises to 1.50",2026-10-18T01:25:12.000Z,168
+"""Ysolde @ FAKEid0082"" posts a big blind of 0.50",2026-10-18T01:25:09.000Z,167
+"""Tovrin @ FAKEid0081"" posts a small blind of 0.25",2026-10-18T01:25:06.000Z,166
+"Player stacks: #1 ""Sorrel @ FAKEid0088"" (35.25) | #2 ""Tovrin @ FAKEid0081"" (88.75) | #3 ""Ysolde @ FAKEid0082"" (28.75) | #4 ""Pethra @ FAKEid0084"" (20.50)",2026-10-18T01:25:03.000Z,165
+"-- starting hand #9 (id: FAKEh1409) (dealer: ""Sorrel @ FAKEid0088"")",2026-10-18T01:25:00.000Z,164
+-- ending hand #8 --,2026-10-18T01:19:08.000Z,163
+"""Tovrin @ FAKEid0081"" collected 48.25 from pot with Pair, K's (combination: K♠, K♦, J♣, 8♦, 7♣)",2026-10-18T01:19:05.000Z,162
+"""Tovrin @ FAKEid0081"" shows a K♠, K♦.",2026-10-18T01:19:02.000Z,161
+"""Morvak @ FAKEid0083"" shows a 2♣, 2♥.",2026-10-18T01:18:59.000Z,160
+"River: [J♣, 8♦, 4♠, 5♥] [7♣]",2026-10-18T01:18:56.000Z,159
+"Turn: [J♣, 8♦, 4♠] [5♥]",2026-10-18T01:18:53.000Z,158
+"Flop: [J♣, 8♦, 4♠]",2026-10-18T01:18:50.000Z,157
+All players in hand choose to run it twice,2026-10-18T01:18:47.000Z,156
+"""Tovrin @ FAKEid0081"" calls 24.00",2026-10-18T01:18:44.000Z,155
+"""Sorrel @ FAKEid0088"" folds",2026-10-18T01:18:41.000Z,154
+"""Pethra @ FAKEid0084"" folds",2026-10-18T01:18:38.000Z,153
+"""Morvak @ FAKEid0083"" raises to 24.00 and go all in",2026-10-18T01:18:35.000Z,152
+"""Ysolde @ FAKEid0082"" folds",2026-10-18T01:18:32.000Z,151
+"""Tovrin @ FAKEid0081"" posts a big blind of 0.50",2026-10-18T01:18:29.000Z,150
+"""Sorrel @ FAKEid0088"" posts a small blind of 0.25",2026-10-18T01:18:26.000Z,149
+"Player stacks: #1 ""Sorrel @ FAKEid0088"" (35.50) | #2 ""Tovrin @ FAKEid0081"" (64.50) | #3 ""Ysolde @ FAKEid0082"" (28.75) | #4 ""Morvak @ FAKEid0083"" (24.00) | #5 ""Pethra @ FAKEid0084"" (20.50)",2026-10-18T01:18:23.000Z,148
+"-- starting hand #8 (id: FAKEh1408) (dealer: ""Pethra @ FAKEid0084"")",2026-10-18T01:18:20.000Z,147
+"""Dorrig @ FAKEid0085"" quits the game with a stack of 16.75.",2026-10-18T01:10:00.000Z,146
+-- ending hand #7 --,2026-10-18T00:59:06.000Z,145
+"""Pethra @ FAKEid0084"" collected 1.00 from pot with Two Pair, J's and 9's (combination: J♦, J♣, 9♣, 9♥, Q♣)",2026-10-18T00:59:03.000Z,144
+"""Pethra @ FAKEid0084"" shows a J♦, J♣.",2026-10-18T00:59:00.000Z,143
+"""Morvak @ FAKEid0083"" shows a 8♠, 6♠.",2026-10-18T00:58:57.000Z,142
+"""Pethra @ FAKEid0084"" checks",2026-10-18T00:58:54.000Z,141
+"""Morvak @ FAKEid0083"" checks",2026-10-18T00:58:51.000Z,140
+"River: [2♠, 5♥, 9♣, 9♥] [Q♣]",2026-10-18T00:58:48.000Z,139
+"""Pethra @ FAKEid0084"" checks",2026-10-18T00:58:45.000Z,138
+"""Morvak @ FAKEid0083"" checks",2026-10-18T00:58:42.000Z,137
+"Turn: [2♠, 5♥, 9♣] [9♥]",2026-10-18T00:58:39.000Z,136
+"""Pethra @ FAKEid0084"" checks",2026-10-18T00:58:36.000Z,135
+"""Morvak @ FAKEid0083"" checks",2026-10-18T00:58:33.000Z,134
+"Flop: [2♠, 5♥, 9♣]",2026-10-18T00:58:30.000Z,133
+"""Pethra @ FAKEid0084"" checks",2026-10-18T00:58:27.000Z,132
+"""Morvak @ FAKEid0083"" calls 0.50",2026-10-18T00:58:24.000Z,131
+"""Ysolde @ FAKEid0082"" folds",2026-10-18T00:58:21.000Z,130
+"""Tovrin @ FAKEid0081"" folds",2026-10-18T00:58:18.000Z,129
+"""Sorrel @ FAKEid0088"" folds",2026-10-18T00:58:15.000Z,128
+"""Dorrig @ FAKEid0085"" folds",2026-10-18T00:58:12.000Z,127
+"""Pethra @ FAKEid0084"" posts a big blind of 0.50",2026-10-18T00:58:09.000Z,126
+"""Morvak @ FAKEid0083"" posts a small blind of 0.25",2026-10-18T00:58:06.000Z,125
+"Player stacks: #1 ""Sorrel @ FAKEid0088"" (35.50) | #2 ""Tovrin @ FAKEid0081"" (64.50) | #3 ""Ysolde @ FAKEid0082"" (28.75) | #4 ""Morvak @ FAKEid0083"" (24.50) | #5 ""Dorrig @ FAKEid0085"" (16.75) | #6 ""Pethra @ FAKEid0084"" (20.00)",2026-10-18T00:58:03.000Z,124
+"-- starting hand #7 (id: FAKEh1407) (dealer: ""Ysolde @ FAKEid0082"")",2026-10-18T00:58:00.000Z,123
+"The player ""Pethra @ FAKEid0084"" rebought. New stack 20.00.",2026-10-18T00:50:13.000Z,122
+"The player ""Pethra @ FAKEid0084"" requested a rebuy of 20.00.",2026-10-18T00:50:10.000Z,121
+-- ending hand #6 --,2026-10-18T00:45:18.000Z,120
+"""Tovrin @ FAKEid0081"" collected 37.00 from pot with Pair, A's (combination: A♥, A♠, Q♥, 9♠, 7♣)",2026-10-18T00:45:15.000Z,119
+"""Tovrin @ FAKEid0081"" shows a A♠, K♦.",2026-10-18T00:45:12.000Z,118
+"""Pethra @ FAKEid0084"" shows a 4♣, 4♦.",2026-10-18T00:45:09.000Z,117
+"River: [A♥, 7♣, 2♦, 9♠] [Q♥]",2026-10-18T00:45:06.000Z,116
+"Turn: [A♥, 7♣, 2♦] [9♠]",2026-10-18T00:45:03.000Z,115
+"Flop: [A♥, 7♣, 2♦]",2026-10-18T00:45:00.000Z,114
+"""Ysolde @ FAKEid0082"" folds",2026-10-18T00:44:57.000Z,113
+"""Tovrin @ FAKEid0081"" calls 18.25",2026-10-18T00:44:54.000Z,112
+"""Sorrel @ FAKEid0088"" folds",2026-10-18T00:44:51.000Z,111
+"""Dorrig @ FAKEid0085"" folds",2026-10-18T00:44:48.000Z,110
+"""Pethra @ FAKEid0084"" raises to 18.25 and go all in",2026-10-18T00:44:45.000Z,109
+"""Morvak @ FAKEid0083"" folds",2026-10-18T00:44:42.000Z,108
+"""Ysolde @ FAKEid0082"" posts a big blind of 0.50",2026-10-18T00:44:39.000Z,107
+"""Tovrin @ FAKEid0081"" posts a small blind of 0.25",2026-10-18T00:44:36.000Z,106
+"Player stacks: #1 ""Sorrel @ FAKEid0088"" (35.50) | #2 ""Tovrin @ FAKEid0081"" (45.75) | #3 ""Ysolde @ FAKEid0082"" (29.25) | #4 ""Morvak @ FAKEid0083"" (24.50) | #5 ""Pethra @ FAKEid0084"" (18.25) | #6 ""Dorrig @ FAKEid0085"" (16.75)",2026-10-18T00:44:33.000Z,105
+"-- starting hand #6 (id: FAKEh1406) (dealer: ""Sorrel @ FAKEid0088"")",2026-10-18T00:44:30.000Z,104
+-- ending hand #5 --,2026-10-17T23:49:17.000Z,103
+"""Sorrel @ FAKEid0088"" collected 7.75 from pot with Three of a Kind, 7's (combination: 7♥, 7♠, 7♣, K♣, Q♦)",2026-10-17T23:49:14.000Z,102
+"""Sorrel @ FAKEid0088"" shows a 7♥, 2♠.",2026-10-17T23:49:11.000Z,101
+"""Morvak @ FAKEid0083"" shows a Q♠, J♠.",2026-10-17T23:49:08.000Z,100
+"""Morvak @ FAKEid0083"" checks",2026-10-17T23:49:05.000Z,99
+"""Sorrel @ FAKEid0088"" checks",2026-10-17T23:49:02.000Z,98
+"River: [7♠, 7♣, Q♦, K♣] [3♥]",2026-10-17T23:48:59.000Z,97
+"""Morvak @ FAKEid0083"" checks",2026-10-17T23:48:56.000Z,96
+"""Sorrel @ FAKEid0088"" checks",2026-10-17T23:48:53.000Z,95
+"Turn: [7♠, 7♣, Q♦] [K♣]",2026-10-17T23:48:50.000Z,94
+"""Sorrel @ FAKEid0088"" calls 2.00",2026-10-17T23:48:47.000Z,93
+"""Morvak @ FAKEid0083"" bets 2.00",2026-10-17T23:48:44.000Z,92
+"""Sorrel @ FAKEid0088"" checks",2026-10-17T23:48:41.000Z,91
+"Flop: [7♠, 7♣, Q♦]",2026-10-17T23:48:38.000Z,90
+"""Ysolde @ FAKEid0082"" folds",2026-10-17T23:48:35.000Z,89
+"""Sorrel @ FAKEid0088"" calls 1.50",2026-10-17T23:48:32.000Z,88
+"""Dorrig @ FAKEid0085"" folds",2026-10-17T23:48:29.000Z,87
+"""Pethra @ FAKEid0084"" folds",2026-10-17T23:48:26.000Z,86
+"""Morvak @ FAKEid0083"" raises to 1.50",2026-10-17T23:48:23.000Z,85
+"""Ysolde @ FAKEid0082"" calls 0.50",2026-10-17T23:48:20.000Z,84
+"""Tovrin @ FAKEid0081"" folds",2026-10-17T23:48:17.000Z,83
+"""Sorrel @ FAKEid0088"" posts a big blind of 0.50",2026-10-17T23:48:14.000Z,82
+"""Dorrig @ FAKEid0085"" posts a small blind of 0.25",2026-10-17T23:48:11.000Z,81
+"Player stacks: #1 ""Sorrel @ FAKEid0088"" (31.25) | #2 ""Tovrin @ FAKEid0081"" (45.75) | #3 ""Ysolde @ FAKEid0082"" (29.75) | #4 ""Morvak @ FAKEid0083"" (28.00) | #5 ""Pethra @ FAKEid0084"" (18.25) | #6 ""Dorrig @ FAKEid0085"" (17.00)",2026-10-17T23:48:08.000Z,80
+"-- starting hand #5 (id: FAKEh1405) (dealer: ""Pethra @ FAKEid0084"")",2026-10-17T23:48:05.000Z,79
+-- ending hand #4 --,2026-10-17T23:34:04.000Z,78
+"""Tovrin @ FAKEid0081"" collected 4.25 from pot",2026-10-17T23:34:01.000Z,77
+"Uncalled bet of 3.00 returned to ""Tovrin @ FAKEid0081""",2026-10-17T23:33:58.000Z,76
+"""Ysolde @ FAKEid0082"" folds",2026-10-17T23:33:55.000Z,75
+"""Tovrin @ FAKEid0081"" bets 3.00",2026-10-17T23:33:52.000Z,74
+"Turn: [J♥, 10♠, 2♣] [5♦]",2026-10-17T23:33:49.000Z,73
+"""Ysolde @ FAKEid0082"" checks",2026-10-17T23:33:46.000Z,72
+"""Tovrin @ FAKEid0081"" checks",2026-10-17T23:33:43.000Z,71
+"Flop: [J♥, 10♠, 2♣]",2026-10-17T23:33:40.000Z,70
+"""Tovrin @ FAKEid0081"" calls 2.00",2026-10-17T23:33:37.000Z,69
+"""Sorrel @ FAKEid0088"" folds",2026-10-17T23:33:34.000Z,68
+"""Dorrig @ FAKEid0085"" folds",2026-10-17T23:33:31.000Z,67
+"""Pethra @ FAKEid0084"" folds",2026-10-17T23:33:28.000Z,66
+"""Morvak @ FAKEid0083"" folds",2026-10-17T23:33:25.000Z,65
+"""Ysolde @ FAKEid0082"" raises to 2.00",2026-10-17T23:33:22.000Z,64
+"""Tovrin @ FAKEid0081"" posts a big blind of 0.50",2026-10-17T23:33:19.000Z,63
+"""Sorrel @ FAKEid0088"" posts a small blind of 0.25",2026-10-17T23:33:16.000Z,62
+"Player stacks: #1 ""Sorrel @ FAKEid0088"" (31.50) | #2 ""Tovrin @ FAKEid0081"" (43.50) | #3 ""Ysolde @ FAKEid0082"" (31.75) | #4 ""Morvak @ FAKEid0083"" (28.00) | #5 ""Pethra @ FAKEid0084"" (18.25) | #6 ""Dorrig @ FAKEid0085"" (17.00)",2026-10-17T23:33:13.000Z,61
+"-- starting hand #4 (id: FAKEh1404) (dealer: ""Dorrig @ FAKEid0085"")",2026-10-17T23:33:10.000Z,60
+-- ending hand #3 --,2026-10-17T23:25:31.000Z,59
+"""Tovrin @ FAKEid0081"" collected 6.75 from pot",2026-10-17T23:25:28.000Z,58
+"Uncalled bet of 4.00 returned to ""Tovrin @ FAKEid0081""",2026-10-17T23:25:25.000Z,57
+"""Dorrig @ FAKEid0085"" folds",2026-10-17T23:25:22.000Z,56
+"""Tovrin @ FAKEid0081"" bets 4.00",2026-10-17T23:25:19.000Z,55
+"""Dorrig @ FAKEid0085"" checks",2026-10-17T23:25:16.000Z,54
+"Flop: [A♠, 8♦, 4♣]",2026-10-17T23:25:13.000Z,53
+"""Dorrig @ FAKEid0085"" calls 3.00",2026-10-17T23:25:10.000Z,52
+"""Sorrel @ FAKEid0088"" folds",2026-10-17T23:25:07.000Z,51
+"""Pethra @ FAKEid0084"" folds",2026-10-17T23:25:04.000Z,50
+"""Morvak @ FAKEid0083"" folds",2026-10-17T23:25:01.000Z,49
+"""Ysolde @ FAKEid0082"" folds",2026-10-17T23:24:58.000Z,48
+"""Tovrin @ FAKEid0081"" raises to 3.00",2026-10-17T23:24:55.000Z,47
+"""Sorrel @ FAKEid0088"" calls 0.50",2026-10-17T23:24:52.000Z,46
+"""Dorrig @ FAKEid0085"" posts a big blind of 0.50",2026-10-17T23:24:49.000Z,45
+"""Pethra @ FAKEid0084"" posts a small blind of 0.25",2026-10-17T23:24:46.000Z,44
+"Player stacks: #1 ""Sorrel @ FAKEid0088"" (32.00) | #2 ""Tovrin @ FAKEid0081"" (39.75) | #3 ""Ysolde @ FAKEid0082"" (31.75) | #4 ""Morvak @ FAKEid0083"" (28.00) | #5 ""Pethra @ FAKEid0084"" (18.50) | #6 ""Dorrig @ FAKEid0085"" (20.00)",2026-10-17T23:24:43.000Z,43
+"-- starting hand #3 (id: FAKEh1403) (dealer: ""Morvak @ FAKEid0083"")",2026-10-17T23:24:40.000Z,42
+-- ending hand #2 --,2026-10-17T23:17:32.000Z,41
+"""Sorrel @ FAKEid0088"" collected 3.50 from pot with Two Pair, 9's and 4's (combination: 9♠, 9♦, 4♣, 4♠, A♣)",2026-10-17T23:17:29.000Z,40
+"""Sorrel @ FAKEid0088"" shows a 4♣, 4♠.",2026-10-17T23:17:26.000Z,39
+"""Pethra @ FAKEid0084"" shows a 2♠, 5♣.",2026-10-17T23:17:23.000Z,38
+"""Sorrel @ FAKEid0088"" checks",2026-10-17T23:17:20.000Z,37
+"""Pethra @ FAKEid0084"" checks",2026-10-17T23:17:17.000Z,36
+"River: [9♠, 9♦, 3♣, 6♥] [A♣]",2026-10-17T23:17:14.000Z,35
+"""Morvak @ FAKEid0083"" folds",2026-10-17T23:17:11.000Z,34
+"""Sorrel @ FAKEid0088"" calls 1.00",2026-10-17T23:17:08.000Z,33
+"""Pethra @ FAKEid0084"" bets 1.00",2026-10-17T23:17:05.000Z,32
+"Turn: [9♠, 9♦, 3♣] [6♥]",2026-10-17T23:17:02.000Z,31
+"""Sorrel @ FAKEid0088"" checks",2026-10-17T23:16:59.000Z,30
+"""Pethra @ FAKEid0084"" checks",2026-10-17T23:16:56.000Z,29
+"""Morvak @ FAKEid0083"" checks",2026-10-17T23:16:53.000Z,28
+"Flop: [9♠, 9♦, 3♣]",2026-10-17T23:16:50.000Z,27
+"""Pethra @ FAKEid0084"" checks",2026-10-17T23:16:47.000Z,26
+"""Morvak @ FAKEid0083"" calls 0.50",2026-10-17T23:16:44.000Z,25
+"""Ysolde @ FAKEid0082"" folds",2026-10-17T23:16:41.000Z,24
+"""Tovrin @ FAKEid0081"" folds",2026-10-17T23:16:38.000Z,23
+"""Sorrel @ FAKEid0088"" calls 0.50",2026-10-17T23:16:35.000Z,22
+"""Dorrig @ FAKEid0085"" folds",2026-10-17T23:16:32.000Z,21
+"""Pethra @ FAKEid0084"" posts a big blind of 0.50",2026-10-17T23:16:29.000Z,20
+"""Morvak @ FAKEid0083"" posts a small blind of 0.25",2026-10-17T23:16:26.000Z,19
+"Player stacks: #1 ""Sorrel @ FAKEid0088"" (30.00) | #2 ""Tovrin @ FAKEid0081"" (39.75) | #3 ""Ysolde @ FAKEid0082"" (31.75) | #4 ""Morvak @ FAKEid0083"" (28.50) | #5 ""Pethra @ FAKEid0084"" (20.00) | #6 ""Dorrig @ FAKEid0085"" (20.00)",2026-10-17T23:16:23.000Z,18
+"-- starting hand #2 (id: FAKEh1402) (dealer: ""Ysolde @ FAKEid0082"")",2026-10-17T23:16:20.000Z,17
+-- ending hand #1 --,2026-10-17T23:12:45.000Z,16
+"""Ysolde @ FAKEid0082"" collected 3.25 from pot",2026-10-17T23:12:42.000Z,15
+"Uncalled bet of 2.00 returned to ""Ysolde @ FAKEid0082""",2026-10-17T23:12:39.000Z,14
+"""Morvak @ FAKEid0083"" folds",2026-10-17T23:12:36.000Z,13
+"""Ysolde @ FAKEid0082"" bets 2.00",2026-10-17T23:12:33.000Z,12
+"Flop: [K♥, 7♣, 2♦]",2026-10-17T23:12:30.000Z,11
+"""Ysolde @ FAKEid0082"" calls 1.50",2026-10-17T23:12:27.000Z,10
+"""Tovrin @ FAKEid0081"" folds",2026-10-17T23:12:24.000Z,9
+"""Sorrel @ FAKEid0088"" folds",2026-10-17T23:12:21.000Z,8
+"""Dorrig @ FAKEid0085"" folds",2026-10-17T23:12:18.000Z,7
+"""Pethra @ FAKEid0084"" folds",2026-10-17T23:12:15.000Z,6
+"""Morvak @ FAKEid0083"" raises to 1.50",2026-10-17T23:12:12.000Z,5
+"""Ysolde @ FAKEid0082"" posts a big blind of 0.50",2026-10-17T23:12:09.000Z,4
+"""Tovrin @ FAKEid0081"" posts a small blind of 0.25",2026-10-17T23:12:06.000Z,3
+"Player stacks: #1 ""Sorrel @ FAKEid0088"" (30.00) | #2 ""Tovrin @ FAKEid0081"" (40.00) | #3 ""Ysolde @ FAKEid0082"" (30.00) | #4 ""Morvak @ FAKEid0083"" (30.00) | #5 ""Pethra @ FAKEid0084"" (20.00) | #6 ""Dorrig @ FAKEid0085"" (20.00)",2026-10-17T23:12:03.000Z,2
+"-- starting hand #1 (id: FAKEh1401) (dealer: ""Sorrel @ FAKEid0088"")",2026-10-17T23:12:00.000Z,1

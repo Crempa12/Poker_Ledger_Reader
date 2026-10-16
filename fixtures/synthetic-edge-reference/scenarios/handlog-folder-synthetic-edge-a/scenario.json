@@ -1,0 +1,87 @@
+{
+  "name": "handlog-folder-synthetic-edge-a",
+  "description": "One folder: hand-log exports (menus 18, 21, 22) for that folder only (--folder).",
+  "status": "ok",
+  "code": "Poker_Ledger_Reader",
+  "data": "edge-data-1",
+  "tz": "America/New_York",
+  "flags": [
+    "--folder",
+    "Synthetic Edge A"
+  ],
+  "notes": [
+    "scope: --folder Synthetic Edge A"
+  ],
+  "expected_exports": [],
+  "missing_exports": [],
+  "steps": [
+    {
+      "kind": "style",
+      "log": "logs/style.txt",
+      "exit": 0,
+      "args": [
+        "--folder",
+        "Synthetic Edge A"
+      ],
+      "menu_file": "style.txt",
+      "menu": [
+        "18",
+        "y",
+        "",
+        "0"
+      ]
+    },
+    {
+      "kind": "playstyle",
+      "log": "logs/playstyle.txt",
+      "exit": 0,
+      "args": [
+        "--folder",
+        "Synthetic Edge A"
+      ],
+      "menu_file": "playstyle.txt",
+      "menu": [
+        "21",
+        "n",
+        "y",
+        "",
+        "0"
+      ]
+    },
+    {
+      "kind": "hit-and-run",
+      "log": "logs/hit-and-run.txt",
+      "exit": 0,
+      "args": [
+        "--folder",
+        "Synthetic Edge A"
+      ],
+      "menu_file": "hit-and-run.txt",
+      "menu": [
+        "22",
+        "n",
+        "y",
+        "",
+        "0"
+      ]
+    }
+  ],
+  "exports": [
+    {
+      "file": "hit_and_run.csv",
+      "data_rows": 7
+    },
+    {
+      "file": "hit_and_run_nights.csv",
+      "data_rows": 13
+    },
+    {
+      "file": "playstyle.csv",
+      "data_rows": 7
+    },
+    {
+      "file": "style_stats.csv",
+      "data_rows": 7
+    }
+  ]
+}

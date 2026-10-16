@@ -1,0 +1,6 @@
+rank,display_name,normalized_name,games,buy_ins,total_won,total_lost,adjustments,total_net,avg_per_game,biggest_win,biggest_loss,aliases,hands_dealt,nights_logged,seconds_dealt,seconds_estimated,hours,per_hour
+1,Sable,sable,1,1,40.55,0.00,0.00,40.55,40.55,40.55,40.55,sable,9,1,623.00,0.00,0.17,234.32
+2,Pell,pell,1,1,30.48,0.00,0.00,30.48,30.48,30.48,30.48,pell,40,1,2346.00,0.00,0.65,46.77
+3,Quill,quill,1,1,0.00,-5.17,0.00,-5.17,-5.17,-5.17,-5.17,quill,40,1,2346.00,0.00,0.65,-7.93
+4,Wick,wick,1,1,0.00,-17.02,0.00,-17.02,-17.02,-17.02,-17.02,wick,30,1,1691.00,0.00,0.47,-36.23
+5,Ondine,ondine,1,1,0.00,-24.17,0.00,-24.17,-24.17,-24.17,-24.17,ondine,35,1,2040.00,0.00,0.57,-42.65

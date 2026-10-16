@@ -1,26 +1,34 @@
 from,to,amount,reason,from_normalized,to_normalized
+Ostravan,Dorrig,10.00,auto,ostravan,dorrig
+Dulvane,Tovrin,25.00,auto,dulvane,tovrin
+Dulvane,Ulvane,5.00,auto,dulvane,ulvane
 Nuvrask,Kaxtun,35.97,auto,nuvrask,kaxtun
 Nuvrask,🎲Brask,12.79,auto,nuvrask,brask
 Ostrelin,🎲Brask,5.42,auto,ostrelin,brask
-Dulvane,Pindrel,30.00,auto,dulvane,pindrel
+Morvak,Pindrel,30.00,auto,morvak,pindrel
 Quorin,Gorvast,10.46,auto,quorin,gorvast
 Quorin,Pindrel,7.06,auto,quorin,pindrel
-Fenquor,Rixmoot,30.01,auto,fenquor,rixmoot
-Fenquor,Hespyre,3.05,auto,fenquor,hespyre
-Ekvarto,Zaqvin,21.75,auto,ekvarto,zaqvin
-Wexlorn,Hespyre,7.65,auto,wexlorn,hespyre
-Wexlorn,Zaqvin,3.56,auto,wexlorn,zaqvin
-"Harlo, Dromm",Jolwick,48.77,auto,harlodromm,jolwick
-"Harlo, Dromm",Vextor,29.04,auto,harlodromm,vextorion
-"Harlo, Dromm",Frymoss,9.51,auto,harlodromm,frymoss
-Hiltrex,Sybnari,21.26,auto,hiltrex,sybnari
-Hiltrex,Frymoss,0.73,auto,hiltrex,frymoss
-Hiltrex,Ylmande,0.25,auto,hiltrex,ylmande
-Quelzit,Mirtavo,43.08,auto,quelzit,mirtavo
-Quelzit,Mari Quenby,6.33,auto,quelzit,marisolquenby
-Ombrix,Vorndal,35.41,auto,ombrix,vorndal
-Ombrix,Plenkor,4.76,auto,ombrix,plenkor
-Tarvelle,Lumqat,16.61,auto,tarvelle,lumqat
-Tarvelle,Plenkor,7.90,auto,tarvelle,plenkor
-Tarvelle,Mari Quenby,3.49,auto,tarvelle,marisolquenby
-Tarvelle,Cavlorn,2.00,auto,tarvelle,cavlorn
+Ombrix,Zaqvin,25.31,auto,ombrix,zaqvin
+Ombrix,Lumqat,14.86,auto,ombrix,lumqat
+Ekvarto,Vexlor,20.00,auto,ekvarto,vexlor
+Ekvarto,Lumqat,1.75,auto,ekvarto,lumqat
+Fenquor,Jolwick,33.06,auto,fenquor,jolwick
+Tarvelle,Vextor,29.04,auto,tarvelle,vextorion
+Tarvelle,Jolwick,0.96,auto,tarvelle,jolwick
+Kelvane,Jolwick,14.75,auto,kelvane,jolwick
+Kelvane,Ylmande,0.25,auto,kelvane,ylmande
+"Harlo, Dromm",Mirtavo,43.08,auto,harlodromm,mirtavo
+"Harlo, Dromm",Vorndal,35.41,auto,harlodromm,vorndal
+"Harlo, Dromm",Mari Quenby,8.83,auto,harlodromm,marisolquenby
+Quelzit,Rixmoot,30.01,auto,quelzit,rixmoot
+Quelzit,Sybnari,19.40,auto,quelzit,sybnari
+Hiltrex,Sorrel,19.00,auto,hiltrex,sorrel
+Hiltrex,Frymoss,3.24,auto,hiltrex,frymoss
+Pethra,Plenkor,12.00,auto,pethra,plenkor
+Ysolde,Hespyre,10.70,auto,ysolde,hespyre
+Ysolde,Sybnari,1.30,auto,ysolde,sybnari
+Wexlorn,Frymoss,7.00,auto,wexlorn,frymoss
+Wexlorn,Cavlorn,2.00,auto,wexlorn,cavlorn
+Wexlorn,Mari Quenby,0.99,auto,wexlorn,marisolquenby
+Wexlorn,Plenkor,0.66,auto,wexlorn,plenkor
+Wexlorn,Sybnari,0.56,auto,wexlorn,sybnari

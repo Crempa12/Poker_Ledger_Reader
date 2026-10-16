@@ -1,0 +1,4 @@
+from,to,amount,reason,from_normalized,to_normalized
+Ondine,Pell,24.17,auto,ondine,pell
+Wick,Sable,17.02,auto,wick,sable
+Quill,Pell,5.17,auto,quill,pell

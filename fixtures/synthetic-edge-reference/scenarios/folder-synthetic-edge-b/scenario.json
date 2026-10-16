@@ -1,0 +1,67 @@
+{
+  "name": "folder-synthetic-edge-b",
+  "description": "One folder: player summary and settlement sheet for that folder only (--folder).",
+  "status": "ok",
+  "code": "Poker_Ledger_Reader",
+  "data": "edge-data-1",
+  "tz": "America/New_York",
+  "flags": [
+    "--folder",
+    "Synthetic Edge B"
+  ],
+  "notes": [],
+  "expected_exports": [
+    "player_summary.csv",
+    "showdown_rivals.csv",
+    "settlements.csv"
+  ],
+  "missing_exports": [],
+  "steps": [
+    {
+      "kind": "summary",
+      "log": "logs/summary.txt",
+      "exit": 0,
+      "args": [
+        "--folder",
+        "Synthetic Edge B"
+      ],
+      "menu_file": "01-summary.txt",
+      "menu": [
+        "12",
+        "0"
+      ]
+    },
+    {
+      "kind": "settle",
+      "log": "logs/settle.txt",
+      "exit": 0,
+      "args": [
+        "--folder",
+        "Synthetic Edge B"
+      ],
+      "menu_file": "02-settle.txt",
+      "menu": [
+        "5",
+        "3",
+        "n",
+        "",
+        "13",
+        "0"
+      ]
+    }
+  ],
+  "exports": [
+    {
+      "file": "player_summary.csv",
+      "data_rows": 8
+    },
+    {
+      "file": "settlements.csv",
+      "data_rows": 1
+    },
+    {
+      "file": "showdown_rivals.csv",
+      "data_rows": 21
+    }
+  ]
+}

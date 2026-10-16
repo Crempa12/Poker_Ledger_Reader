@@ -40,6 +40,11 @@ export {
   type NumberReading,
 } from "./util.ts";
 
+// The hand-log facade: the hand logs with the ledger in, the menus 12, 18, 21 and 22 and the
+// player history's "At the table" and "Beaten at showdown by" blocks out.
+export { loadHandWorld, handViewOf, atTheTable, beatenAtShowdown } from "./handworld.ts";
+export type { HandWorld, HandView, HandExports, HitRunView } from "./handworld.ts";
+
 // One module at a time, for the parts a caller uses by name.
 export * as ledger from "./ledger.ts";
 export * as players from "./players.ts";
@@ -48,3 +53,8 @@ export * as adjustments from "./adjustments.ts";
 export * as settlement from "./settlement.ts";
 export * as sessions from "./sessions.ts";
 export * as util from "./util.ts";
+export * as handlog from "./handlog.ts";
+export * as playtime from "./playtime.ts";
+export * as showdowns from "./showdowns.ts";
+export * as playstyle from "./playstyle.ts";
+export * as hitrun from "./hitrun.ts";

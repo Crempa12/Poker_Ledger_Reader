@@ -1,0 +1,75 @@
+{
+  "name": "range",
+  "description": "Dates from 2026-10-06 to 2026-10-07: player summary and settlement sheet for that stretch (--from, --to).",
+  "status": "ok",
+  "code": "Poker_Ledger_Reader",
+  "data": "edge-data-1",
+  "tz": "America/New_York",
+  "flags": [
+    "--from",
+    "2026-10-06",
+    "--to",
+    "2026-10-07"
+  ],
+  "notes": [
+    "range: the middle third of the game nights (the picks tools/validate.py makes): 2026-10-06 to 2026-10-07"
+  ],
+  "expected_exports": [
+    "player_summary.csv",
+    "showdown_rivals.csv",
+    "settlements.csv"
+  ],
+  "missing_exports": [],
+  "steps": [
+    {
+      "kind": "summary",
+      "log": "logs/summary.txt",
+      "exit": 0,
+      "args": [
+        "--from",
+        "2026-10-06",
+        "--to",
+        "2026-10-07"
+      ],
+      "menu_file": "01-summary.txt",
+      "menu": [
+        "12",
+        "0"
+      ]
+    },
+    {
+      "kind": "settle",
+      "log": "logs/settle.txt",
+      "exit": 0,
+      "args": [
+        "--from",
+        "2026-10-06",
+        "--to",
+        "2026-10-07"
+      ],
+      "menu_file": "02-settle.txt",
+      "menu": [
+        "5",
+        "3",
+        "n",
+        "",
+        "13",
+        "0"
+      ]
+    }
+  ],
+  "exports": [
+    {
+      "file": "player_summary.csv",
+      "data_rows": 7
+    },
+    {
+      "file": "settlements.csv",
+      "data_rows": 4
+    },
+    {
+      "file": "showdown_rivals.csv",
+      "data_rows": 25
+    }
+  ]
+}

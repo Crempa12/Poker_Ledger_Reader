@@ -1,14 +1,14 @@
 Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
 WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
 WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
-Loaded 12 games (3 folders), 0 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+Loaded 14 games (3 folders), 2 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
 WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
 WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
          They count for the name on the seat until you check them in menu 20.
 
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker Cavlorn | pinned payments 2                             |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP
@@ -33,7 +33,7 @@ WARNING: 3 buy-ins look like they were made on someone else's account or under s
   3. Everything in the current scope (all folders)
   0. Cancel
 Choose: 
--- Everything in all folders, 12 games -------------------------------------
+-- Everything in all folders, 14 games -------------------------------------
   Player                   Poker net    Payments   Settles as
   Sybnari                    +$91.47           -   is owed $91.47
   Gorvast                    +$78.19           -   is owed $78.19
@@ -42,25 +42,37 @@ Choose:
   Vextor                     +$29.04     +$12.50   is owed $41.54
   Vorndal                    +$35.41           -   is owed $35.41
   Mirtavo                    +$29.53           -   is owed $29.53
+  Tovrin                     +$25.00           -   is owed $25.00
   Frymoss                    +$24.94           -   is owed $24.94
   🎴                         +$24.61           -   is owed $24.61
   Hespyre                    +$22.47           -   is owed $22.47
   🎲Brask                     -$3.15     +$25.00   is owed $21.85
+  Vexlor                     +$20.00           -   is owed $20.00
+  Sorrel                     +$19.00           -   is owed $19.00
   Pindrel                    +$13.74           -   is owed $13.74
+  Dorrig                     +$10.00           -   is owed $10.00
   Cavlorn                     +$5.00           -   is owed $5.00
+  Ulvane                      +$5.00           -   is owed $5.00
   Mari Quenby                 +$9.82      -$7.00   is owed $2.82
   Bexrunn                     +$1.50           -   is owed $1.50
   Hiltrex                     +$1.50           -   is owed $1.50
   Frymoss Two                 +$1.08           -   is owed $1.08
   Ylmande                     +$0.50           -   is owed $0.50
+  Quillan                      $0.00           -   even
+  Wenrick                      $0.00           -   even
   Kaxtun                      -$1.61           -   owes $1.61
   Quinn "Q" Varn              -$3.26           -   owes $3.26
   707070                      -$7.87           -   owes $7.87
+  Ostravan                   -$10.00           -   owes $10.00
   Rixmoot                    -$10.14           -   owes $10.14
+  Pethra                     -$12.00           -   owes $12.00
+  Ysolde                     -$12.00           -   owes $12.00
   Lumqat                     -$13.25           -   owes $13.25
+  Kelvane                    -$15.00           -   owes $15.00
   Wexlorn                    -$15.17           -   owes $15.17
   Ostrelin                   -$21.05           -   owes $21.05
   Dulvane                    -$30.00           -   owes $30.00
+  Morvak                     -$30.00           -   owes $30.00
   Tarvelle                   -$30.00           -   owes $30.00
   Quelzit                    -$30.10           -   owes $30.10
   Fenquor                    -$33.06           -   owes $33.06
@@ -80,10 +92,11 @@ Pins and one-off requests are skipped. Turn the banker off in menu 6 to use them
 
 (banker mode)
 -- Settlement sheet --------------------------------------------------------
-  34 payments, 18 senders, 18 receivers
+  44 payments, 23 senders, 23 receivers
 
   Cavlorn               --->  Bexrunn                   $1.50   banker
                         --->  🎲Brask                  $21.85   banker
+                        --->  Dorrig                   $10.00   banker
                         --->  Frymoss                  $24.94   banker
                         --->  Frymoss Two               $1.08   banker
                         --->  Gorvast                  $78.19   banker
@@ -94,12 +107,16 @@ Pins and one-off requests are skipped. Turn the banker off in menu 6 to use them
                         --->  Mirtavo                  $29.53   banker
                         --->  Pindrel                  $13.74   banker
                         --->  Plenkor                  $57.98   banker
+                        --->  Sorrel                   $19.00   banker
                         --->  Sybnari                  $91.47   banker
+                        --->  Tovrin                   $25.00   banker
+                        --->  Ulvane                    $5.00   banker
                         --->  🎴                       $24.61   banker
+                        --->  Vexlor                   $20.00   banker
                         --->  Vextor                   $41.54   banker
                         --->  Vorndal                  $35.41   banker
                         --->  Ylmande                   $0.50   banker
-                              sends $497.90 in all, to 17 people
+                              sends $576.90 in all, to 22 people
   Zaqvin                --->  Cavlorn                  $77.22   banker
   Ombrix                --->  Cavlorn                  $54.56   banker
   Harlo, Dromm          --->  Cavlorn                  $52.24   banker
@@ -109,22 +126,29 @@ Pins and one-off requests are skipped. Turn the banker off in menu 6 to use them
   Fenquor               --->  Cavlorn                  $33.06   banker
   Quelzit               --->  Cavlorn                  $30.10   banker
   Dulvane               --->  Cavlorn                  $30.00   banker
+  Morvak                --->  Cavlorn                  $30.00   banker
   Tarvelle              --->  Cavlorn                  $30.00   banker
   Ostrelin              --->  Cavlorn                  $21.05   banker
   Wexlorn               --->  Cavlorn                  $15.17   banker
+  Kelvane               --->  Cavlorn                  $15.00   banker
   Lumqat                --->  Cavlorn                  $13.25   banker
+  Pethra                --->  Cavlorn                  $12.00   banker
+  Ysolde                --->  Cavlorn                  $12.00   banker
   Rixmoot               --->  Cavlorn                  $10.14   banker
+  Ostravan              --->  Cavlorn                  $10.00   banker
   707070                --->  Cavlorn                   $7.87   banker
   Quinn "Q" Varn        --->  Cavlorn                   $3.26   banker
   Kaxtun                --->  Cavlorn                   $1.61   banker
 
 -- Who receives what -------------------------------------------------------
   Bexrunn                   $1.50   from Cavlorn
-  Cavlorn                 $504.90   from 707070, Dulvane, Ekvarto, Fenquor,
-                                         Harlo, Dromm, Kaxtun, Lumqat,
-                                         Nuvrask, Ombrix, Ostrelin, Quelzit,
+  Cavlorn                 $583.90   from 707070, Dulvane, Ekvarto, Fenquor,
+                                         Harlo, Dromm, Kaxtun, Kelvane,
+                                         Lumqat, Morvak, Nuvrask, Ombrix,
+                                         Ostravan, Ostrelin, Pethra, Quelzi.
                                          Quinn "Q" Varn, Quorin, Rixmoot,
-                                         Tarvelle, Wexlorn, Zaqvin
+                                         Tarvelle, Wexlorn, Ysolde, Zaqvin
+  Dorrig                   $10.00   from Cavlorn
   Frymoss                  $24.94   from Cavlorn
   Frymoss Two               $1.08   from Cavlorn
   Gorvast                  $78.19   from Cavlorn
@@ -135,7 +159,11 @@ Pins and one-off requests are skipped. Turn the banker off in menu 6 to use them
   Mirtavo                  $29.53   from Cavlorn
   Pindrel                  $13.74   from Cavlorn
   Plenkor                  $57.98   from Cavlorn
+  Sorrel                   $19.00   from Cavlorn
   Sybnari                  $91.47   from Cavlorn
+  Tovrin                   $25.00   from Cavlorn
+  Ulvane                    $5.00   from Cavlorn
+  Vexlor                   $20.00   from Cavlorn
   Vextor                   $41.54   from Cavlorn
   Vorndal                  $35.41   from Cavlorn
   Ylmande                   $0.50   from Cavlorn
@@ -145,8 +173,8 @@ Pins and one-off requests are skipped. Turn the banker off in menu 6 to use them
   Next: 7 saves this sheet as a session, 13 exports it as CSV.
 (press Enter to continue)
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker Cavlorn | pinned payments 2                             |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP
@@ -167,8 +195,8 @@ Pins and one-off requests are skipped. Turn the banker off in menu 6 to use them
  Choose a number: Exported to <work>/runs/banker/settle/Saved_Data/settlements.csv
 
 +----------------------------------------------------------------------------+
-| POKER LEDGER   12 games | Jan 14 - Nov 1 | all folders                     |
-| 35 players | hand logs 0/12 | books off by +$5.00                          |
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
 | me Zaqvin | banker Cavlorn | pinned payments 2                             |
 +----------------------------------------------------------------------------+
  RESULTS                                 SETTLE UP

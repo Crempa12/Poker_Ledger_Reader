@@ -1,0 +1,45 @@
+{
+  "name": "views",
+  "description": "Printed views: settings and pins (6), leaderboard (2), saved sheets (8, 11), duplicates (16), payments (17), seat owners (20).",
+  "status": "ok",
+  "code": "Poker_Ledger_Reader",
+  "data": "edge-data-1",
+  "tz": "America/New_York",
+  "flags": [],
+  "notes": [],
+  "expected_exports": [],
+  "missing_exports": [],
+  "steps": [
+    {
+      "kind": "views",
+      "log": "views.txt",
+      "exit": 0,
+      "args": [],
+      "menu_file": "views.txt",
+      "menu": [
+        "6",
+        "0",
+        "2",
+        "",
+        "8",
+        "",
+        "11",
+        "",
+        "16",
+        "",
+        "17",
+        "0",
+        "20",
+        "3",
+        "0",
+        "0",
+        "0"
+      ]
+    }
+  ],
+  "exports": [
+    {
+      "file": "views.txt"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+from,to,amount,reason,from_normalized,to_normalized
+Marisolquenby,Quill,7.00,banker,marisolquenby,quill
+Ondine,Quill,33.51,banker,ondine,quill
+Quorin,Quill,25.00,banker,quorin,quill
+Thorn,Quill,3.94,banker,thorn,quill
+Zaqvin,Quill,12.50,banker,zaqvin,quill
+Quill,Brask,25.00,banker,quill,brask
+Quill,Pell,48.52,banker,quill,pell
+Quill,Rune,27.70,banker,quill,rune
+Quill,Sable,77.14,banker,quill,sable
+Quill,Vextorion,12.50,banker,quill,vextorion
+Quill,Wick,43.12,banker,quill,wick
+Quill,Zinnia,61.68,banker,quill,zinnia

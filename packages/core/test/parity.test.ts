@@ -26,8 +26,8 @@ describe("parity with the C++ app: made-up data", () => {
 });
 
 describe.skipIf(process.env.PARITY_REAL !== "1")("parity with the C++ app: real data (local only)", () => {
-  it("matches every ledger export and printed text", async () => {
-    const reference = join(REPO, "local/reference-real");
+  it("matches every ledger and hand-log export and printed text", async () => {
+    const reference = join(REPO, "local/reference-handlog-2026-10-15");
     expect(existsSync(reference), "run the real reference first (see reference/README.md)").toBe(true);
     const report = await runParity(reference, REAL_DATA);
     expect(report.mismatchCount, formatParityReport(report)).toBe(0);

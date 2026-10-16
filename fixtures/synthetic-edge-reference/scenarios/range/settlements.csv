@@ -1,0 +1,5 @@
+from,to,amount,reason,from_normalized,to_normalized
+Thorn,Sable,32.87,auto,thorn,sable
+Rune,Pell,18.12,auto,rune,pell
+Wick,Sable,17.02,auto,wick,sable
+Quill,Sable,13.59,auto,quill,sable

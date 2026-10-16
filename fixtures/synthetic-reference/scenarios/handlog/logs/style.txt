@@ -1,0 +1,90 @@
+Skipped: only never-played seats (no start time, $0 net) in ledger_pglFAKE0013.csv
+WARNING: ledger_pglFAKE0006.csv does not balance: its nets sum to +$5.00 instead of $0.00.
+WARNING: 3 duplicate/overlapping ledgers found (2 skipped so nothing is counted twice). Menu 16 shows the details.
+Loaded 14 games (3 folders), 2 hand logs, 3 merged names, 3 seat checks, 5 payments & corrections.
+WARNING: 1 account has a name never seen before. Menu 4 asks whether it is someone's new nickname.
+WARNING: 3 buy-ins look like they were made on someone else's account or under someone else's name.
+         They count for the name on the seat until you check them in menu 20.
+
++----------------------------------------------------------------------------+
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: 
+Hand-log statistics for all folders: 2 of 14 games have a log.
+Games without a log (download "poker_now_log_<id>.csv" from PokerNow; menu 19 files it):
+  2026-11-01  Synthetic Autumn  ledger_pglFAKE0012
+  2026-10-24  Synthetic Autumn  ledger_pglFAKE0011
+  2026-10-03  Synthetic Autumn  ledger_pglFAKE0010
+  2026-05-02  Synthetic Spring  ledger_pglFAKE0008
+  2026-05-02  Synthetic Spring  ledger_pglFAKE0009
+  ...
+
+-- Hand logs in scope ------------------------------------------------------------------------
+Date        Folder            Hands  Hours  Players  Showdown  Biggest pot  Won by
+----------------------------------------------------------------------------------------------
+2026-10-17  Synthetic Autumn      9    2.2        6       56%       $48.25  Tovrin          #8
+2026-10-31  Synthetic Autumn      7    4.1        6       29%       $10.00  Kelvane         #2
+----------------------------------------------------------------------------------------------
+
+-- How everyone plays ------------------------------------------------------------------------------
+Player           Games  Hands VPIP  PFR Flop WTSD W$SD FoldR    AF   H&R   Big pot  Style
+----------------------------------------------------------------------------------------------------
+Pethra               1      9  22%  22%  33% 100%  33%  100%   inf     -     $1.00  (few hands)     
+Sorrel               1      9  33%   0%  22% 100% 100%   83%   0.0   (0)     $7.75  (few hands)     
+Tovrin               1      9  44%  11%  44%  50% 100%   25%   inf   (0)    $48.25  (few hands)     
+Ysolde               1      9  33%  11%  22%   0%   0%   75%   inf     -     $3.25  (few hands)     
+Morvak               1      8  62%  38%  62%  60%   0%  100%   inf     -     $0.00  (few hands)     
+Dorrig               1      7  14%   0%  14%   0%   0%   80%   0.0   (0)     $0.00  (few hands)     
+Kelvane              1      7  17%  17%  17%   0% 100%  100%   inf     -    $10.00  (few hands)     
+Ostravan             1      7  33%   0%  50%  33% 100%  100%   inf     -     $4.00  (few hands)     
+Quillan              1      7  17%   0%  33%   0%   0%  100%   0.0     -     $0.00  (few hands)     
+Vexlor               1      7  33%  17%  17%   0%   0%  100%   1.0   (0)     $1.50  (few hands)     
+Wenrick              1      7  17%   0%  33%  50%   0%  100%   1.0     -     $1.00  (few hands)     
+Ulvane               1      6  40%   0%  40%   0%   0%  100%   0.0   (0)     $0.00  (few hands)     
+----------------------------------------------------------------------------------------------------
+VPIP = % of hands where money went in voluntarily preflop.  PFR = % raised preflop.
+Flop = % of hands that reached the flop.  WTSD = % of flops that went to showdown.
+W$SD = % of showdowns won.  FoldR = % folded facing a preflop raise.  AF = (bets + raises) / calls.
+H&R = hit & run factor, 0-100: how early they leave the game when winning (menu 22 explains it).
+An H&R in (brackets) has fewer than 3 winning nights behind it.
+
+Export this table to Saved_Data/style_stats.csv? (y/n): Exported to <work>/runs/handlog/style/Saved_Data/style_stats.csv
+(press Enter to continue)
++----------------------------------------------------------------------------+
+| POKER LEDGER   14 games | Jan 14 - Nov 1 | all folders                     |
+| 47 players | hand logs 2/14 | books off by +$5.00                          |
+| me Zaqvin | banker off | pinned payments 2                                 |
++----------------------------------------------------------------------------+
+ RESULTS                                 SETTLE UP
+   1  Change scope                         5  Build settlement sheet
+   2  Leaderboard                          6  Pins, banker, me & display
+   3  Player history                       7  Save sheet to track payments
+   4  Player names  * 1 new                8  Saved sheets: all
+  20  Shared accounts  * 3 to check        9  Saved sheets: unpaid
+  17  Payments & corrections  (5)         10  Record a payment
+                                          11  Who still owes whom
+ REPORTS                                 HAND LOGS
+  12  Export players CSV                  18  Playing style
+  13  Export sheet CSV                    21  Deep profiles
+  14  HTML report                         22  Hit & run
+  15  Charts                              19  Import from Downloads
+  16  Duplicate check  * 3 found           0  Save and exit
+
+ Choose a number: Saved merge rules, preferences, settings, seat owners and session balances. Bye.

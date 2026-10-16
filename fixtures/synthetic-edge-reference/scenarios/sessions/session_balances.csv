@@ -1,0 +1,9 @@
+session_id,from_display,from_normalized,to_display,to_normalized,original_amount,remaining_amount,status
+Winter 2026 sheet,Jolwick,jolwick,Kaxtun,kaxtun,15.00,0.00,paid
+Winter 2026 sheet,Mirtavo,mirtavo,Zaqvin,zaqvin,25.00,10.00,partial
+Winter 2026 sheet,Zaqvin,zaqvin,Plenkor,plenkor,40.00,40.00,open
+reference-all,Marisolquenby,marisolquenby,Wick,wick,7.00,3.50,partial
+reference-all,Ondine,ondine,Wick,wick,33.51,33.51,open
+reference-all,Quorin,quorin,Brask,brask,25.00,25.00,open
+reference-all,Thorn,thorn,Rune,rune,3.94,3.94,open
+reference-all,Zaqvin,zaqvin,Vextorion,vextorion,12.50,12.50,open
