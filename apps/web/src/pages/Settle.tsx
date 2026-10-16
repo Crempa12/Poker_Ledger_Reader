@@ -131,7 +131,7 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
             </a>
           ) : null}
           <a href={href("settle")} aria-current={game === undefined ? "page" : undefined}>
-            Everything · {plural(view.games.length, "game")}
+            Everything<span className="hide-xs"> · {plural(view.games.length, "game")}</span>
           </a>
         </div>
         <label className="pick">

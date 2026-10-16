@@ -33,7 +33,7 @@ export function Adjust({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       <h1>Payments &amp; corrections</h1>
       <p className="lede">
         Money that changed hands outside the ledger, debts let go, and corrections by hand (console menu 17). They change who owes
-        whom on <a href={href("settle")}>Settle up</a>, not the poker results on the leaderboard.
+        whom on <a href={href("settle")}>Settle up</a>, not the poker results on Standings.
       </p>
       <section className="sec" aria-labelledby="adj-h">
         <h2 id="adj-h">{world.adjustments.length === 0 ? "Entries" : `Entries (${world.adjustments.length})`}</h2>
@@ -160,7 +160,7 @@ function PaymentForm({ ctx, people, nameOf, save, busy }: FormProps & { nameOf: 
     }
     if (!folderOk(ctx.scope.folder)) return;
     setProblem(null);
-    const done = `${nameOf(debtor)} now owes ${moneyCents(cents)} less and ${nameOf(creditor)} is owed ${moneyCents(cents)} less. The leaderboard does not change.`;
+    const done = `${nameOf(debtor)} now owes ${moneyCents(cents)} less and ${nameOf(creditor)} is owed ${moneyCents(cents)} less. Standings do not change.`;
     void save([...ctx.world.adjustments, ...rows.value], done).then((ok) => {
       if (ok) {
         setAmount("");

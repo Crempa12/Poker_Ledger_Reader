@@ -42,7 +42,8 @@ git clone --branch web-app https://github.com/Crempa12/Poker_Ledger_Reader.git P
 or download the `web-app` branch as a ZIP from GitHub (Code, then Download ZIP), then
 open it as above. With no `Poker_Ledger_Reader` folder next to
 this one, the site keeps its data in `data/` inside this folder (git ignores it): the
-Overview offers **Start a new data folder**, then add games on **+ Add game**. The files
+first page asks for your first game (paste its PokerNow link, then **Start with this
+game**) and makes the data folder with it. The files
 are the same ones the console app reads, so it can be pointed at that folder later.
 `PLR_DATA_ROOT` names any other folder; the site starts a data folder only in one that
 is empty or not there yet.
@@ -56,18 +57,21 @@ the page says so, and nothing is saved anywhere.
 
 | Page | What it shows |
 |---|---|
-| Overview | games, players, money in play, whether the books balance, your running total, the leaderboard |
+| Standings | you first (your net, your place, what you owe or are owed), then the leaderboard, the latest night and what is still owed; whether the books balance |
 | Player | every night with the running total and its chart, best and worst nights, nicknames, time at the table and who beat them at showdown (menu 3) |
 | Play style | from the hand logs: how everyone plays (menu 18), deep profiles (menu 21) and the hit & run factor (menu 22), with the console's CSV files to download |
-| Games | every game, newest first; one game's results per player, and every seat with "whose money was it?" (menu 20) |
+| Nights | every game, newest first, with how you did; one night's results per player, and every seat with "whose money was it?" (menu 20) |
 | Settle up | who pays whom for the scope or one game, with your pins and banker mode; "send my money to a specific person" requests (menu 5); copy it for the group chat; **Save sheet** to track payments (menu 7) |
 | Who owes | what is still owed between each pair (with a reminder to copy for the group chat), every saved sheet, and **Paid…** to record a payment (menu 10) |
 | Checks | what the console app flags at startup; answer new names, merge names by hand or split one back out (menu 4); answer seats that look shared, undo a saved seat owner (menu 20) |
 | Settings | pinned payments, the banker, who "me" is, the console's display (menu 6) |
-| Payments & corrections | linked from Settle up and the overview: money that changed hands outside the ledger, debts let go, one-sided corrections, removing one (menu 17) |
-| + Add game | paste a PokerNow game link to file its ledger; file the hand logs (and ledgers) in your Downloads folder, or pick them (menu 19) |
+| Payments & corrections | under More, and linked from Standings: money that changed hands outside the ledger, debts let go, one-sided corrections, removing one (menu 17) |
+| + Add game | (+ Add on a phone) paste a PokerNow game link and its ledger is fetched; the PokerNow files in your Downloads folder are found and ticked; one button files them all (menu 19) |
+| More | Play style, Checks (with a count when something needs an answer), Payments & corrections, Settings and Help; the facts the console prints at startup; light or dark |
 
-The folder and date range at the top work like the console app's scope (menu 1).
+The line at the top (**All folders · All time**) picks the folder and the dates, like the
+console app's scope (menu 1). It shows on the pages it changes; Who owes is always for
+every game.
 
 ### Changing names, sheets and settings
 
@@ -114,15 +118,18 @@ place of the file there, then press **Refresh**. The time in a backup's name is 
 
 ### Adding games
 
-Paste the game's link on **+ Add game**. The ledger is fetched from PokerNow and saved
-into `Games/<folder>/` in the console app's folder, the same place menu 19 puts it,
-so the console app sees it too. (A data folder with no `Games` folder yet gets the
-folder at its top, where the console app also reads games.) PokerNow puts a captcha on hand logs, so download
-the log yourself (the page links to each game missing one). The page lists the PokerNow
-files in your Downloads folder that are not filed yet, as menu 19 does: press **Add all**
-(**Add it** for one file), then **Save all** (or the file's own **Save to** button). It
-files a copy and leaves Downloads as it is (menu 19 moves the files). You can also pick
-the files by hand. On a Mac, the first time, macOS may ask whether Terminal may open
+Press **+ Add game** (**+ Add** on a phone) and paste the game's link: the ledger is
+fetched from PokerNow at once, and the page shows what it found (players, buy-ins, the
+top result, whether the books balance). It is filed into `Games/<folder>/` in the console
+app's folder, the same place menu 19 puts it, so the console app sees it too. (A data
+folder with no `Games` folder yet gets the folder at its top, where the console app also
+reads games.) PokerNow puts a captcha on hand logs, so download the log yourself (the page
+says how, and lists the nights still missing one). The page finds the PokerNow files in
+your Downloads folder that are not filed yet, as menu 19 does, and ticks them: untick any
+you do not want, then press the one button at the bottom (**File it**, **File both**,
+**File all 3**; **Choose another folder** files them somewhere else). It files a copy and
+leaves Downloads as it is (menu 19 moves the files). You can also drop or pick the files
+by hand. On a Mac, the first time, macOS may ask whether Terminal may open
 your Downloads folder.
 Game files hold everyone's names, PokerNow ids and results. If the console app's
 repository is public on GitHub, committing them there publishes all of that: keep them
