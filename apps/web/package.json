@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.json",
-    "dev:quiet": "PLR_NO_OPEN=1 vite",
+    "dev:quiet": "vite --mode quiet",
     "snapshot": "node server/snapshot.ts"
   },
   "devDependencies": {

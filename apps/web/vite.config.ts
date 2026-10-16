@@ -47,12 +47,14 @@ function localData(): Plugin {
   };
 }
 
-export default defineConfig({
+// `vite --mode quiet` (npm run web:quiet) starts without opening a browser, as PLR_NO_OPEN=1 does; a
+// command-line flag, so it works in cmd.exe on Windows too, which has no VAR=value prefix.
+export default defineConfig(({ mode }) => ({
   plugins: [react(), localData()],
   server: {
     host: process.env.PLR_LAN === "1" ? true : "127.0.0.1",
     port: 5173,
-    open: process.env.PLR_NO_OPEN !== "1",
+    open: process.env.PLR_NO_OPEN !== "1" && mode !== "quiet",
     // No other site may read from this server or show it in a frame (the API checks
     // its own requests; this covers Vite's own files too).
     cors: false,
@@ -64,4 +66,4 @@ export default defineConfig({
       deny: [".env", ".env.*", "*.{crt,pem,key,p12,pfx,cer,der}", ".npmrc", ".yarnrc.yml", "**/.git/**", denyPatternFor(LOCAL)],
     },
   },
-});
+}));

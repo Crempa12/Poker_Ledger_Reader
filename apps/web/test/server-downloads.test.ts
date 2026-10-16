@@ -55,7 +55,12 @@ function downloads(): string {
   mkdirSync(join(dir, `ledger_${ID_B}.csv`)); // a folder with a PokerNow name
   const outside = mkdtempSync(join(tmpdir(), "plr-downloads-outside-"));
   writeFileSync(join(outside, "secret.csv"), "not for the page\n");
-  symlinkSync(join(outside, "secret.csv"), join(dir, `poker_now_log_${ID_A}.csv`));
+  try {
+    symlinkSync(join(outside, "secret.csv"), join(dir, `poker_now_log_${ID_A}.csv`));
+  } catch (err) {
+    // Windows makes links only for an administrator or in Developer Mode; the tests hold without one.
+    if ((err as NodeJS.ErrnoException).code !== "EPERM") throw err;
+  }
   // The log is the newer download.
   utimesSync(join(dir, `ledger_${ID_A}.csv`), new Date(2030, 0, 1), new Date(2030, 0, 1));
   utimesSync(join(dir, `poker_now_log_${ID_B} (1).csv`), new Date(2030, 0, 2), new Date(2030, 0, 2));
@@ -89,7 +94,8 @@ describe("the Downloads folder routes", () => {
     expect((r.json.files as { name: string; kind: string }[]).find((f) => f.name === "ledger_pglMadeUpUpperCase77.CSV")?.kind).toBe("ledger");
   });
 
-  it("say when the Downloads folder is there but cannot be opened", async () => {
+  // Windows does not take a folder's read permission away with chmod, so this runs elsewhere only.
+  it.skipIf(process.platform === "win32")("say when the Downloads folder is there but cannot be opened", async () => {
     const dir = downloads();
     chmodSync(dir, 0o000);
     try {
@@ -159,11 +165,14 @@ describe("the folder a game is filed in", () => {
     expect(safeFolder("Nov 2026")).toBe("Nov 2026");
     expect(safeFolder("  Nov 2026  ")).toBe("Nov 2026");
     expect(safeFolder("Nov/Week 1")).toBe("Nov/Week 1");
+    expect(safeFolder("Console")).toBe("Console"); // only the device names themselves are Windows'
+    expect(safeFolder("Fall 2026 (home games)")).toBe("Fall 2026 (home games)");
   });
 
   it("refuses names that would leave Games, hide, or change on Windows", () => {
     for (const bad of ["", "/", "Nov/", "/Nov", "Nov//Week", "..", "../x", "Nov/../x", ".hidden", "Nov/.x", "Games.", "Nov/Week.",
-      "Nov /Week", "a\\b", "C:", "a/b/c/d/e", "x".repeat(61), "build", "Nov/reports", 7, null]) {
+      "Nov /Week", "a\\b", "C:", "a/b/c/d/e", "x".repeat(61), "build", "Nov/reports", "saved_data", "Reports", "BUILD",
+      "a?b", "a*b", 'a"b', "a<b", "a>b", "a|b", "a\u0001b", "CON", "nul", "Nov/com1", "lpt9.txt", "aux.csv", 7, null]) {
       expect(safeFolder(bad), String(bad)).toBeNull();
     }
   });

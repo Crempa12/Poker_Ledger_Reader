@@ -1,6 +1,6 @@
 // Parity with the C++ app. The made-up run is committed and runs everywhere (CI
 // included). The real-data run reads local/reference-real and the real data root,
-// so it runs only with PARITY_REAL=1 (npm run parity:real). Nothing here writes a
+// so it runs only with npm run parity:real (or PARITY_REAL=1). Nothing here writes a
 // file: the checks print to the test output only.
 
 import { existsSync } from "node:fs";
@@ -25,7 +25,10 @@ describe("parity with the C++ app: made-up data", () => {
   }, 120_000);
 });
 
-describe.skipIf(process.env.PARITY_REAL !== "1")("parity with the C++ app: real data (local only)", () => {
+// npm run parity:real runs this file with --mode real (a flag, so it works in cmd.exe on Windows as well).
+// (import.meta.env is Vite's, which this package's types do not know.)
+const REAL = process.env.PARITY_REAL === "1" || (import.meta as { env?: { MODE?: string } }).env?.MODE === "real";
+describe.skipIf(!REAL)("parity with the C++ app: real data (local only)", () => {
   it("matches every ledger and hand-log export and printed text", async () => {
     const reference = join(REPO, "local/reference-handlog-2026-10-15");
     expect(existsSync(reference), "run the real reference first (see reference/README.md)").toBe(true);

@@ -306,7 +306,8 @@ describe("the old versions kept in local/backups", () => {
     expect(t.read("merge_rules.csv")).toBe(MORE_RULES);
   });
 
-  it.skipIf(process.getuid?.() === 0)("removes the backup of a save that could not write, so the folder is left as it was", async () => {
+  // As root, or on Windows (where chmod does not stop a folder taking new files), the folder stays writable.
+  it.skipIf(process.getuid?.() === 0 || process.platform === "win32")("removes the backup of a save that could not write, so the folder is left as it was", async () => {
     const t = setup({ "merge_rules.csv": RULES }, async () => {
       // Once the lock is held and the old text is read, the folder stops taking writes.
       chmodSync(join(t.root, "Saved_Data"), 0o555);

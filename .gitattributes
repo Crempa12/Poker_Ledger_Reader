@@ -1,2 +1,8 @@
 # Windows batch files need CRLF, or cmd can lose its place at a goto label.
 *.cmd text eol=crlf
+# The test data is kept byte for byte on every computer: Git for Windows would otherwise check it out with
+# CRLF line ends (core.autocrlf), and the parity checks compare bytes. Some fixtures are CRLF on purpose.
+fixtures/** -text
+# Read by the tests and by bash, so LF everywhere.
+*.md text eol=lf
+*.command text eol=lf

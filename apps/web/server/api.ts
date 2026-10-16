@@ -204,17 +204,24 @@ function likeBefore(before: string, text: string): string {
 }
 
 // A folder name the user typed or picked: one plain name, nothing that climbs out.
+// The names Windows keeps for devices, with or without an extension: a folder cannot be called that there.
+const WINDOWS_DEVICE = /^(con|prn|aux|nul|com[0-9\u00b9\u00b2\u00b3]|lpt[0-9\u00b9\u00b2\u00b3])(\..*)?$/i;
+
 // A folder under Games: one name, or a few joined by "/" for a folder inside a folder ("Nov/Week 1"), as
 // the console app reads them and menu 19 files into them. Each name is checked on its own: not empty, not
-// starting with a dot, no backslash or colon, not ending in a dot or space (Windows drops those, so
-// "Games." would be "Games"), and not a folder the console app skips.
+// starting with a dot, not ending in a dot or space (Windows drops those, so "Games." would be "Games"),
+// none of the characters Windows refuses in a name, not a Windows device name, and not a folder the console
+// app skips, in any case (a Mac's and Windows' usual file systems ignore case, so "saved_data" would be the
+// Saved_Data folder, where the console app never reads a game).
 export function safeFolder(name: unknown): string | null {
   if (typeof name !== "string") return null;
   const parts = name.trim().split("/");
   if (parts.length > 4) return null;
   for (const part of parts) {
-    if (part === "" || part.length > 60 || part !== part.trim() || part.startsWith(".") || /[.]$/.test(part)) return null;
-    if (/[\\:]/.test(part) || isExcludedDir(part)) return null;
+    if (part === "" || part.length > 60 || part !== part.trim() || part.startsWith(".") || part.endsWith(".")) return null;
+    if (/[\\:<>"|?*\u0000-\u001f]/.test(part) || WINDOWS_DEVICE.test(part)) return null;
+    const lower = part.toLowerCase();
+    if (isExcludedDir(part) || isExcludedDir(lower) || lower === "saved_data") return null;
   }
   return parts.join("/");
 }
@@ -483,12 +490,19 @@ async function acquireSaveLock(dir: string, waitMs: number): Promise<(() => Prom
     try {
       await writeFile(lock, `${process.pid}\n`, { flag: "wx" });
       return async () => {
-        // A lock that cannot be removed is logged, not thrown: the save's own answer is what counts.
-        await rm(lock, { force: true }).catch((err: unknown) => console.error("could not remove the save lock:", err));
+        // A lock that cannot be removed is logged, not thrown: the save's own answer is what counts. Windows
+        // can hold a file just made (a virus scanner, the indexer), so the remove is tried a few times
+        // (Node retries only with recursive set, which a single file does not mind).
+        await rm(lock, { force: true, recursive: true, maxRetries: 5, retryDelay: 100 }).catch((err: unknown) =>
+          console.error("could not remove the save lock:", err),
+        );
       };
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
     }
+    // A lock older than LOCK_STALE_MS was left by a save that never finished. Two servers that both find
+    // the same old lock at once could both take it over; that needs two sites on one data folder and a
+    // crashed save, and the basis check still refuses the second of two saves made from the same data.
     const made = (await stat(lock).catch(() => null))?.mtimeMs;
     if (made !== undefined && Math.abs(Date.now() - made) > LOCK_STALE_MS) {
       await rm(lock, { force: true });
@@ -561,7 +575,11 @@ export async function handleSavedFile(cfg: ApiConfig, req: IncomingMessage, res:
     await mkdir(dir, { recursive: true });
     const unlock = await acquireSaveLock(dir, cfg.lockWaitMs ?? LOCK_WAIT_MS);
     if (unlock === null) {
-      return send(res, 423, { error: "Another save to the console app's data folder is still running. Try again in a moment." });
+      return send(res, 423, {
+        error:
+          "Another save to the console app's data folder is still running, or its lock file (Saved_Data/.web-save.lock) " +
+          "was not removed. Try again in a moment; a lock left behind is taken over after a minute.",
+      });
     }
     try {
       if (typeof body.basis !== "string" || body.basis !== (await dataBasis(cfg.dataRoot))) {
@@ -609,15 +627,24 @@ export async function handleSavedFile(cfg: ApiConfig, req: IncomingMessage, res:
       // Written next to the file under a random name, then renamed over it: a crash never
       // leaves half a file, and two writers never share a temporary file.
       const temp = `${target}.${randomUUID()}.web-tmp`;
+      let step = "write";
       try {
         await writeFile(temp, out, "utf8");
+        step = "replace";
         await rename(temp, target);
       } catch (err) {
         // The file is as it was, so the copy made for this save is not needed.
         await rm(temp, { force: true }).catch(() => undefined);
         if (backup !== null) await rm(backup, { force: true }).catch(() => undefined);
         console.error(`could not write ${file}:`, err);
-        return send(res, 500, { error: `${file} could not be written, so nothing changed. Check that the Saved_Data folder can be written to, then try again.` });
+        // On Windows a file another program has open (Excel, most often) cannot be replaced.
+        const code = (err as NodeJS.ErrnoException).code ?? "";
+        const inUse = step === "replace" && (code === "EPERM" || code === "EBUSY" || code === "EACCES");
+        return send(res, 500, {
+          error: inUse
+            ? `${file} is open in another program (Excel?), so it could not be replaced and nothing changed. Close it there, then try again.`
+            : `${file} could not be written, so nothing changed. Check that the Saved_Data folder can be written to, then try again.`,
+        });
       }
       if (backup !== null) await pruneBackups(backups, file, backup);
       send(res, 200, { saved: file, backup });
@@ -707,7 +734,9 @@ export async function handleSave(cfg: ApiConfig, req: IncomingMessage, res: Serv
   const folder = safeFolder(body.folder);
   if (m === null) return send(res, 400, { error: "only PokerNow ledger_… or poker_now_log_… files can be saved" });
   if (folder === null) {
-    return send(res, 400, { error: "pick a folder name with no dot at its start or end, and no \\ or :" });
+    return send(res, 400, {
+      error: 'pick another folder name: no dot at its start or end, none of \\ : < > " | ? *, and not a name Windows keeps (CON, NUL ...) or Saved_Data',
+    });
   }
   const text = typeof body.text === "string" ? body.text : "";
   if (text.length === 0) return send(res, 400, { error: "the file is empty" });

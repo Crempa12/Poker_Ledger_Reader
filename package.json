@@ -17,7 +17,7 @@
     "reference": "bash reference/run.sh",
     "check:privacy": "node tools/check-privacy.ts",
     "parity": "node tools/parity.ts --reference fixtures/synthetic-reference --data fixtures/synthetic",
-    "parity:real": "PARITY_REAL=1 vitest run packages/core/test/parity.test.ts -t 'real data'",
+    "parity:real": "vitest run --mode real packages/core/test/parity.test.ts -t \"real data\"",
     "parity:handlog:real": "node tools/parity.ts --reference local/reference-handlog-2026-10-15 --data ../Poker_Ledger_Reader",
     "web": "npm run dev -w @plr/web",
     "typecheck:web": "npm run typecheck -w @plr/web",
