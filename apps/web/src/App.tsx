@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ledger } from "@plr/core";
 
 import { buildCtx, type Ctx } from "./context.ts";
@@ -81,8 +81,9 @@ export function App() {
       ) : null}
       {ctx.payload.consoleOpen > 0 && ctx.payload.canWrite ? (
         <p className="banner" role="status">
-          The console app is open. It saves its own copy of the names, sheets and settings when it quits, so changes here wait
-          until it is closed: quit it with <strong>0. Save and exit</strong>, then press Refresh.
+          The console app is open. It saves its own copy of the names, sheets and settings when it quits, so the site will not save
+          those until it is closed: quit it with <strong>0. Save and exit</strong>, then press Refresh. A new game can still be filed;
+          the console app lists it after it restarts.
         </p>
       ) : ctx.payload.consoleOpen === -1 && ctx.payload.canWrite ? (
         <p className="banner" role="status">
@@ -90,7 +91,9 @@ export function App() {
         </p>
       ) : null}
       <ScopeBar ctx={ctx} onChange={changeScope} />
-      <Page ctx={ctx} route={route} onSaved={refresh} />
+      <PageBoundary key={route.join("/")}>
+        <Page ctx={ctx} route={route} onSaved={refresh} />
+      </PageBoundary>
       <footer className="footer muted">
         {snapshot ? (
           <>Snapshot of {plural(ctx.world.games.length, "game")} · taken {shortDate(taken, ctx.tz)} {clockTime(taken, ctx.tz)} · </>
@@ -103,6 +106,33 @@ export function App() {
       </footer>
     </Shell>
   );
+}
+
+// A page that throws while it is drawn shows a short message in its place, so the rest of the site
+// still works, instead of the whole page going blank. Moving to another page clears it (see the key).
+class PageBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  override state: { failed: boolean } = { failed: false };
+
+  static getDerivedStateFromError(): { failed: boolean } {
+    return { failed: true };
+  }
+
+  override componentDidCatch(err: unknown): void {
+    console.error("[plr] a page could not be shown:", err);
+  }
+
+  override render(): ReactNode {
+    if (this.state.failed) {
+      return (
+        <div className="card pad">
+          <h2>This page could not be shown</h2>
+          <p>Something on it failed. Go back to the overview, or press Refresh and try again.</p>
+          <a href={href()}>Back to the overview</a>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function folderName(path: string): string {

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { boardFor, sessions, settlement, type PaymentPreference, type PlayerStats, type SettlementEntry, type SettlementReason } from "@plr/core";
 
+import { copyToClipboard } from "../clipboard.ts";
+import { isSnapshot } from "../data.ts";
 import { useSaver } from "../components/saver.tsx";
 import { dayScope, type Ctx } from "../context.ts";
 import { longDate, moneyCents, plural, shortDate } from "../format.ts";
@@ -52,6 +54,7 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
   // The banker is the one in Settings, as menu 5 uses it: there is no switch per sheet.
   const banker = world.settings.banker;
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const [asked, setAsked] = useState<Requests>({ sheet: "", list: [], pinnedHere: [] });
 
   const game = gameId === "" ? undefined : world.games.find((g) => g.id === gameId);
@@ -85,14 +88,15 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
 
   const title = game !== undefined ? `Game on ${longDate(game.start, tz)}` : `Everything in ${scopeWords(ctx.choice)}, ${plural(games.length, "game")}`;
 
+  // The sheet as text for the group chat. Where the browser will not copy it, the text is shown to select.
+  const copyBody = copyText(title, sheet.entries);
   const copy = (): void => {
-    navigator.clipboard
-      .writeText(copyText(title, sheet.entries))
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => setCopied(false));
+    setCopyFailed(false);
+    void copyToClipboard(copyBody).then((ok) => {
+      setCopied(ok);
+      setCopyFailed(!ok);
+      if (ok) setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   const newestFirst = [...view.games].reverse();
@@ -137,7 +141,7 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
         ) : null}
       </section>
 
-      {banker === "" && losers.length > 0 && winners.length > 0 ? (
+      {banker === "" && losers.length > 0 && winners.length > 0 && !isSnapshot(ctx.payload) ? (
         <RequestCard
           ctx={ctx}
           losers={losers}
@@ -187,6 +191,12 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
                 Download CSV
               </button>
             </div>
+            {copyFailed ? (
+              <>
+                <p className="down small">This browser would not copy it. Select the text below and copy it by hand.</p>
+                <textarea className="links" readOnly rows={8} value={copyBody} onFocus={(e) => e.currentTarget.select()} />
+              </>
+            ) : null}
             <h3>Who receives what</h3>
             <div className="tablewrap">
               <table>

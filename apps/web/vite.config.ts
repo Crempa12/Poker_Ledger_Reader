@@ -7,14 +7,15 @@
 // still works only on this computer).
 //
 // PLR_CONSOLE_CHECK=0 skips the "is the console app open?" check: only for a test
-// server pointed (PLR_DATA_ROOT) at a scratch copy that no console app is using. Give
-// such a server its own PLR_BACKUP_DIR too, so its backups never push out the real ones
-// (local/backups/ keeps the newest 50 of each file).
+// server pointed (PLR_DATA_ROOT) at a scratch copy that no console app is using. Its
+// backups go to a folder of their own inside local/backups/ (one per data folder), so they
+// never push out the real ones; PLR_BACKUP_DIR can still point them somewhere else.
 import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
 import { apiMiddleware } from "./server/api.ts";
+import { denyPatternFor } from "./server/fsdeny.ts";
 
 const dataRoot = resolve(process.env.PLR_DATA_ROOT ?? resolve(import.meta.dirname, "../../../Poker_Ledger_Reader"));
 const timeZone = process.env.PLR_TZ ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -59,7 +60,7 @@ export default defineConfig({
       // local/ holds the Saved_Data backups, the snapshots and the real-data reference
       // runs: Vite's /@fs/ must never hand them out (a phone on the Wi-Fi could ask).
       // Setting deny replaces Vite's list, so its own entries are repeated here.
-      deny: [".env", ".env.*", "*.{crt,pem,key,p12,pfx,cer,der}", ".npmrc", ".yarnrc.yml", "**/.git/**", `${LOCAL}/**`],
+      deny: [".env", ".env.*", "*.{crt,pem,key,p12,pfx,cer,der}", ".npmrc", ".yarnrc.yml", "**/.git/**", denyPatternFor(LOCAL)],
     },
   },
 });

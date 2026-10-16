@@ -1,6 +1,7 @@
 import { players, util, type PlayerStats } from "@plr/core";
 
 import { LineChart, NetBar, Sparkbars, type LinePoint } from "../components/charts.tsx";
+import { isSnapshot } from "../data.ts";
 import { nightsOf, upDown, type Ctx } from "../context.ts";
 import { longDate, moneyCents, moneySigned, moneySignedCents, plural, shortDate, toneOf, toneOfCents } from "../format.ts";
 import { useHandLogs } from "../handlogs.ts";
@@ -39,6 +40,23 @@ export function Overview({ ctx }: { ctx: Ctx }) {
   const meName = me === "" ? "not set" : ctx.nameOf(me);
   const logged = hand.status === "ready" && hand.data !== undefined ? [`hand logs ${hand.data.logged}/${hand.data.games}`] : [];
   const facts = [...logged, `banker ${banker}`, `pinned payments ${world.prefs.length}`, `me ${meName}`].join(" · ");
+
+  // No games at all (not just none in this scope): the folder read may not be the console app's.
+  if (world.games.length === 0 && !isSnapshot(ctx.payload)) {
+    const folder = ctx.payload.dataRoot.split(/[\\/]/).filter((part) => part !== "").pop() ?? ctx.payload.dataRoot;
+    return (
+      <div className="card pad">
+        <h2>No games were found</h2>
+        <p>
+          No games were found in <code>{folder}</code>.
+        </p>
+        <p className="muted">
+          The site reads the console app&apos;s folder (its <code>Games</code> and <code>Saved_Data</code> folders). It must sit next
+          to this one, as <code>Poker_Ledger_Reader</code>, or <code>PLR_DATA_ROOT</code> must name it. Then press <strong>Refresh</strong>.
+        </p>
+      </div>
+    );
+  }
 
   if (view.games.length === 0) {
     return <div className="card pad">No games in this scope. Pick another folder or date range above.</div>;

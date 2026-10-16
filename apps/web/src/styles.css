@@ -137,10 +137,9 @@ input[type="date"] {
 }
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   width: 100%;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 .tabs a {
   white-space: nowrap;

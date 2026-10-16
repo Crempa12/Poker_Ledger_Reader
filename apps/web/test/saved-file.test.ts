@@ -10,7 +10,7 @@ import { Readable } from "node:stream";
 import { describe, expect, it } from "vitest";
 
 import { players, sessions } from "../../../packages/core/src/index.ts";
-import { dataBasis, handleSavedFile, type ApiConfig, type ConsoleCheck } from "../server/api.ts";
+import { backupFolderOf, dataBasis, handleSavedFile, type ApiConfig, type ConsoleCheck } from "../server/api.ts";
 
 const PORT = 5173;
 const STALE =
@@ -68,13 +68,15 @@ function setup(files: Record<string, string>, probe: () => Promise<ConsoleCheck>
   mkdirSync(join(root, "Games"));
   for (const [name, text] of Object.entries(files)) writeFileSync(join(root, "Saved_Data", name), text);
   const backupDir = join(root, "backups");
+  // This data folder's old versions are kept in a folder of their own inside backupDir.
+  const ownBackups = backupFolderOf(backupDir, root);
   const cfg: ApiConfig = { dataRoot: root, timeZone: "America/New_York", consoleProbe: probe, backupDir };
   return {
     cfg,
     root,
     read: (name) => readFileSync(join(root, "Saved_Data", name), "utf8"),
-    backups: () => (existsSync(backupDir) ? readdirSync(backupDir) : []),
-    backupText: (name) => readFileSync(join(backupDir, name), "utf8"),
+    backups: () => (existsSync(ownBackups) ? readdirSync(ownBackups) : []),
+    backupText: (name) => readFileSync(join(ownBackups, name), "utf8"),
     save: async (body, headers) => call(cfg, request({ basis: await dataBasis(root), ...body }, headers)),
   };
 }
@@ -238,11 +240,11 @@ describe("saves of one file at the same time", () => {
 describe("the old versions kept in local/backups", () => {
   it("keeps only the newest 50 of each file, and leaves other files' backups alone", async () => {
     const t = setup({ "merge_rules.csv": RULES, "settings.csv": SETTINGS });
-    mkdirSync(join(t.root, "backups"));
+    mkdirSync(backupFolderOf(join(t.root, "backups"), t.root), { recursive: true });
     // Names start with the time they were kept, so these are older than any save made now.
     const old = Array.from({ length: 55 }, (_, i) => `2020-01-01T00-00-${String(i).padStart(2, "0")}-000Z_merge_rules.csv`);
-    for (const name of old) writeFileSync(join(t.root, "backups", name), RULES);
-    for (let i = 0; i < 3; i++) writeFileSync(join(t.root, "backups", `2020-01-01T00-00-0${i}-000Z_settings.csv`), SETTINGS);
+    for (const name of old) writeFileSync(join(backupFolderOf(join(t.root, "backups"), t.root),name), RULES);
+    for (let i = 0; i < 3; i++) writeFileSync(join(backupFolderOf(join(t.root, "backups"), t.root),`2020-01-01T00-00-0${i}-000Z_settings.csv`), SETTINGS);
     const r = await t.save({ file: "merge_rules.csv", before: RULES, text: MORE_RULES });
     expect(r.status).toBe(200);
     const mine = t.backups().filter((n) => n.endsWith("_merge_rules.csv")).sort();
@@ -255,10 +257,10 @@ describe("the old versions kept in local/backups", () => {
 
   it("never removes the backup it just made, even when 50 older ones sort after it", async () => {
     const t = setup({ "merge_rules.csv": RULES });
-    mkdirSync(join(t.root, "backups"));
+    mkdirSync(backupFolderOf(join(t.root, "backups"), t.root), { recursive: true });
     // Named as if the clock had been ahead: all 50 are later than the time of this save.
     for (let i = 0; i < 50; i++) {
-      writeFileSync(join(t.root, "backups", `2031-01-01T00-00-${String(i).padStart(2, "0")}-000Z_merge_rules.csv`), RULES);
+      writeFileSync(join(backupFolderOf(join(t.root, "backups"), t.root),`2031-01-01T00-00-${String(i).padStart(2, "0")}-000Z_merge_rules.csv`), RULES);
     }
     const r = await t.save({ file: "merge_rules.csv", before: RULES, text: MORE_RULES });
     expect(r.status).toBe(200);
@@ -270,9 +272,9 @@ describe("the old versions kept in local/backups", () => {
 
   it("keeps the newest backups when the clock was moved back, so a later save does not remove them", async () => {
     const t = setup({ "merge_rules.csv": RULES });
-    mkdirSync(join(t.root, "backups"));
+    mkdirSync(backupFolderOf(join(t.root, "backups"), t.root), { recursive: true });
     for (let i = 0; i < 49; i++) {
-      writeFileSync(join(t.root, "backups", `2031-01-01T00-00-${String(i).padStart(2, "0")}-000Z_merge_rules.csv`), RULES);
+      writeFileSync(join(backupFolderOf(join(t.root, "backups"), t.root),`2031-01-01T00-00-${String(i).padStart(2, "0")}-000Z_merge_rules.csv`), RULES);
     }
     const first = await t.save({ file: "merge_rules.csv", before: RULES, text: MORE_RULES });
     const second = await t.save({ file: "merge_rules.csv", before: MORE_RULES, text: OTHER_RULES });

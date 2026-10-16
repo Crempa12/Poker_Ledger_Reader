@@ -27,7 +27,8 @@ The site's **Help** tab walks through a week of using it.
 It reads `Games/` and `Saved_Data/` from the console app's folder next to this one
 (`../Poker_Ledger_Reader`), every time the page loads or you press **Refresh**, so
 it always shows the same numbers as the console app. Set `PLR_DATA_ROOT` to read
-another folder.
+another folder. If that folder is not there, or has neither `Games/` nor `Saved_Data/`,
+the page says so, and nothing is saved anywhere.
 
 | Page | What it shows |
 |---|---|
@@ -52,15 +53,18 @@ console app on copies of the data). Two rules keep the two apps from undoing eac
 other:
 
 - **Quit the console app first** (0. Save and exit). It keeps its own copy of these
-  files and writes them all again when it quits, so the site refuses to save while
-  it is open and says so at the top of the page.
-- If anything changed since the page loaded (a game was added, or a saved file
-  changed, in another tab or by the console app), the save is refused; press
-  **Refresh** and do it again.
+  files and writes them all again when it quits, so the site refuses to save names,
+  sheets and settings while it is open and says so at the top of the page. (Adding a
+  game is not refused: see Adding games below.)
+- Every save is checked against the data the page was built from. If anything changed
+  since the page loaded (a game was added, or a saved file changed, in another tab or
+  by the console app), the save is refused; press **Refresh** and do it again. Adding
+  a game is checked the same way.
 - If the site cannot tell whether the console app is open, it refuses the save too
   and says so; try again in a moment.
 - A file that is not plain UTF-8 text is never rewritten by the site: fix it by hand
-  first.
+  first. A saved file keeps its own line endings (a file the console wrote on Windows
+  has CRLF line ends, and stays that way) and its byte order mark, if it has one.
 - If a file has rows the site could not read (the Checks page lists them), a save
   asks first, because it would leave those rows out.
 
@@ -69,11 +73,13 @@ The console app reads a typed amount only up to its first comma, so there `1,234
 saved as 1. Type `1234` when you use the console.
 
 Before each change the old file is kept, byte for byte, in `local/backups/` in this
-folder (the newest 50 of each file; older ones are removed). To undo a change: quit
-the console app, rename the backup to the file's name alone (a backup is named with
-the date and time it was kept, a short code, and then the file's name, so a name
-ending in `_settings.csv` becomes `settings.csv`), copy it into `Saved_Data/` in place
-of the file there, then press **Refresh**.
+folder: in a folder of its own there, named by a short code for the data folder it
+came from (the newest 50 of each file in that folder; older ones are removed). Backups
+made before this change stay where they are, in `local/backups/` itself. To undo a
+change: quit the console app, rename the backup to the file's name alone (a backup is
+named with the date and time it was kept, a short code, and then the file's name, so a
+name ending in `_settings.csv` becomes `settings.csv`), copy it into `Saved_Data/` in
+place of the file there, then press **Refresh**.
 
 ### Adding games
 
@@ -82,6 +88,11 @@ into `Games/<folder>/` in the console app's folder, the same place menu 19 puts 
 so the console app sees it too. PokerNow puts a captcha on hand logs, so download
 the log yourself (the page links to each game missing one) and pick the file there.
 Commit the new files on `master` as usual.
+
+A game that is already filed in any folder is not filed again (menu 19 does the same).
+A game can be filed while the console app is open, but the console app lists it only
+after it is restarted. A folder can be named `Games` only once the data has a `Games`
+folder, because otherwise the games at the top of the folder would stop being read.
 
 ### Share it with the group (any phone, anywhere)
 

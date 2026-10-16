@@ -214,7 +214,7 @@ function viaMiddleware(cfg: ApiConfig, req: IncomingMessage): Promise<Reply> {
 describe("importing a game file", () => {
   it("writes a game file once when the same import comes twice at once", async () => {
     const { root, cfg } = dataRoot();
-    const body = { fileName: "ledger_pglAAAAAAAAAAAA.csv", folder: "Oct", text: LEDGER };
+    const body = { fileName: "ledger_pglAAAAAAAAAAAA.csv", folder: "Oct", text: LEDGER, basis: await dataBasis(root) };
     const [a, b] = await Promise.all([
       reply((res) => handleSave(cfg, make("POST", "/api/save", body, writeHeaders()), res)),
       reply((res) => handleSave(cfg, make("POST", "/api/save", body, writeHeaders()), res)),
@@ -229,7 +229,8 @@ describe("importing a game file", () => {
     writeFileSync(join(root, "Games", "Blocked"), "not a folder");
     const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
     try {
-      const r = await viaMiddleware(cfg, make("POST", "/api/save", { fileName: "ledger_pglAAAAAAAAAAAA.csv", folder: "Blocked", text: LEDGER }, writeHeaders()));
+      const basis = await dataBasis(root);
+      const r = await viaMiddleware(cfg, make("POST", "/api/save", { fileName: "ledger_pglAAAAAAAAAAAA.csv", folder: "Blocked", text: LEDGER, basis }, writeHeaders()));
       expect(r.status).toBe(500);
       expect(String(r.body.error)).not.toContain(root);
       expect(errors).toHaveBeenCalled();

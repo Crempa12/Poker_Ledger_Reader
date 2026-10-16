@@ -4,7 +4,17 @@ import { useEffect, useState } from "react";
 
 export function parseHash(hash: string): string[] {
   const path = hash.replace(/^#\/?/, "").split("?")[0] ?? "";
-  return path === "" ? [] : path.split("/").map((p) => decodeURIComponent(p));
+  return path === "" ? [] : path.split("/").map(decodeSegment);
+}
+
+// A segment a person typed or edited by hand may hold a bare percent sign ("100%"). It is kept as
+// typed; a throw here would blank the page.
+function decodeSegment(part: string): string {
+  try {
+    return decodeURIComponent(part);
+  } catch {
+    return part;
+  }
 }
 
 export function useRoute(): string[] {

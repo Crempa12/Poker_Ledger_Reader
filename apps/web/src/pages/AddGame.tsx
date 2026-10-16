@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { ledger, type Game } from "@plr/core";
 
 import type { Ctx } from "../context.ts";
@@ -48,6 +48,12 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState("");
+  // The basis the server checks each save against. A save returns the new one, so the next game of the
+  // batch goes through without a reload; a reload of the data (after a save) sets it again.
+  const basis = useRef(ctx.payload.basis);
+  useEffect(() => {
+    basis.current = ctx.payload.basis;
+  }, [ctx.payload.basis]);
 
   if (!ctx.payload.canWrite) {
     return <div className="card pad">Adding games works only on the computer that holds the data.</div>;
@@ -100,7 +106,13 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   const save = async (item: Item): Promise<void> => {
     setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saving" } : x)));
     try {
-      const r = await postJSON<{ saved: string }>("/api/save", { fileName: item.fileName, folder: item.folder, text: item.text });
+      const r = await postJSON<{ saved: string; basis: string }>("/api/save", {
+        fileName: item.fileName,
+        folder: item.folder,
+        text: item.text,
+        basis: basis.current,
+      });
+      basis.current = r.basis;
       setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saved", message: `saved as Games/${r.saved}` } : x)));
       onSaved();
     } catch (err) {
@@ -126,6 +138,11 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
           Paste the game's link (or several, one per line). The ledger is fetched straight from PokerNow and filed into your{" "}
           <code>Games</code> folder, the same place the console app's menu 19 puts it.
         </p>
+        {ctx.payload.consoleOpen > 0 ? (
+          <p className="banner" role="status">
+            The console app is open. A game filed here is saved at once, but the console app lists it only after it is restarted.
+          </p>
+        ) : null}
         <textarea
           className="links"
           rows={3}
@@ -177,7 +194,8 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
             ))}
           </ul>
           <p className="muted small">
-            After saving, the game shows here and in the console app. Commit the new files to git as you usually do.
+            After saving, the game shows here at once; the console app lists it after it is restarted. Commit the new files to git as you
+            usually do.
           </p>
         </section>
       ) : null}

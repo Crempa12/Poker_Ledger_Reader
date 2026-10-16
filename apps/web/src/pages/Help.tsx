@@ -58,7 +58,8 @@ export function Help({ ctx }: { ctx: Ctx }) {
         <ul>
           <li>
             Quit the console app first (<strong>0. Save and exit</strong>). It writes its own copy of the names, sheets and settings
-            when it quits, so the site will not save while it is open.
+            when it quits, so the site will not save those while it is open. A new game can still be filed; the console app lists it
+            after it restarts.
           </li>
           <li>
             If the site says something changed since the page loaded, press <strong>Refresh</strong> and do it again.

@@ -13,13 +13,15 @@
 // the files directly), so they keep out other sites, phones and proxies, not local
 // programs.
 //
-// Game files: only PokerNow file names, only inside Games/, never over an existing file.
-// Saved_Data files: only the six the app keeps, only text the app itself would write,
-// only over the version the page was showing and the game data it was built from (the
-// basis), never while the console app is open, one save at a time (also across two
-// servers on one folder, by a lock file), and the old version is kept in local/backups/
-// first (the newest 50 of each file). A file whose bytes are not valid UTF-8 is never
-// rewritten, since that would change bytes the page cannot show.
+// Game files: only PokerNow file names, only inside Games/, never over an existing file, never a
+// ledger or hand log that is already filed in any folder, and only over the data the page was built
+// from (the basis), in a data folder that is the console app's.
+// Saved_Data files: only the six the app keeps, only text the app itself would write (in the line
+// ends and byte order mark the file already has), only over the version the page was showing and the
+// game data it was built from (the basis), never while the console app is open, one save at a time
+// (also across two servers on one folder, by a lock file). The old version is kept first, in a folder
+// of local/backups/ for that data folder (the newest 50 of each file). A file whose bytes are not
+// valid UTF-8 is never rewritten, since that would change bytes the page cannot show.
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
@@ -178,6 +180,39 @@ function gamesDir(dataRoot: string): string {
   return existsSync(g) ? g : dataRoot;
 }
 
+// The data folder must be there and hold the console app's data: a Games or Saved_Data folder, or
+// CSV files directly in it. Anything else is refused before a file or folder is made, so a mistyped
+// PLR_DATA_ROOT cannot collect saves in a folder the console app never reads.
+async function dataRootReady(root: string): Promise<boolean> {
+  const s = await stat(root).catch(() => null);
+  if (s === null || !s.isDirectory()) return false;
+  if (existsSync(join(root, "Games")) || existsSync(join(root, "Saved_Data"))) return true;
+  const names = await readdir(root).catch(() => [] as string[]);
+  return names.some((n) => /\.csv$/i.test(n));
+}
+
+function notADataFolder(root: string): string {
+  return (
+    `The data folder ${root} is not there, or holds no console app data (no Games or Saved_Data folder). ` +
+    "Nothing was changed. Set PLR_DATA_ROOT to the console app's folder, then restart the site."
+  );
+}
+
+// The folder inside the backups folder that holds one data folder's old versions: a short code made
+// from its full path. Data folders that share a backups folder (a test copy, say) then never count,
+// or remove, each other's versions.
+export function backupFolderOf(backupsRoot: string, dataRoot: string): string {
+  return join(backupsRoot, createHash("sha256").update(resolve(dataRoot)).digest("hex").slice(0, 12));
+}
+
+// The text a file is written with: CRLF where the file has CRLF (the console writes its files as
+// text, so on Windows they do), and the byte order mark the file starts with, if it has one. A new
+// file (nothing before it) is LF with no mark.
+function likeBefore(before: string, text: string): string {
+  const body = before.includes("\r\n") ? text.replace(/\n/g, "\r\n") : text;
+  return (before.startsWith("\uFEFF") ? "\uFEFF" : "") + body;
+}
+
 // A folder name the user typed or picked: one plain name, nothing that climbs out.
 function safeFolder(name: unknown): string | null {
   if (typeof name !== "string") return null;
@@ -186,9 +221,10 @@ function safeFolder(name: unknown): string | null {
   return n;
 }
 
-// The game files as "path, size, time" lines, walked the way tools/load.ts walks them.
-// The contents are not read: the hand logs are large.
-async function statGames(dir: string, prefix: string, out: string[]): Promise<void> {
+// Calls visit for every .csv under dir, with its path relative to dir ("/" separators) and its
+// full path, walked the way tools/load.ts walks them (excluded folders skipped, symlinked folders not
+// entered). Nothing is read here.
+async function eachGameCsv(dir: string, visit: (relativePath: string, full: string) => Promise<void>, prefix = ""): Promise<void> {
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => null);
   if (entries === null) return;
   for (const entry of entries) {
@@ -203,12 +239,35 @@ async function statGames(dir: string, prefix: string, out: string[]): Promise<vo
       if (isDirectory) continue; // symlinked folders are not entered
     }
     if (isDirectory) {
-      if (!isExcludedDir(entry.name)) await statGames(full, relativePath, out);
+      if (!isExcludedDir(entry.name)) await eachGameCsv(full, visit, relativePath);
     } else if (isFile && /\.csv$/i.test(entry.name)) {
-      const s = await stat(full).catch(() => null);
-      if (s !== null) out.push(JSON.stringify([relativePath, s.size, s.mtimeMs]));
+      await visit(relativePath, full);
     }
   }
+}
+
+// The game files as "path, size, time" lines. The contents are not read: the hand logs are large.
+async function statGames(dir: string, out: string[]): Promise<void> {
+  await eachGameCsv(dir, async (relativePath, full) => {
+    const s = await stat(full).catch(() => null);
+    if (s !== null) out.push(JSON.stringify([relativePath, s.size, s.mtimeMs]));
+  });
+}
+
+// The relative path of every game file, for the check that a game is not filed twice.
+async function gameFileNames(dir: string): Promise<string[]> {
+  const names: string[] = [];
+  await eachGameCsv(dir, async (relativePath) => {
+    names.push(relativePath);
+  });
+  return names;
+}
+
+// Whether a game file (its relative path) is the same kind of file for the same game: a ledger or a
+// hand log with this id, a browser copy's " (1)" included. The console checks the two kinds apart too.
+function isSameGameFile(path: string, kind: string, id: string): boolean {
+  const m = /^(ledger|poker_now_log)_(pgl[A-Za-z0-9_-]{10,40})(?: \(\d+\))?\.csv$/i.exec(path.split("/").pop() ?? "");
+  return m !== null && m[1]?.toLowerCase() === kind && m[2] === id;
 }
 
 // What the page was built from, as one short text: the game files' paths, sizes and times,
@@ -217,19 +276,36 @@ async function statGames(dir: string, prefix: string, out: string[]): Promise<vo
 // those six is. Other files in Saved_Data (a .DS_Store, say) do not count. The server works
 // it out again on every save and refuses a save whose basis is not the same.
 export async function dataBasis(dataRoot: string): Promise<string> {
+  return (await basisParts(dataRoot)).basis;
+}
+
+// The three Saved_Data files the hand-log results read: merge_rules.csv (names), seat_owners.csv
+// (whose seat each game's money was) and adjustments.csv (the money in the stats). Nothing else in
+// Saved_Data reaches them (checked against packages/core: the hand-log results read no settings,
+// pinned payments or session balances).
+const HAND_LOG_SAVED = ["merge_rules.csv", "seat_owners.csv", "adjustments.csv"] as const;
+
+// The whole basis, and the part of it the hand-log results depend on (the games and HAND_LOG_SAVED).
+// A save of any other Saved_Data file changes the whole basis and not the second part, so the hand
+// logs are not read again for it (server/handlogs.ts keys its results by the second part).
+export async function basisParts(dataRoot: string): Promise<{ basis: string; handLogs: string }> {
   const games: string[] = [];
-  await statGames(gamesDir(dataRoot), "", games);
+  await statGames(gamesDir(dataRoot), games);
   games.sort();
-  const hash = createHash("sha256");
-  hash.update(JSON.stringify(["games-folder", gamesDir(dataRoot) !== dataRoot]) + "\n");
-  for (const g of games) hash.update(g + "\n");
   const savedDir = join(dataRoot, "Saved_Data");
+  const digests = new Map<string, string | null>();
   for (const name of SAVED_DATA_FILES) {
     const bytes = await readFile(join(savedDir, name)).catch(() => null);
-    const digest = bytes === null ? null : createHash("sha256").update(bytes).digest("hex");
-    hash.update(JSON.stringify(["saved", name, digest]) + "\n");
+    digests.set(name, bytes === null ? null : createHash("sha256").update(bytes).digest("hex"));
   }
-  return hash.digest("hex");
+  const over = (saved: readonly string[]): string => {
+    const hash = createHash("sha256");
+    hash.update(JSON.stringify(["games-folder", gamesDir(dataRoot) !== dataRoot]) + "\n");
+    for (const g of games) hash.update(g + "\n");
+    for (const name of saved) hash.update(JSON.stringify(["saved", name, digests.get(name) ?? null]) + "\n");
+    return hash.digest("hex");
+  };
+  return { basis: over(SAVED_DATA_FILES), handLogs: over(HAND_LOG_SAVED) };
 }
 
 export async function handleData(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -237,7 +313,8 @@ export async function handleData(cfg: ApiConfig, req: IncomingMessage, res: Serv
   // The basis is worked out before the data is read: a change in between then makes the
   // next save refuse, and can never let a save through against data the page does not hold.
   const basis = await dataBasis(cfg.dataRoot);
-  const inputs = await loadDataRoot(cfg.dataRoot);
+  // The hand logs' text is not read here: the page gets their names only (below).
+  const inputs = await loadDataRoot(cfg.dataRoot, { handLogText: false });
   // Hand logs are large and not used by the pages yet; only ledgers go to the page,
   // plus the names of the logs so the page can tell which games have one.
   const ledgers = inputs.games.filter((g) => looksLikeLedger(g.text));
@@ -271,14 +348,15 @@ export async function handleHandLogs(cfg: ApiConfig, req: IncomingMessage, res: 
   const cache = cfg.handLogs ?? handLogCache;
   // The basis is worked out before the hand logs are read, and again after. When the data changed
   // in between, the answer is worked out again under the new basis, so the basis an answer carries
-  // always names the data it holds.
-  let basis = await dataBasis(cfg.dataRoot);
+  // always names the data it holds. The results are kept under the hand-log part of the basis (only
+  // the data they read), and the answer names the whole basis.
+  let parts = await basisParts(cfg.dataRoot);
   for (let attempt = 1; ; attempt++) {
-    const payload = await cache.payloadFor(cfg.dataRoot, cfg.timeZone, basis, parsed.scope);
-    const after = await dataBasis(cfg.dataRoot);
-    if (after === basis) return send(res, 200, payload);
+    const payload = await cache.payloadFor(cfg.dataRoot, cfg.timeZone, parts.handLogs, parsed.scope);
+    const after = await basisParts(cfg.dataRoot);
+    if (after.basis === parts.basis) return send(res, 200, { ...payload, basis: parts.basis });
     if (attempt === 3) return send(res, 503, { error: "the data changed while the hand logs were read; try again" });
-    basis = after;
+    parts = after;
   }
 }
 
@@ -440,10 +518,11 @@ export async function handleSavedFile(cfg: ApiConfig, req: IncomingMessage, res:
     return send(res, 400, { error: `that is not text the console app would write for ${file} (a row would be dropped or changed)` });
   }
 
-  const backups = cfg.backupDir ?? BACKUPS;
+  const backups = backupFolderOf(cfg.backupDir ?? BACKUPS, cfg.dataRoot);
   const dir = join(cfg.dataRoot, "Saved_Data");
   const target = join(dir, file);
   await inSaveQueue(async () => {
+    if (!(await dataRootReady(cfg.dataRoot))) return send(res, 409, { error: notADataFolder(cfg.dataRoot) });
     await mkdir(dir, { recursive: true });
     const unlock = await acquireSaveLock(dir, cfg.lockWaitMs ?? LOCK_WAIT_MS);
     if (unlock === null) {
@@ -482,7 +561,9 @@ export async function handleSavedFile(cfg: ApiConfig, req: IncomingMessage, res:
       if (current !== before) {
         return send(res, 409, { error: `${file} changed since this page read it. Press Refresh and do it again.` });
       }
-      if (current === text) return send(res, 200, { saved: file, backup: null });
+      // The text in the file's own line ends and byte order mark (see likeBefore).
+      const out = likeBefore(current, text);
+      if (current === out) return send(res, 200, { saved: file, backup: null });
       // The old version is kept byte for byte, before anything is written.
       let backup: string | null = null;
       if (bytes !== null && current !== "") {
@@ -494,7 +575,7 @@ export async function handleSavedFile(cfg: ApiConfig, req: IncomingMessage, res:
       // leaves half a file, and two writers never share a temporary file.
       const temp = `${target}.${randomUUID()}.web-tmp`;
       try {
-        await writeFile(temp, text, "utf8");
+        await writeFile(temp, out, "utf8");
         await rename(temp, target);
       } catch (err) {
         // The file is as it was, so the copy made for this save is not needed.
@@ -593,29 +674,46 @@ export async function handleSave(cfg: ApiConfig, req: IncomingMessage, res: Serv
   if (folder === null) return send(res, 400, { error: "pick a folder name without slashes or dots at the start" });
   const text = typeof body.text === "string" ? body.text : "";
   if (text.length === 0) return send(res, 400, { error: "the file is empty" });
-  const [, kind, id] = m;
+  const [, kind = "", id = ""] = m;
   if (kind === "ledger" && !looksLikeLedger(text)) return send(res, 400, { error: "that file is not a PokerNow ledger" });
   if (kind === "poker_now_log" && !text.startsWith("entry,at,order")) {
     return send(res, 400, { error: "that file is not a PokerNow hand log" });
   }
 
-  const base = resolve(gamesDir(cfg.dataRoot));
-  const dir = resolve(base, folder);
-  if (!dir.startsWith(base + sep)) return send(res, 400, { error: "that folder is outside Games/" });
-  const target = join(dir, `${kind}_${id}.csv`);
-  if (existsSync(target)) return send(res, 409, { error: "that file is already there", path: `${folder}/${kind}_${id}.csv` });
-  await mkdir(dir, { recursive: true });
-  // wx: a file that appeared since the check above (a second import of the same game at
-  // once) is never written over, and is reported the same way.
-  try {
-    await writeFile(target, text, { encoding: "utf8", flag: "wx" });
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "EEXIST") {
-      return send(res, 409, { error: "that file is already there", path: `${folder}/${kind}_${id}.csv` });
-    }
-    throw err;
+  // A folder named Games here, in a data folder with no Games folder yet, would become the folder the
+  // games are read from (and hide the games at the root). So it is refused until there is a Games folder.
+  if (folder.toLowerCase() === "games" && !existsSync(join(cfg.dataRoot, "Games"))) {
+    return send(res, 400, { error: "this data has no Games folder, so a folder cannot be named Games here: pick another name" });
   }
-  send(res, 200, { saved: `${folder}/${kind}_${id}.csv` });
+  // Like the Saved_Data saves: one at a time, after the data folder and the page's basis are checked.
+  await inSaveQueue(async () => {
+    if (!(await dataRootReady(cfg.dataRoot))) return send(res, 409, { error: notADataFolder(cfg.dataRoot) });
+    if (typeof body.basis !== "string" || body.basis !== (await dataBasis(cfg.dataRoot))) {
+      return send(res, 409, { error: STALE });
+    }
+    const base = resolve(gamesDir(cfg.dataRoot));
+    const dir = resolve(base, folder);
+    if (!dir.startsWith(base + sep)) return send(res, 400, { error: "that folder is outside Games/" });
+    const target = join(dir, `${kind}_${id}.csv`);
+    const relative = `${folder}/${kind}_${id}.csv`;
+    if (existsSync(target)) return send(res, 409, { error: "that file is already there", path: relative });
+    // The same game is not filed twice, in any folder (menu 19 refuses it too).
+    const filed = (await gameFileNames(base)).find((path) => isSameGameFile(path, kind, id));
+    if (filed !== undefined) return send(res, 409, { error: `that game is already filed (in ${filed})`, path: filed });
+    await mkdir(dir, { recursive: true });
+    // wx: a file that appeared since the checks above (a second import of the same game at
+    // once) is never written over, and is reported the same way.
+    try {
+      await writeFile(target, text, { encoding: "utf8", flag: "wx" });
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "EEXIST") {
+        return send(res, 409, { error: "that file is already there", path: relative });
+      }
+      throw err;
+    }
+    // The new basis goes back, so the page can file the next game of the batch without a reload.
+    send(res, 200, { saved: relative, basis: await dataBasis(cfg.dataRoot) });
+  });
 }
 
 const SNAPSHOT_SCRIPT = fileURLToPath(new URL("./snapshot.ts", import.meta.url));

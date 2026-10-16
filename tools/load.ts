@@ -29,6 +29,15 @@ export interface DataRootInputs {
   savedData: Record<string, string>; // text of each CSV in Saved_Data by file name; "" when missing
 }
 
+// A hand log's file name, as a path under the game folder (case-insensitive, like the C++ app).
+export const HAND_LOG_PATH = /(^|\/)poker_now_log_[^/]*\.csv$/i;
+
+export interface LoadOptions {
+  // false: a hand log's text is not read (it comes back as "", and its name is still listed). The text
+  // is large and some callers need only the names. Default true.
+  handLogText?: boolean;
+}
+
 async function readText(path: string): Promise<string | null> {
   try {
     return await readFile(path, "utf8");
@@ -40,7 +49,7 @@ async function readText(path: string): Promise<string | null> {
 // Collects every .csv under dir. Like the C++ walk: folders with excluded names
 // are skipped, symlinked folders are not entered, symlinked files are read, and
 // unreadable folders and files are skipped.
-async function collectCsv(dir: string, prefix: string, out: LedgerInput[]): Promise<void> {
+async function collectCsv(dir: string, prefix: string, out: LedgerInput[], readHandLogs: boolean): Promise<void> {
   let entries;
   try {
     entries = await readdir(dir, { withFileTypes: true });
@@ -61,9 +70,9 @@ async function collectCsv(dir: string, prefix: string, out: LedgerInput[]): Prom
     }
 
     if (isDirectory) {
-      if (!isExcludedDir(entry.name)) await collectCsv(full, relativePath, out);
+      if (!isExcludedDir(entry.name)) await collectCsv(full, relativePath, out, readHandLogs);
     } else if (isFile && /\.csv$/i.test(entry.name)) {
-      const text = await readText(full);
+      const text = !readHandLogs && HAND_LOG_PATH.test(relativePath) ? "" : await readText(full);
       if (text !== null) out.push({ relativePath, text });
     }
   }
@@ -87,11 +96,11 @@ async function readSavedData(savedDir: string): Promise<Record<string, string>> 
   return saved;
 }
 
-export async function loadDataRoot(root: string): Promise<DataRootInputs> {
+export async function loadDataRoot(root: string, options: LoadOptions = {}): Promise<DataRootInputs> {
   const gamesDir = join(root, "Games");
   const dataDir = existsSync(gamesDir) ? gamesDir : root;
   const games: LedgerInput[] = [];
-  await collectCsv(dataDir, "", games);
+  await collectCsv(dataDir, "", games, options.handLogText ?? true);
   return {
     dataDir,
     games,
