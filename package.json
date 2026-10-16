@@ -23,7 +23,7 @@
     "typecheck:web": "npm run typecheck -w @plr/web",
     "web:quiet": "npm run dev:quiet -w @plr/web",
     "verify": "npm run typecheck && npm run typecheck:web && vitest run && npm run check:privacy",
-    "web:phone": "PLR_LAN=1 npm run dev -w @plr/web",
+    "web:phone": "npm run dev -w @plr/web -- --host",
     "snapshot": "npm run snapshot -w @plr/web"
   },
   "devDependencies": {
