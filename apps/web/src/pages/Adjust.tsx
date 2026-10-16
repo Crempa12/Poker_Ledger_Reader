@@ -30,30 +30,37 @@ export function Adjust({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 
   return (
     <>
-      <section className="card">
-        <h2>Payments &amp; corrections</h2>
-        <p className="muted small">
-          Money that changed hands outside the ledger, debts let go, and corrections by hand (console menu 17). They change who
-          owes whom on <a href={href("settle")}>Settle up</a>, not the poker results on the leaderboard.
-        </p>
+      <h1>Payments &amp; corrections</h1>
+      <p className="lede">
+        Money that changed hands outside the ledger, debts let go, and corrections by hand (console menu 17). They change who owes
+        whom on <a href={href("settle")}>Settle up</a>, not the poker results on the leaderboard.
+      </p>
+      <section className="sec" aria-labelledby="adj-h">
+        <h2 id="adj-h">{world.adjustments.length === 0 ? "Entries" : `Entries (${world.adjustments.length})`}</h2>
         {world.adjustments.length === 0 ? (
-          <p className="muted">None yet.</p>
+          <p className="sub">None yet.</p>
         ) : (
-          <table>
+          <table className="adjlist">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Player</th>
-                <th className="num">Amount</th>
-                <th className="hide-sm">Folder</th>
-                <th className="hide-xs">Note</th>
+                <th scope="col">Date</th>
+                <th scope="col">Player</th>
+                <th scope="col" className="num">
+                  Amount
+                </th>
+                <th scope="col" className="hide-sm">
+                  Folder
+                </th>
+                <th scope="col" className="hide-xs">
+                  Note
+                </th>
                 {canWrite ? <th aria-label="Remove" /> : null}
               </tr>
             </thead>
             <tbody>
               {world.adjustments.map((a, i) => (
                 <tr key={`${a.group}-${i}`}>
-                  <td>{a.date === null ? "?" : formatLocalDate(a.date, tz)}</td>
+                  <td className="mono nowrap">{a.date === null ? "?" : formatLocalDate(a.date, tz)}</td>
                   <td>{ctx.nameOf(a.playerNormalized)}</td>
                   <td className={`num ${toneOfCents(a.amountCents)}`}>{moneySignedCents(a.amountCents)}</td>
                   <td className="hide-sm">{a.folder === "" ? <span className="muted">(all folders)</span> : a.folder}</td>
@@ -61,7 +68,7 @@ export function Adjust({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                   {canWrite ? (
                     <td className="num">
                       <button
-                        className="ghost small"
+                        className="link small"
                         disabled={saver.busy}
                         onClick={() => remove(a.group)}
                         aria-label={`Remove the ${moneySignedCents(a.amountCents)} entry for ${ctx.nameOf(a.playerNormalized)}`}
@@ -81,7 +88,7 @@ export function Adjust({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       {canWrite ? (
         <>
           {scope.folder === "" ? (
-            <p className="muted small center">
+            <p className="sub">
               New entries go under: <strong>all folders</strong> (they count only when settling everything). Pick a folder at the top to
               tag them with it.
             </p>
@@ -95,7 +102,7 @@ export function Adjust({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
           <CorrectionForm ctx={ctx} people={people} save={save} busy={saver.busy} />
         </>
       ) : (
-        <p className="muted small center">Entries can be added on the computer that runs the site.</p>
+        <p className="sub">Entries can be added on the computer that runs the site.</p>
       )}
     </>
   );
@@ -163,9 +170,9 @@ function PaymentForm({ ctx, people, nameOf, save, busy }: FormProps & { nameOf: 
   };
 
   return (
-    <section className="card">
-      <h3>Money that changed hands outside the ledger</h3>
-      <p className="muted small">A payment, or a debt let go. Both sides are saved together, so the books stay balanced.</p>
+    <section className="sec form">
+      <h2>Money that changed hands outside the ledger</h2>
+      <p className="sub">A payment, or a debt let go. Both sides are saved together, so the books stay balanced.</p>
       <div className="controls">
         <label>
           <span className="muted">Who got the money, or let it go? (was owed)</span>
@@ -224,9 +231,9 @@ function CorrectionForm({ ctx, people, save, busy }: FormProps) {
   };
 
   return (
-    <section className="card">
-      <h3>Correct one player's balance by hand</h3>
-      <p className="muted small">One-sided: nobody else's balance changes, so the sheets come up short until the other side is entered.</p>
+    <section className="sec form">
+      <h2>Correct one player's balance by hand</h2>
+      <p className="sub">One-sided: nobody else's balance changes, so the sheets come up short until the other side is entered.</p>
       <div className="controls">
         <label>
           <span className="muted">Player</span>

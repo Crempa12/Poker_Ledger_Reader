@@ -1,6 +1,7 @@
 // Menu 18 (playing style) and menu 21 (deep profiles), as the website shows them. The rows,
 // columns, labels, tags and explanations are the console's; every number goes through the
 // core's printf rounding (handformat.ts).
+import type { ReactNode } from "react";
 import { handlog, hitrun, playstyle, util } from "@plr/core";
 
 // The console's own sort (libc++ std::sort), so equal counts come out in the console's order.
@@ -22,21 +23,22 @@ function ArchetypeCell({ label }: { label: string }) {
 }
 
 // The menu 18 "Games without a log" list (main.cpp handLogStats): the newest games in scope with no
-// hand log, and how many more there are.
-export function UnloggedCard({ data, tz }: { data: HandScopePayload; tz: string }) {
+// hand log, and how many more there are. Folded: it is a to-do list, not a result.
+export function UnloggedCard({ data, tz, children }: { data: HandScopePayload; tz: string; children?: ReactNode }) {
   const games = data.unlogged ?? [];
   if (games.length === 0) return null;
   const more = data.unloggedMore ?? 0;
   return (
-    <section className="card">
-      <h2>Games without a log</h2>
+    <details className="fold">
+      <summary>Games without a log ({games.length + more})</summary>
+      {children}
       <div className="tablewrap">
         <table>
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Folder</th>
-              <th>Game</th>
+              <th scope="col">Date</th>
+              <th scope="col">Folder</th>
+              <th scope="col">Game</th>
             </tr>
           </thead>
           <tbody>
@@ -44,16 +46,16 @@ export function UnloggedCard({ data, tz }: { data: HandScopePayload; tz: string 
               <tr key={g.id}>
                 <td className="nowrap">{util.formatLocalDate(g.start, tz)}</td>
                 <td>{g.folder}</td>
-                <td className="nowrap">{g.id}</td>
+                <td className="mono small">{g.id}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       {more > 0 ? (
-        <p className="muted small">{`${more} more ${more === 1 ? "game" : "games"} without a log ${more === 1 ? "is" : "are"} not listed.`}</p>
+        <p className="sub">{`${more} more ${more === 1 ? "game" : "games"} without a log ${more === 1 ? "is" : "are"} not listed.`}</p>
       ) : null}
-    </section>
+    </details>
   );
 }
 

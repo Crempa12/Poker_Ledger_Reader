@@ -562,15 +562,15 @@ describe("Settings against the console's pins, banker, me and display (menu 6, m
       expect(pins).toEqual(block.pins);
 
       // The banker: off, so the select shows the "off" choice with the console's words after it.
-      const banker = needCard(html, "<h3>Banker</h3>");
+      const banker = needCard(html, "<h2>Banker</h2>");
       expect(selectedLabel(banker).toLowerCase()).toBe(`${block.banker.value} (${block.banker.note})`);
 
       // Me: the same person, as the select shows the chosen name.
-      const me = needCard(html, "<h3>Me</h3>");
+      const me = needCard(html, "<h2>Me</h2>");
       expect(selectedLabel(me)).toBe(block.me.value);
 
       // The display: the same setting, with the console's words in brackets.
-      const display = textOf(needCard(html, "<h3>Console display</h3>"));
+      const display = textOf(needCard(html, "<h2>Console display</h2>"));
       expect(display).toContain(`${block.display.value} (${block.display.note})`);
     });
   }
@@ -581,6 +581,6 @@ describe("Settings against the console's pins, banker, me and display (menu 6, m
     expect(boxed).toBe("Cavlorn");
     const ctx = await ctxFor(SYNTHETIC, { "settings.csv": "key,value\nme,zaqvin\nbanker,cavlorn\ndisplay,fancy\n" });
     const html = show(createElement(Settings, { ctx, onSaved: noop }));
-    expect(selectedLabel(needCard(html, "<h3>Banker</h3>"))).toBe(boxed);
+    expect(selectedLabel(needCard(html, "<h2>Banker</h2>"))).toBe(boxed);
   });
 });

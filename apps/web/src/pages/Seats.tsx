@@ -129,8 +129,8 @@ export function SharedSeats({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void })
 
   if (groups.length === 0) {
     return saver.shown === null ? null : (
-      <section className="card">
-        <h3>Seats that look shared · menu 20</h3>
+      <section className="sec">
+        <h2>Seats that look shared · menu 20</h2>
         {saver.shown}
         <p className="up small">✓ No shared seats left to check.</p>
       </section>
@@ -138,9 +138,9 @@ export function SharedSeats({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void })
   }
 
   return (
-    <section className="card">
-      <h3>Seats that look shared · menu 20</h3>
-      <p className="muted small">
+    <section className="sec">
+      <h2>Seats that look shared · menu 20</h2>
+      <p className="sub">
         PokerNow credits a seat to the name and account it was bought on. When someone played on a friend's account or under a
         friend's name, hand the seat to the person whose money it was. Someone who only changed nickname is a merge instead.
         Until you answer, each seat counts for the name on it.
@@ -272,9 +272,9 @@ export function SeatEditor({ ctx, game, onSaved }: { ctx: Ctx; game: Game; onSav
   const toggle = (i: number): void => setPicked(picked.includes(i) ? picked.filter((j) => j !== i) : [...picked, i]);
 
   return (
-    <section className="card">
+    <section className="sec">
       <h2>Seats</h2>
-      <p className="muted small">
+      <p className="sub">
         {ctx.payload.canWrite
           ? "Every sit-down in this game. A seat played by someone other than its name? Tick it and say whose money it was (console menu 20)."
           : "Every sit-down in this game. Whose money a seat was is set on the computer that runs the site (console menu 20)."}

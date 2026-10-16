@@ -21,6 +21,7 @@ export function PlayStylePage({ ctx, section, person }: { ctx: Ctx; section: str
   const hand = useHandLogs(ctx);
   return (
     <>
+      <h1>Play style</h1>
       <SectionNav section={section} />
       {hand.status === "ready" && hand.data !== undefined ? (
         <PlayStyleBody ctx={ctx} data={hand.data} section={section} person={person} />
@@ -61,33 +62,38 @@ export function PlayStyleBody({
   person: string;
 }) {
   if (data.games === 0) {
-    return <div className="card pad">No games in this scope. Pick another folder or date range above.</div>;
+    return <p className="lede">No games in this scope. Pick another folder or date range above.</p>;
   }
   const scope = scopeWords(ctx.choice);
   switch (section) {
     case "":
       return (
         <>
-          <p className="muted">{`Hand-log statistics for ${scope}: ${data.logged} of ${data.games} games have a log.`}</p>
-          {data.logged < data.games ? (
-            <p className="muted small">
-              Games without a log: <AddLogHint canWrite={ctx.payload.canWrite} />
-            </p>
-          ) : null}
+          <p className="lede">{`Hand-log statistics for ${scope}: ${data.logged} of ${data.games} games have a log.`}</p>
           <Notes messages={data.messages} />
-          <UnloggedCard data={data} tz={ctx.tz} />
           {data.logged === 0 ? (
-            <div className="card pad">
-              <p>
-                No hand logs in scope. <AddLogHint canWrite={ctx.payload.canWrite} />
-              </p>
-            </div>
+            <p className="lede">
+              No hand logs in scope. <AddLogHint canWrite={ctx.payload.canWrite} />
+            </p>
           ) : (
             <>
-              <NightsCard data={data} tz={ctx.tz} />
               <StyleCard style={data.style} />
+              <NightsCard data={data} tz={ctx.tz} />
             </>
           )}
+          {data.logged < data.games ? (
+            (data.unlogged ?? []).length > 0 ? (
+              <UnloggedCard data={data} tz={ctx.tz}>
+                <p className="sub">
+                  Games without a log: <AddLogHint canWrite={ctx.payload.canWrite} />
+                </p>
+              </UnloggedCard>
+            ) : (
+              <p className="sub">
+                Games without a log: <AddLogHint canWrite={ctx.payload.canWrite} />
+              </p>
+            )
+          ) : null}
           <Downloads exports={data.exports} />
         </>
       );
@@ -119,10 +125,10 @@ export function PlayStyleBody({
       );
     default:
       return (
-        <div className="card pad">
-          <p>That page does not exist.</p>
+        <>
+          <p className="lede">That page does not exist.</p>
           <a href={href("style")}>Back to playing style</a>
-        </div>
+        </>
       );
   }
 }

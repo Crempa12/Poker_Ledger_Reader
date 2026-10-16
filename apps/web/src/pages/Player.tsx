@@ -8,7 +8,7 @@ import { longDate, moneySigned, moneySignedCents, plural, toneOf, toneOfCents } 
 import { entryOf } from "../handformat.ts";
 import { useHandLogs } from "../handlogs.ts";
 import { href } from "../router.ts";
-import { runningTotal, Tile } from "./Overview.tsx";
+import { ordinal, runningTotal } from "./Overview.tsx";
 
 export function PlayerPage({ ctx, normalized: asked }: { ctx: Ctx; normalized: string }) {
   const { view, tz } = ctx;
@@ -20,16 +20,19 @@ export function PlayerPage({ ctx, normalized: asked }: { ctx: Ctx; normalized: s
   if (p === undefined) {
     const known = ctx.everyone.some((x) => x.normalizedName === normalized);
     return (
-      <div className="card pad">
-        <h1 className="sr-only">Player</h1>
-        <p>{known ? `${ctx.nameOf(normalized)} has no games in this scope.` : "No player by that name."}</p>
-        <a href={href()}>Back to the leaderboard</a>
-      </div>
+      <>
+        <h1>{known ? ctx.nameOf(normalized) : "Player not found"}</h1>
+        <p className="lede">{known ? `${ctx.nameOf(normalized)} has no games in this scope.` : "No player by that name."}</p>
+        <a href={href()}>Back to Standings</a>
+      </>
     );
   }
   const d = players.playerDollars(p);
   const ud = upDown(p);
   const aliases = p.aliases.filter((a) => a !== p.normalizedName);
+  // Where they stand among the players with a game, as on Standings (a player with payments only has no place).
+  const listed = view.board.filter((x) => x.games > 0);
+  const place = listed.findIndex((x) => x.normalizedName === p.normalizedName) + 1;
 
   // Newest first, each night with the running total after it (poker only, like the chart).
   let running = 0;
@@ -41,39 +44,47 @@ export function PlayerPage({ ctx, normalized: asked }: { ctx: Ctx; normalized: s
 
   return (
     <>
-      <section className="card">
-        <h1>{p.displayName}</h1>
-        <p className="muted small">
-          {plural(p.games, "night")} · {plural(p.buyIns, "buy-in")} · {plural(p.playerIds.length, "PokerNow account")}
-          {aliases.length > 0 ? ` · also plays as ${aliases.join(", ")}` : ""}
-        </p>
-        <div className="tiles">
-          <Tile label="Net" value={moneySigned(d.totalNet)} tone={toneOf(d.totalNet)} />
-          <Tile label="Up–Down" value={`${ud.up}–${ud.down}`} />
-          <Tile label="Avg/night" value={moneySigned(d.averagePerGame)} tone={toneOf(d.averagePerGame)} />
-          <Tile label="Best night" value={moneySigned(d.biggestWin)} tone={toneOf(d.biggestWin)} />
-          <Tile label="Worst night" value={moneySigned(d.biggestLoss)} tone={toneOf(d.biggestLoss)} />
+      <a className="back" href={href()}>
+        ‹ Standings
+      </a>
+      <h1>{p.displayName}</h1>
+      <p className="sub">
+        {plural(p.games, "night")} · {plural(p.buyIns, "buy-in")} · {plural(p.playerIds.length, "PokerNow account")}
+        {aliases.length > 0 ? ` · also plays as ${aliases.join(", ")}` : ""}
+      </p>
+      <section className="phead" aria-label="Results">
+        <dl className="phero">
+          <div>
+            <dt className="label">Net</dt>
+            <dd className={`hero ${toneOf(d.totalNet)}`}>{moneySigned(d.totalNet)}</dd>
+          </div>
+        </dl>
+        {place > 0 ? (
+          <p className="facts">
+            {ordinal(place)} of {listed.length} on the standings{p.normalizedName === ctx.me ? " · you" : ""}
+          </p>
+        ) : null}
+        <dl className="pstats">
+          <Stat label="Up–Down" value={`${ud.up}–${ud.down}`} />
+          <Stat label="Avg/night" value={moneySigned(d.averagePerGame)} tone={toneOf(d.averagePerGame)} />
+          <Stat label="Best night" value={moneySigned(d.biggestWin)} tone={toneOf(d.biggestWin)} />
+          <Stat label="Worst night" value={moneySigned(d.biggestLoss)} tone={toneOf(d.biggestLoss)} />
           {p.adjustmentsCents !== 0 ? (
             <>
-              <Tile label="Payments & corrections" value={moneySignedCents(p.adjustmentsCents)} tone={toneOfCents(p.adjustmentsCents)} />
+              <Stat label="Payments & corrections" value={moneySignedCents(p.adjustmentsCents)} tone={toneOfCents(p.adjustmentsCents)} />
               {/* The console's header line: poker net plus payments and corrections, the figure a settlement sheet uses. */}
-              <Tile
-                label="Balance"
-                value={moneySigned(players.balanceDollars(p))}
-                tone={toneOf(players.balanceDollars(p))}
-                sub="net plus payments"
-              />
+              <Stat label="Balance" value={moneySigned(players.balanceDollars(p))} tone={toneOf(players.balanceDollars(p))} sub="net plus payments" total />
             </>
           ) : null}
-        </div>
+        </dl>
       </section>
 
-      <section className="card">
+      <section className="sec">
         <h2>Running total</h2>
         <LineChart points={runningTotal(p, tz)} />
       </section>
 
-      <section className="card">
+      <section className="sec">
         <h2>At the table</h2>
         {hand.data !== undefined ? (
           <AtTheTable displayName={p.displayName} totalNet={d.totalNet} time={entryOf(hand.data.playtime, normalized)} />
@@ -82,7 +93,7 @@ export function PlayerPage({ ctx, normalized: asked }: { ctx: Ctx; normalized: s
         )}
       </section>
 
-      <section className="card">
+      <section className="sec">
         <h2>Beaten at showdown by</h2>
         {hand.data !== undefined ? (
           <BeatenAtShowdown displayName={p.displayName} games={hand.data.games} summary={beatenFor(hand.data, normalized)} />
@@ -107,17 +118,25 @@ export function PlayerPage({ ctx, normalized: asked }: { ctx: Ctx; normalized: s
         ) : null}
       </section>
 
-      <section className="card">
+      <section className="sec">
         <h2>Every night</h2>
         <div className="tablewrap">
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th className="hide-xs">Folder</th>
-                <th className="num hide-xs">Buy-ins</th>
-                <th className="num">Result</th>
-                <th className="num">Running</th>
+                <th scope="col">Date</th>
+                <th scope="col" className="hide-xs">
+                  Folder
+                </th>
+                <th scope="col" className="num hide-xs">
+                  Buy-ins
+                </th>
+                <th scope="col" className="num">
+                  Result
+                </th>
+                <th scope="col" className="num">
+                  Running
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -141,8 +160,21 @@ export function PlayerPage({ ctx, normalized: asked }: { ctx: Ctx; normalized: s
             </tbody>
           </table>
         </div>
-        <p className="muted small">{nightsOf(p).length} nights. Payments and corrections are dimmed and not in the running total.</p>
+        <p className="sub">{nightsOf(p).length} nights. Payments and corrections are dimmed and not in the running total.</p>
       </section>
     </>
+  );
+}
+
+// One line of the player's receipt: the label, a dotted leader, the figure.
+function Stat({ label, value, tone, sub, total = false }: { label: string; value: string; tone?: string; sub?: string; total?: boolean }) {
+  return (
+    <div className={total ? "pl total" : "pl"}>
+      <dt>
+        {label}
+        {sub !== undefined ? <small>{sub}</small> : null}
+      </dt>
+      <dd className={`amount ${tone ?? ""}`}>{value}</dd>
+    </div>
   );
 }

@@ -922,6 +922,23 @@ h2.sheet-title {
 .pickrow .pick select {
   max-width: 100%;
 }
+@media (max-width: 599px) {
+  .pickrow .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+  .pickrow .seg > * {
+    justify-content: center;
+    text-align: center;
+    padding: 6px 8px;
+    line-height: 1.25;
+  }
+  .pickrow .pick,
+  .pickrow .pick select {
+    width: 100%;
+  }
+}
 .warnbox {
   border-left: 3px solid var(--down);
   padding: 8px 12px;
@@ -1010,6 +1027,24 @@ tr.dim td:not(.up):not(.down) {
 .formrow td {
   background: var(--paper-2);
   padding: 12px;
+}
+/* A quiet text button in a table row (Remove): still a 36px target. */
+td button.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  font-family: var(--sans);
+  font-weight: 400;
+  color: var(--ink-2);
+}
+/* A form under a list (Payments & corrections): its own part of the page. */
+.sec.form {
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+td button.link:hover {
+  color: var(--ink);
 }
 .stick {
   position: sticky;
@@ -1422,10 +1457,37 @@ tr.dim td:not(.up):not(.down) {
 .choices {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
+/* An answer is a choice between equals, so each is outlined: no answer looks like the default. */
+.choices button:not(.link) {
+  display: inline-block;
+  min-height: 44px;
+  padding: 10px 14px;
+  text-align: left;
+  line-height: 1.35;
+  font-weight: 500;
+  color: var(--ink);
+  background: transparent;
+  border-color: var(--ink);
+}
+.choices button:not(.link):hover {
+  opacity: 1;
+  background: var(--paper-2);
+}
 .choices .muted {
-  color: inherit;
+  color: var(--ink-2);
+}
+/* "Someone else…": the list, a typed name and Theirs, kept together on one line when they fit. */
+.someone {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.someone input {
+  width: 9.5em;
 }
 .merged li {
   padding: 6px 0;
@@ -1463,17 +1525,20 @@ tr.dim td:not(.up):not(.down) {
 }
 .subtabs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0;
   margin: 4px 0 18px;
   border-bottom: 1px solid var(--rule);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 .subtabs a {
   display: inline-flex;
+  flex: none;
   align-items: center;
   min-height: 44px;
-  padding: 0 14px 0 0;
-  margin-right: 14px;
+  padding: 0;
+  margin-right: 22px;
   color: var(--ink-2);
   text-decoration: none;
   border-bottom: 2px solid transparent;
@@ -1588,16 +1653,58 @@ tr.dim td:not(.up):not(.down) {
 .linechart .dot.even {
   fill: var(--down);
 }
-/* Old stat tiles, kept for the pages not moved to the new look yet. */
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0 16px;
-  margin-bottom: 24px;
+/* A player's page: the net in big figures, where they stand, then the rest as receipt lines. */
+.phead {
+  margin: 6px 0 34px;
 }
-.tile {
-  border-top: 2px solid var(--ink);
-  padding: 8px 0;
+.phero,
+.pstats {
+  margin: 0;
+}
+.phero dd {
+  margin: 6px 0 10px;
+}
+.phead .facts {
+  font-size: 15px;
+  color: var(--ink-2);
+  margin: 0 0 14px;
+}
+.pstats dt {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.pstats dt::after {
+  content: "";
+  flex: 1 1 16px;
+  min-width: 16px;
+  align-self: flex-end;
+  border-bottom: 2px dotted var(--ink-3);
+  margin-bottom: 0.4em;
+}
+.pstats dt small {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.pstats dd {
+  margin: 0;
+}
+.pstats > .pl:first-child {
+  border-top: 1px solid var(--ink);
+}
+@media (min-width: 900px) {
+  .phead {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+    grid-template-rows: auto 1fr;
+    column-gap: 48px;
+  }
+  .phead .pstats {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
 }
 .big {
   font-family: var(--mono);

@@ -247,13 +247,11 @@ function webBoard(html: string): Board[] {
   });
 }
 
-// The tiles on a page, by label, as text.
+// A player's figures, by label, as text: each <dt> label (without its small note) and the <dd> after it.
 function tilesOf(html: string): Map<string, string> {
   const tiles = new Map<string, string>();
-  for (const part of html.split('<div class="tile">').slice(1)) {
-    const label = textOf(at(/<div class="muted small">([\s\S]*?)<\/div>/.exec(part), 1));
-    const value = textOf(at(/<div class="big[^"]*">([\s\S]*?)<\/div>/.exec(part), 1));
-    tiles.set(label, value);
+  for (const m of html.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt><dd[^>]*>([\s\S]*?)<\/dd>/g)) {
+    tiles.set(textOf(at(m, 1).replace(/<small>[\s\S]*?<\/small>/g, "")), textOf(at(m, 2)));
   }
   return tiles;
 }

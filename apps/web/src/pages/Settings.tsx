@@ -16,6 +16,7 @@ export function Settings({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 
   return (
     <>
+      <h1>Settings</h1>
       {canWrite ? <Share /> : <p className="banner">Settings can be changed on the computer that runs the site.</p>}
       <Pins ctx={ctx} onSaved={onSaved} people={people} canWrite={canWrite} />
       <PersonSetting
@@ -36,19 +37,19 @@ export function Settings({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         people={people}
         canWrite={canWrite}
         title="Me"
-        help="Who you are in the ledgers: highlighted on the leaderboard, and the running total on the overview."
+        help="Who you are in the ledgers: highlighted on Standings, with your own figures at the top."
         offLabel="Not set"
         value={world.settings.me}
         change={(s, v) => ({ ...s, me: v })}
         done={(v) => (v === "" ? "\"Me\" cleared." : `Saved: you are ${ctx.nameOf(v)}.`)}
       />
       <Display ctx={ctx} onSaved={onSaved} canWrite={canWrite} />
-      <section className="card">
-        <h3>Where the data is</h3>
+      <section className="sec">
+        <h2>Where the data is</h2>
         <p className="small">
           <code>{ctx.payload.dataRoot}</code>
         </p>
-        <p className="muted small">
+        <p className="sub">
           Games in <code>Games/</code>, settings in <code>Saved_Data/</code>, the same files the console app uses. Times are shown
           in {ctx.tz}. Before this site changes a file in Saved_Data, it keeps the old one in the web project's{" "}
           <code>local/backups/</code> folder.
@@ -85,9 +86,9 @@ function Share() {
     }
   };
   return (
-    <section className="card">
+    <section className="sec">
       <h2>Share a snapshot</h2>
-      <p className="muted small">
+      <p className="sub">
         One file with every page of this site and the results up to now. It opens on any phone or computer, even offline, with
         nothing to install: send it by AirDrop, a message or a shared drive. It does not update, so make a new one after each
         game. It holds everyone's results, names, notes, PokerNow account ids and saved sheets: send it only to people who may see
@@ -152,9 +153,9 @@ function Pins({ ctx, onSaved, people, canWrite }: { ctx: Ctx; onSaved: () => voi
   };
 
   return (
-    <section className="card">
+    <section className="sec">
       <h2>Pinned payments</h2>
-      <p className="muted small">
+      <p className="sub">
         "Someone always pays someone": when the payer owes and the payee is owed, the payer's losses go to that payee first.
       </p>
       {world.prefs.length === 0 ? (
@@ -238,9 +239,9 @@ function PersonSetting(props: {
   };
 
   return (
-    <section className="card">
-      <h3>{props.title}</h3>
-      <p className="muted small">{props.help}</p>
+    <section className="sec">
+      <h2>{props.title}</h2>
+      <p className="sub">{props.help}</p>
       <div className="controls">
         <select value={pick} onChange={(e) => setPicked(e.target.value)} disabled={!canWrite || busy} aria-label={props.title}>
           <option value="">{props.offLabel}</option>
@@ -269,9 +270,9 @@ function Display({ ctx, onSaved, canWrite }: { ctx: Ctx; onSaved: () => void; ca
     void run("settings.csv", settlement.serializeSettingsCSV(next), `The console app's display is now ${simple ? "fancy" : "simple"}.`);
   };
   return (
-    <section className="card">
-      <h3>Console display</h3>
-      <p className="muted small">
+    <section className="sec">
+      <h2>Console display</h2>
+      <p className="sub">
         How the console app draws its screens: <strong>{simple ? "simple" : "fancy"}</strong>{" "}
         {simple ? "(plain text, no colors or symbols)" : "(colors, boxes and charts)"}. This site is not affected.
       </p>

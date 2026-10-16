@@ -9,8 +9,8 @@ export function AddLogHint({ canWrite }: { canWrite: boolean }) {
   if (!canWrite) return <>Hand logs are added on the computer that runs the site.</>;
   return (
     <>
-      Download &quot;poker_now_log_&lt;id&gt;.csv&quot; from PokerNow, then pick it on <a href={href("add")}>+ Add game</a> (or
-      file it with the console app&apos;s menu 19).
+      Download &quot;poker_now_log_&lt;id&gt;.csv&quot; from PokerNow, then open <a href={href("add")}>+ Add</a>: it finds the file in
+      Downloads and files it with its game (or file it with the console app&apos;s menu 19).
     </>
   );
 }

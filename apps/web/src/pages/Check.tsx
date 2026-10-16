@@ -33,21 +33,19 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 
   return (
     <>
-      <section className="card">
-        <h2>Checks</h2>
-        <p className="muted small">
-          {ctx.payload.canWrite
-            ? "What the console app flags at startup. New names can be answered here; for the rest, use the console menu named next to each one, then press Refresh."
-            : "What the console app flags at startup. This copy is read-only: answers and changes are made on the computer that runs the site."}
-        </p>
-        {checkCount(ctx) === 0 && world.warnings.length === 0 ? <p className="up">✓ Nothing to check.</p> : null}
-      </section>
+      <h1>Checks</h1>
+      <p className="lede">
+        {ctx.payload.canWrite
+          ? "What the console app flags at startup. New names can be answered here; for the rest, use the console menu named next to each one, then press Refresh."
+          : "What the console app flags at startup. This copy is read-only: answers and changes are made on the computer that runs the site."}
+      </p>
+      {checkCount(ctx) === 0 && world.warnings.length === 0 ? <p className="lede up">✓ Nothing to check.</p> : null}
 
       {view.mergeSuggestions.length > 0 ? (
         <NewNames ctx={ctx} saver={answers} />
       ) : answers.shown !== null ? (
-        <section className="card">
-          <h3>New names to check · menu 4</h3>
+        <section className="sec">
+          <h2>New names to check · menu 4</h2>
           {answers.shown}
           <p className="up small">✓ No new names left to check.</p>
         </section>
@@ -56,8 +54,8 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       <SharedSeats ctx={ctx} onSaved={onSaved} />
 
       {world.duplicates.length > 0 ? (
-        <section className="card">
-          <h3>Duplicate ledgers · menu 16</h3>
+        <section className="sec">
+          <h2>Duplicate ledgers · menu 16</h2>
           <ul className="plain">
             {world.duplicates.map((d, i) => (
               <li key={i}>
@@ -76,10 +74,10 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       ) : null}
 
       {world.messages.length > 0 ? (
-        <section className="card">
-          <h3>Ledger notes</h3>
+        <section className="sec">
+          <h2>Ledger notes</h2>
           {world.messages.some((m) => m.startsWith("WARNING") && m.includes("does not balance")) ? (
-            <p className="muted small">
+            <p className="sub">
               A ledger that does not balance may have been cut short or changed by hand. On the computer that runs the site, download it again
               from PokerNow, put it in place of the old file, then press Refresh. A payment or correction does not clear this.
             </p>
@@ -95,15 +93,15 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       ) : null}
 
       {handNotes.length > 0 ? (
-        <section className="card">
-          <h3>Hand logs · Play style</h3>
+        <section className="sec">
+          <h2>Hand logs · Play style</h2>
           <Notes messages={handNotes} />
         </section>
       ) : null}
 
       {world.warnings.length > 0 ? (
-        <section className="card">
-          <h3>Rows that could not be read</h3>
+        <section className="sec">
+          <h2>Rows that could not be read</h2>
           <ul className="plain">
             {world.warnings.map((w, i) => (
               <li key={i} className="muted">
@@ -116,9 +114,9 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       ) : null}
 
       <Names ctx={ctx} onSaved={onSaved} />
-      <section className="card">
-        <h3>Seat owners · menu 20</h3>
-        <p className="muted small">
+      <section className="sec">
+        <h2>Seat owners · menu 20</h2>
+        <p className="sub">
           Seats handed to someone other than their name, and seats checked as right. Any seat of a game can be handed over from
           that game's page.
         </p>
@@ -146,8 +144,8 @@ function NewNames({ ctx, saver }: { ctx: Ctx; saver: Saver }) {
   };
 
   return (
-    <section className="card">
-      <h3>New names to check · menu 4</h3>
+    <section className="sec">
+      <h2>New names to check · menu 4</h2>
       <ul className="plain questions">
         {view.mergeSuggestions.flatMap((s) =>
           s.newNames.map((n) => {
@@ -228,9 +226,9 @@ function Names({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   };
 
   return (
-    <section className="card">
-      <h3>Player names · menu 4</h3>
-      <p className="muted small">
+    <section className="sec">
+      <h2>Player names · menu 4</h2>
+      <p className="sub">
         Same person under different nicknames? Merge them. A seat played by someone other than the name on it is menu 20
         instead: that moves one seat's money and leaves both names alone.
       </p>

@@ -7,9 +7,9 @@ import { href } from "../router.ts";
 
 // Each page and the console menus it stands for, for anyone who knows the console app.
 const MENUS: { page: string; path: string | null; menus: string }[] = [
-  { page: "Overview", path: "", menus: "2 (leaderboard), the startup box" },
+  { page: "Standings", path: "", menus: "2 (leaderboard), the startup box (now under More)" },
   { page: "A player (tap a name)", path: null, menus: "3 (player history)" },
-  { page: "Games", path: "games", menus: "20 (whose money was it?), one game's results" },
+  { page: "Nights, and one night", path: "games", menus: "one game's results, 20 (whose money was it?)" },
   { page: "Play style", path: "style", menus: "18 (style), 21 (deep profiles), 22 (hit & run)" },
   { page: "Settle up", path: "settle", menus: "5 (sheet and requests), 7 (save sheet)" },
   { page: "Who owes", path: "owed", menus: "8, 9, 11 (saved sheets), 10 (record a payment)" },
@@ -23,46 +23,55 @@ export function Help({ ctx }: { ctx: Ctx }) {
   if (isSnapshot(ctx.payload)) return <SnapshotHelp ctx={ctx} />;
   return (
     <>
-      <section className="card pad">
-        <h1>How to use it</h1>
-        <p className="muted">
-          The site reads its data folder (the console app&apos;s folder, if you use the console app) every time a page loads, and
-          again when you come back to its tab after something changed there, so it always shows what the console app shows.
-        </p>
-        <h2>After each game</h2>
-        <ol>
+      <h1>How to use it</h1>
+      <p className="lede">
+        The site reads the data folder (the console app&apos;s folder, if you use the console app) each time a page opens, and again
+        when you come back to its tab, so it always shows what the console app shows.
+      </p>
+      <section className="sec" aria-labelledby="after-h">
+        <h2 id="after-h">After each game</h2>
+        <ol className="steps">
           <li>
-            <a href={href("add")}>+ Add game</a>: paste the game&apos;s PokerNow link. The ledger is saved where the console app keeps
-            its games. PokerNow puts a captcha on hand logs, so download the hand log yourself: the page finds it in your Downloads
-            folder (press <strong>Add all</strong>, or <strong>Add it</strong> for one file, then <strong>Save all</strong> or the
-            file&apos;s own <strong>Save to</strong> button), or you can pick the file. Filed a game in the wrong folder? Move its
-            file (and its hand log) to the right folder yourself, in Finder or File Explorer, then press <strong>Refresh</strong>.
+            <span>
+              <strong>Add it.</strong> Press <a href={href("add")}>+ Add</a> and paste the game&apos;s PokerNow link: the page
+              fetches the ledger. PokerNow puts a captcha on hand logs, so download the hand log from PokerNow yourself; the page
+              finds it in your Downloads. Then press the one button at the bottom (<strong>File it</strong>, <strong>File both</strong>
+              …). Filed into the wrong folder? Move the files in Finder or File Explorer, then press <strong>Refresh</strong>.
+            </span>
           </li>
           <li>
-            <a href={href("check")}>Checks</a>: answer any new name (a new nickname, or a new player) and any seat that looks like
-            someone else&apos;s money.
+            <span>
+              <strong>Answer the checks.</strong> <a href={href("check")}>Checks</a>, under More, shows a count when something needs
+              an answer: a new name (a new nickname, or a new player), or a seat that looks like someone else&apos;s money.
+            </span>
           </li>
           <li>
-            <a href={href("settle")}>Settle up</a>: choose what to settle (the folder, or one game) and look over who pays whom. If
-            someone wants to pay a particular person, add it there. Copy the sheet for the group chat, then press{" "}
-            <strong>Save sheet</strong> to track who has paid. Save one sheet per night or one for the whole folder, not both: Who
-            owes adds up every saved sheet.
+            <span>
+              <strong>Settle up.</strong> <a href={href("settle")}>Settle up</a> shows the latest night, or everything. Copy it for
+              the group chat, then press <strong>Save sheet</strong> to track who has paid. Save one sheet per night or one for the
+              whole folder, not both: Who owes adds up every saved sheet.
+            </span>
           </li>
           <li>
-            <a href={href("owed")}>Who owes</a>: press <strong>Paid…</strong> as the money comes in. That changes Who owes only;
-            a payment on <a href={href("adjust")}>Payments &amp; corrections</a> changes Settle up only, as in the console app.
+            <span>
+              <strong>Mark what is paid.</strong> On <a href={href("owed")}>Who owes</a>, press <strong>Paid…</strong> as the money
+              comes in. That changes Who owes only; a payment on <a href={href("adjust")}>Payments &amp; corrections</a> changes
+              Settle up only, as in the console app.
+            </span>
           </li>
           <li>
-            Share it: <a href={href("settings")}>Settings</a> → <strong>Make a snapshot</strong>, then <strong>Download it</strong>,
-            and send that file to the group (a group chat or AirDrop). It opens in any phone&apos;s browser, even offline, and does
-            not change, so make a new one after the next game.
+            <span>
+              <strong>Share it.</strong> <a href={href("settings")}>Settings</a> → <strong>Make a snapshot</strong>, then{" "}
+              <strong>Download it</strong> and send the file to the group (a group chat or AirDrop). It opens in any phone&apos;s
+              browser, even offline, and does not change, so make a new one after the next game.
+            </span>
           </li>
         </ol>
       </section>
 
-      <section className="card pad">
-        <h2>Before you change anything</h2>
-        <ul>
+      <section className="sec" aria-labelledby="before-h">
+        <h2 id="before-h">Before you change anything</h2>
+        <ul className="plain">
           <li>
             Quit the console app first (<strong>0. Save and exit</strong>). It writes its own copy of the names, sheets and settings
             when it quits, so the site will not save those while it is open. A new game can still be filed; the console app lists it
@@ -84,46 +93,44 @@ export function Help({ ctx }: { ctx: Ctx }) {
         </ul>
       </section>
 
-      <section className="card">
-        <h2>The console app&apos;s menus</h2>
-        <div className="tablewrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Page</th>
-                <th>Console menu</th>
+      <details className="fold">
+        <summary>The console app&apos;s menus, page by page</summary>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Page</th>
+              <th scope="col">Console menu</th>
+            </tr>
+          </thead>
+          <tbody>
+            {MENUS.map((m) => (
+              <tr key={m.page}>
+                <td>{m.path === null ? m.page : <a href={m.path === "" ? href() : href(m.path)}>{m.page}</a>}</td>
+                <td>{m.menus}</td>
               </tr>
-            </thead>
-            <tbody>
-              {MENUS.map((m) => (
-                <tr key={m.page}>
-                  <td>{m.path === null ? m.page : <a href={m.path === "" ? href() : href(m.path)}>{m.page}</a>}</td>
-                  <td>{m.menus}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            ))}
+          </tbody>
+        </table>
+      </details>
     </>
   );
 }
 
 function SnapshotHelp({ ctx }: { ctx: Ctx }) {
   return (
-    <section className="card pad">
+    <>
       <h1>How to read this</h1>
-      <p>
+      <p className="lede">
         This is a copy of the poker results up to {longDate(Math.floor(ctx.payload.loadedAt / 1000), ctx.tz)}. It does not change:
         ask for a new one after the next game.
       </p>
-      <ul>
+      <ul className="plain">
         <li>
-          Folder and Dates at the top choose the games Overview, Games and Settle up count. Who owes is for every game, and Play
-          style has all dates only.
+          The line at the top (all folders, all time) chooses the games that Standings, Nights and Settle up count. Who owes is for
+          every game, and Play style has all dates only.
         </li>
         <li>
-          <a href={href()}>Overview</a> has the leaderboard; tap a name for that player&apos;s nights.
+          <a href={href()}>Standings</a> is the leaderboard; tap a name for that player&apos;s nights.
         </li>
         <li>
           <a href={href("settle")}>Settle up</a> says who pays whom, and <a href={href("owed")}>Who owes</a> what is still unpaid on
@@ -133,6 +140,6 @@ function SnapshotHelp({ ctx }: { ctx: Ctx }) {
           <a href={href("style")}>Play style</a> reads the hand logs: how everyone plays, and the hit &amp; run factor.
         </li>
       </ul>
-    </section>
+    </>
   );
 }

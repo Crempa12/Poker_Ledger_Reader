@@ -489,13 +489,3 @@ function NoGames({ ctx }: { ctx: Ctx }) {
     </>
   );
 }
-
-export function Tile({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: string }) {
-  return (
-    <div className="tile">
-      <div className="muted small">{label}</div>
-      <div className={`big ${tone ?? ""}`}>{value}</div>
-      {sub !== undefined ? <div className="muted small">{sub}</div> : null}
-    </div>
-  );
-}
