@@ -580,3 +580,14 @@ details summary {
 .merged .alias button {
   font-size: 0.8rem;
 }
+.pins li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.pins li:first-child {
+  border-top: 0;
+}

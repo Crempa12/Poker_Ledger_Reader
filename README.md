@@ -24,12 +24,28 @@ another folder.
 | Overview | games, players, money in play, whether the books balance, your running total, the leaderboard |
 | Player | every night with the running total and its chart, best and worst nights, nicknames |
 | Games | every game, newest first; one game's results per player |
-| Settle up | who pays whom for the scope or one game, with your pinned payments and banker mode; copy it for the group chat |
-| Who owes | saved sheets (console menu 7) and what is still owed between each pair |
-| Checks | what the console app flags at startup: new names, shared seats, duplicates |
+| Settle up | who pays whom for the scope or one game, with your pins and banker mode; "send my money to a specific person" requests (menu 5); copy it for the group chat; **Save sheet** to track payments (menu 7) |
+| Who owes | what is still owed between each pair, every saved sheet, and **Paid…** to record a payment (menu 10) |
+| Checks | what the console app flags at startup; answer new names, merge names by hand or split one back out (menu 4) |
+| Settings | pinned payments, the banker, who "me" is, the console's display (menu 6) |
 | + Add game | paste a PokerNow game link to file its ledger; pick a downloaded hand log to file it |
 
 The folder and date range at the top work like the console app's scope (menu 1).
+
+### Changing names, sheets and settings
+
+The buttons on Settle up, Who owes, Checks and Settings write the same files in
+`Saved_Data/` that the console menus write, byte for byte (checked against the
+console app on copies of the data). Two rules keep the two apps from undoing each
+other:
+
+- **Quit the console app first** (0. Save and exit). It keeps its own copy of these
+  files and writes them all again when it quits, so the site refuses to save while
+  it is open and says so at the top of the page.
+- If a file changed since the page loaded it, the save is refused; press
+  **Refresh** and do it again.
+
+Before each change the old file is kept in `local/backups/` in this folder.
 
 ### Adding games
 
@@ -47,7 +63,7 @@ npm run web:phone
 
 The terminal prints a `Network:` address; open it on your phone. Anyone on that
 Wi-Fi can then read the page, so use it at home, not on public Wi-Fi. Adding games
-works only on this computer.
+and every other change work only on this computer.
 
 ## Checks
 

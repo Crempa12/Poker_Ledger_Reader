@@ -1,36 +1,16 @@
 import { useState } from "react";
 import { moneySigned, players, seats } from "@plr/core";
 
+import { useSaver, type Saver } from "../components/saver.tsx";
 import type { Ctx } from "../context.ts";
 import { longDate, plural } from "../format.ts";
 import { href } from "../router.ts";
-import { confirmNames, errorText, writeSaved, type SavedFile } from "../saved.ts";
+import { confirmNames } from "../saved.ts";
 
 // How many things the console app would ask you to look at.
 export function checkCount(ctx: Ctx): number {
   const { world, view } = ctx;
   return view.mergeSuggestions.length + view.seatFlags.length + world.duplicates.filter((d) => !d.skipped || d.kind === "overlap").length + world.messages.filter((m) => m.startsWith("WARNING")).length;
-}
-
-// One save at a time, with the outcome shown under the card.
-function useSaver(ctx: Ctx, onSaved: () => void) {
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
-  const run = async (file: SavedFile, text: string, done: string): Promise<void> => {
-    setBusy(true);
-    setNote(null);
-    try {
-      await writeSaved(ctx, file, text);
-      setNote({ ok: true, text: done });
-      onSaved();
-    } catch (err) {
-      setNote({ ok: false, text: errorText(err) });
-    } finally {
-      setBusy(false);
-    }
-  };
-  const shown = note === null ? null : <p className={note.ok ? "up small" : "down small"}>{note.text}</p>;
-  return { busy, run, shown };
 }
 
 // Poker result over every game, the way the console app prints it next to a name.
@@ -136,7 +116,7 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 // Menu 4's first step: a name never seen before, on an account someone else uses.
 // The same person under a new nickname is merged; a different person is saved as a
 // checked seat, so the question is not asked again (C++ reviewNewNames).
-function NewNames({ ctx, saver }: { ctx: Ctx; saver: ReturnType<typeof useSaver> }) {
+function NewNames({ ctx, saver }: { ctx: Ctx; saver: Saver }) {
   const { world, view } = ctx;
   const { busy, run, shown } = saver;
   const canWrite = ctx.payload.canWrite;
@@ -218,7 +198,9 @@ function Names({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       return;
     }
     const rules = players.addMergeRule(world.rules, other, keep);
-    void run("merge_rules.csv", players.serializeMergeRulesCSV(rules), `Merged "${ctx.nameOf(other)}" into "${ctx.nameOf(keep)}".`).then(() => setOther(""));
+    void run("merge_rules.csv", players.serializeMergeRulesCSV(rules), `Merged "${ctx.nameOf(other)}" into "${ctx.nameOf(keep)}".`).then((ok) => {
+      if (ok) setOther("");
+    });
   };
   const split = (alias: string, canonical: string): void => {
     if (!window.confirm(`"${alias}" will count as its own player again, not as ${ctx.nameOf(canonical)}. Go ahead?`)) return;

@@ -12,6 +12,7 @@ import { Games } from "./pages/Games.tsx";
 import { Overview } from "./pages/Overview.tsx";
 import { Owed } from "./pages/Owed.tsx";
 import { PlayerPage } from "./pages/Player.tsx";
+import { Settings } from "./pages/Settings.tsx";
 import { Settle } from "./pages/Settle.tsx";
 
 type State = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; loaded: Loaded };
@@ -95,6 +96,8 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
       return <Owed ctx={ctx} onSaved={onSaved} />;
     case "check":
       return <Check ctx={ctx} onSaved={onSaved} />;
+    case "settings":
+      return <Settings ctx={ctx} onSaved={onSaved} />;
     case "add":
       return <AddGame ctx={ctx} onSaved={onSaved} />;
     default:
@@ -113,6 +116,7 @@ const TABS: { path: string; label: string }[] = [
   { path: "settle", label: "Settle up" },
   { path: "owed", label: "Who owes" },
   { path: "check", label: "Checks" },
+  { path: "settings", label: "Settings" },
   { path: "add", label: "+ Add game" },
 ];
 
