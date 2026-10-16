@@ -2,12 +2,14 @@ import { useState } from "react";
 import { boardFor, players, settlement, util, type Game, type PlayerStats } from "@plr/core";
 
 import { Sparkbars, type LinePoint } from "../components/charts.tsx";
-import { isSnapshot, postJSON } from "../data.ts";
+import { useSaver } from "../components/saver.tsx";
+import { isSnapshot } from "../data.ts";
 import { dayScope, nightsOf, upDown, type Ctx } from "../context.ts";
 import { longDate, money, moneyCents, moneySigned, moneySignedCents, plural, shortDate, toneOf, toneOfCents } from "../format.ts";
 import { resultsOf } from "../game.ts";
 import { href } from "../router.ts";
 import { printOrder } from "../settle-sheet.ts";
+import { AddGame } from "./AddGame.tsx";
 
 export function runningTotal(p: PlayerStats, timeZone: string): LinePoint[] {
   let cents = 0;
@@ -25,9 +27,15 @@ const WIDE_ROWS = 15;
 export function Overview({ ctx, onSaved = () => undefined }: { ctx: Ctx; onSaved?: () => void }) {
   const { view, world } = ctx;
 
-  // No games at all (not just none in this scope): the folder read may not be the console app's, or there
-  // may be no data folder yet (a group that does not use the console app starts one here).
-  if (world.games.length === 0 && !isSnapshot(ctx.payload)) return <NoGames ctx={ctx} onSaved={onSaved} />;
+  // No games at all (not just none in this scope). Where a game can be filed (a data folder with none yet, or
+  // one the site may start), the start page is + Add itself: paste the first link, press one button. Otherwise
+  // the folder read may not be the console app's, and the page says where it has to be.
+  if (world.games.length === 0 && !isSnapshot(ctx.payload)) {
+    if (ctx.payload.canWrite && (ctx.payload.dataReady === true || ctx.payload.canStartData === true)) {
+      return <AddGame ctx={ctx} onSaved={onSaved} first />;
+    }
+    return <NoGames ctx={ctx} />;
+  }
   if (view.games.length === 0) {
     return <p className="lede">No games in this scope. Pick another folder or date range above.</p>;
   }
@@ -40,7 +48,7 @@ export function Overview({ ctx, onSaved = () => undefined }: { ctx: Ctx; onSaved
   return (
     <div className="homegrid">
       <div>
-        <YouBlock ctx={ctx} listed={listed} latest={latest} />
+        <YouBlock ctx={ctx} listed={listed} latest={latest} onSaved={onSaved} />
         <section className="sec" aria-labelledby="standings-h">
           <div className="sec-h">
             <h2 id="standings-h">Standings</h2>
@@ -82,7 +90,7 @@ function isLastNight(ctx: Ctx, game: Game): boolean {
 
 // You: your net for the scope as the big number, your place, and who you owe. Without a "me" (or with one
 // who has no games in this scope) the leader takes the place, and the page says how to see your own.
-function YouBlock({ ctx, listed, latest }: { ctx: Ctx; listed: PlayerStats[]; latest: Game | undefined }) {
+function YouBlock({ ctx, listed, latest, onSaved }: { ctx: Ctx; listed: PlayerStats[]; latest: Game | undefined; onSaved: () => void }) {
   const { me } = ctx;
   const snapshot = isSnapshot(ctx.payload);
   const meName = me === "" ? "" : ctx.nameOf(me);
@@ -135,19 +143,44 @@ function YouBlock({ ctx, listed, latest }: { ctx: Ctx; listed: PlayerStats[]; la
       {versus !== null ? <p className="vs">{versus}</p> : null}
       {mine !== undefined ? <OwesLine ctx={ctx} you={own ? null : meName} /> : null}
       {mine === undefined ? (
-        <p className="hint">
-          {me === ""
-            ? snapshot
-              ? "The top earner, in this scope."
-              : (
-                  <>
-                    The top earner. Say who you are in <a href={href("settings")}>Settings</a> to see your own number here.
-                  </>
-                )
-            : `${meName} has no games in this scope, so the top earner is shown.`}
-        </p>
+        me === "" && own ? (
+          <WhoAreYou ctx={ctx} onSaved={onSaved} />
+        ) : (
+          <p className="hint">{me === "" ? "The top earner, in this scope." : `${meName} has no games in this scope, so the top earner is shown.`}</p>
+        )
       ) : null}
     </section>
+  );
+}
+
+// The top earner is shown until the site knows who you are: one pick here says it (Settings' "Me", menu 6).
+function WhoAreYou({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
+  const { busy, run, shown } = useSaver(ctx, onSaved);
+  const [pick, setPick] = useState("");
+  const people = [...ctx.everyone].filter((p) => p.games > 0).sort((a, b) => a.displayName.localeCompare(b.displayName));
+  const save = (): void => {
+    void run("settings.csv", settlement.serializeSettingsCSV({ ...ctx.world.settings, me: pick }), `Saved: you are ${ctx.nameOf(pick)}.`);
+  };
+  return (
+    <div className="whoyou">
+      <p className="hint">
+        <label htmlFor="who-you">The top earner, for now. Which one is you? Your own number then comes first here.</label>
+      </p>
+      <div className="row tight">
+        <select id="who-you" value={pick} onChange={(e) => setPick(e.target.value)} disabled={busy}>
+          <option value="">Pick your name…</option>
+          {people.map((p) => (
+            <option key={p.normalizedName} value={p.normalizedName}>
+              {p.displayName}
+            </option>
+          ))}
+        </select>
+        <button onClick={save} disabled={busy || pick === ""}>
+          {busy ? "Saving…" : "That's me"}
+        </button>
+      </div>
+      {shown}
+    </div>
   );
 }
 
@@ -421,15 +454,16 @@ function StillOwed({ ctx }: { ctx: Ctx }) {
   );
 }
 
-// No games at all: the folder read may not be the console app's, or there may be no data folder yet.
-function NoGames({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
+// No games, and none can be filed from here: a phone on the Wi-Fi, or a folder that is not the console app's
+// (and that the site may not start one in).
+function NoGames({ ctx }: { ctx: Ctx }) {
   const folder = ctx.payload.dataRoot.split(/[\\/]/).filter((part) => part !== "").pop() ?? ctx.payload.dataRoot;
   if (ctx.payload.dataReady === true) {
     return (
       <>
         <h1>No games yet</h1>
         <p className="lede">
-          The data folder <code>{folder}</code> has no games in it yet. Add the first one on <a href={href("add")}>+ Add game</a>.
+          The data folder <code>{folder}</code> has no games in it yet. Games are added on the computer that runs the site.
         </p>
       </>
     );
@@ -440,8 +474,7 @@ function NoGames({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       <p className="lede">
         No games were found in <code>{folder}</code>.
       </p>
-      {ctx.payload.canStartData === true ? <StartData ctx={ctx} onSaved={onSaved} /> : null}
-      {ctx.payload.canStartData !== true && ctx.payload.dataStartable === true ? (
+      {ctx.payload.dataStartable === true ? (
         <p>
           Not using the console app? The site starts a data folder of its own only in a folder that is empty (or not there yet), that
           it may write to, and that is not a link. If <code>{ctx.payload.dataRoot}</code> holds other files, move them out; otherwise
@@ -463,38 +496,6 @@ export function Tile({ label, value, sub, tone }: { label: string; value: string
       <div className="muted small">{label}</div>
       <div className={`big ${tone ?? ""}`}>{value}</div>
       {sub !== undefined ? <div className="muted small">{sub}</div> : null}
-    </div>
-  );
-}
-
-// For a group without the console app: starts the site's data folder (Games and Saved_Data) where it
-// reads, which the server allows only where nothing is yet.
-function StartData({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const start = async (): Promise<void> => {
-    setBusy(true);
-    setError(null);
-    try {
-      await postJSON<{ started: string }>("/api/start-data", {});
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <div className="startdata">
-      <p>
-        Not using the console app? Start a new data folder at <code>{ctx.payload.dataRoot}</code>, then add your games on{" "}
-        <strong>+ Add game</strong>. The site keeps everything there, in the same files the console app uses. Keep that folder out
-        of git: it holds everyone&apos;s names and results.
-      </p>
-      <button onClick={() => void start()} disabled={busy}>
-        {busy ? "Starting…" : "Start a new data folder"}
-      </button>
-      {error !== null ? <p className="down small">{error}</p> : null}
     </div>
   );
 }

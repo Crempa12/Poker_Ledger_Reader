@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { boardFor, sessions, settlement, type PaymentPreference, type PlayerStats, type SettlementEntry, type SettlementReason } from "@plr/core";
+import { boardFor, players, sessions, settlement, type PaymentPreference, type PlayerStats, type SettlementEntry, type SettlementReason } from "@plr/core";
 
 import { copyToClipboard } from "../clipboard.ts";
 import { isSnapshot } from "../data.ts";
@@ -50,7 +50,7 @@ function forSheet(state: Requests, sheet: string): Requests {
 }
 
 export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onSaved: () => void }) {
-  const { world, view, tz, scope } = ctx;
+  const { world, view, tz, scope, me } = ctx;
   // The banker is the one in Settings, as menu 5 uses it: there is no switch per sheet.
   const banker = world.settings.banker;
   const [copied, setCopied] = useState(false);
@@ -95,6 +95,7 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
   // The transfers as menu 5 prints them: grouped by payer, the biggest payers first, each payer's total under their last line.
   const entries = printOrder(sheet.entries);
   const rows = sheetRows(sheet.entries);
+  const moved = entries.reduce((s, e) => s + e.amountCents, 0);
   // Who receives what (menu 5's block under the sheet): each receiver's total and who sends it.
   const receivers = receiversOf(sheet.entries);
   // Menu 5's hint: payments and corrections saved under all folders that this sheet leaves out.
@@ -102,6 +103,7 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
   const pinsHere = world.prefs.filter(
     (p) => losers.some((l) => l.normalizedName === p.payerNormalized) && winners.some((w) => w.normalizedName === p.payeeNormalized),
   );
+  const isYou = (n: string): boolean => me !== "" && players.resolveCanonical(world.rules, n) === me;
 
   const title = game !== undefined ? `Game on ${longDate(game.start, tz)}` : `Everything in ${scopeWords(ctx.choice)}, ${plural(games.length, "game")}`;
 
@@ -117,36 +119,57 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
   };
 
   const newestFirst = [...view.games].reverse();
+  const latest = newestFirst[0];
   return (
     <>
-      <section className="card">
-        <h2>Settle up</h2>
-        <div className="controls">
-          <label>
-            <span className="muted">What to settle</span>
-            <select
-              value={game?.id ?? ""}
-              onChange={(e) => {
-                window.location.hash = e.target.value === "" ? href("settle") : href("settle", e.target.value);
-              }}
-            >
-              <option value="">Everything in scope ({plural(view.games.length, "game")})</option>
-              {game !== undefined && !newestFirst.includes(game) ? <option value={game.id}>{shortDate(game.start, tz)} · {game.folder}</option> : null}
-              {newestFirst.map((g) => (
-                <option key={g.id} value={g.id}>
-                  One game: {shortDate(g.start, tz)} · {g.folder}
-                </option>
-              ))}
-            </select>
-          </label>
+      <h1>Settle up</h1>
+      <div className="pickrow">
+        <div className="seg" role="group" aria-label="What to settle">
+          {latest !== undefined ? (
+            <a href={href("settle", latest.id)} aria-current={game?.id === latest.id ? "page" : undefined}>
+              Latest night · {shortDate(latest.start, tz)}
+            </a>
+          ) : null}
+          <a href={href("settle")} aria-current={game === undefined ? "page" : undefined}>
+            Everything · {plural(view.games.length, "game")}
+          </a>
         </div>
+        <label className="pick">
+          <span className="sr-only">What to settle</span>
+          <select
+            value={game?.id ?? ""}
+            onChange={(e) => {
+              window.location.hash = e.target.value === "" ? href("settle") : href("settle", e.target.value);
+            }}
+          >
+            <option value="">Everything in scope ({plural(view.games.length, "game")})</option>
+            {game !== undefined && !newestFirst.includes(game) ? <option value={game.id}>{shortDate(game.start, tz)} · {game.folder}</option> : null}
+            {newestFirst.map((g) => (
+              <option key={g.id} value={g.id}>
+                One game: {shortDate(g.start, tz)} · {g.folder}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <section className="sec" aria-labelledby="sheet-h">
+        {entries.length > 0 ? (
+          <p className="hero-s">
+            {moneyCents(moved)}
+            <small>moves in {plural(entries.length, "payment")}</small>
+          </p>
+        ) : null}
+        <h2 id="sheet-h" className="sheet-title">
+          {title}
+        </h2>
         {banker !== "" ? (
-          <p className="muted small">
+          <p className="sub">
             Banker mode is on: everyone settles through {ctx.nameOf(banker)}. Pins and one-off requests are skipped. Turn the banker off to use
             them: change it in {ctx.payload.canWrite ? <a href={href("settings")}>Settings</a> : "Settings"}
           </p>
         ) : pinsHere.length > 0 ? (
-          <p className="muted small">
+          <p className="sub">
             Pinned payments that apply here: {pinsHere.map((p) => `${ctx.nameOf(p.payerNormalized)} always pays ${ctx.nameOf(p.payeeNormalized)}`).join(", ")}
             {ctx.payload.canWrite ? (
               <>
@@ -156,62 +179,60 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
             ) : null}
           </p>
         ) : null}
-      </section>
-
-      {banker === "" && losers.length > 0 && winners.length > 0 && !isSnapshot(ctx.payload) ? (
-        <RequestCard
-          ctx={ctx}
-          losers={losers}
-          winners={winners}
-          requests={requests}
-          // An update is applied to the latest requests, not to the ones this card had when it was clicked.
-          onChange={(update) => setAsked((prev) => update(forSheet(prev, suggested)))}
-          onSaved={onSaved}
-        />
-      ) : null}
-
-      <section className="card">
-        <h2>{title}</h2>
         {notHere > 0 ? (
-          <p className="down small">
+          <p className="small down">
             Not on this sheet: {notHere} {notHere === 1 ? "payment/correction" : "payments/corrections"} saved under all folders (settle every
             folder to include them).
           </p>
         ) : null}
         {board.length === 0 ? (
-          <p className="muted">No players found in that selection.</p>
+          <p className="sub">No players found in that selection.</p>
         ) : entries.length === 0 ? (
-          <p className="muted">Nobody owes anything here.</p>
+          <p className="lede">Nobody owes anything here.</p>
         ) : (
           <>
-            <p className="muted small">{sheetSummary(entries)}</p>
-            <ul className="payments">
-              {rows.map((row, i) =>
-                row.kind === "total" ? (
-                  <li key={i} className="muted small">
-                    {row.text}
-                  </li>
-                ) : (
-                  <li key={i}>
-                    <a href={href("player", row.entry.fromNormalized)}>{row.entry.fromDisplay}</a>
-                    <span className="arrow" aria-hidden="true">→</span>
-                    <span className="sr-only"> pays </span>
-                    <a href={href("player", row.entry.toNormalized)}>{row.entry.toDisplay}</a>
-                    <strong className="amount">{moneyCents(row.entry.amountCents)}</strong>
-                    {TAG[row.entry.reason] !== "" ? <span className="tag">{TAG[row.entry.reason]}</span> : null}
-                  </li>
-                ),
-              )}
-            </ul>
-            <div className="controls">
-              <button onClick={copy}>{copied ? "Copied" : "Copy for the group chat"}</button>
-              <button className="ghost" onClick={() => download("settlements.csv", sheetCsv(sheet.entries))}>
+            <div className="slip">
+              <ul className="payments">
+                {rows.map((row, i) =>
+                  row.kind === "total" ? (
+                    <li key={i} className="pl per">
+                      {row.text}
+                    </li>
+                  ) : (
+                    <li key={i} className={isYou(row.entry.fromNormalized) || isYou(row.entry.toNormalized) ? "pl you" : "pl"}>
+                      <a className="who" href={href("player", row.entry.fromNormalized)}>
+                        {row.entry.fromDisplay}
+                      </a>
+                      <span className="lead" aria-hidden="true" />
+                      <strong className="amount">{moneyCents(row.entry.amountCents)}</strong>
+                      <span className="to">
+                        <span aria-hidden="true">→ </span>
+                        <span className="sr-only"> pays </span>
+                        <a href={href("player", row.entry.toNormalized)}>{row.entry.toDisplay}</a>
+                      </span>
+                      {TAG[row.entry.reason] !== "" ? <span className="tag">{TAG[row.entry.reason]}</span> : null}
+                    </li>
+                  ),
+                )}
+              </ul>
+              <div className="pl total">
+                <span className="who">Total moved</span>
+                <span className="lead" aria-hidden="true" />
+                <span className="amt">{moneyCents(moved)}</span>
+              </div>
+            </div>
+            <p className="sub">{sheetSummary(entries)} · biggest payers first</p>
+            <div className="btnrow">
+              <button className="block" onClick={copy}>
+                {copied ? "Copied" : "Copy for the group chat"}
+              </button>
+              <button className="ghost block" onClick={() => download("settlements.csv", sheetCsv(sheet.entries))}>
                 Download CSV
               </button>
             </div>
             {copyFailed ? (
               <>
-                <p className="down small">This browser would not copy it. Select the text below and copy it by hand.</p>
+                <p className="small down">This browser would not copy it. Select the text below and copy it by hand.</p>
                 <textarea
                   className="links"
                   readOnly
@@ -222,14 +243,45 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
                 />
               </>
             ) : null}
-            <h3>Who receives what</h3>
+          </>
+        )}
+        {sheet.warnings.map((w, i) => (
+          <div key={i} className="small down warnbox">
+            {offByLines(w).map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+        ))}
+      </section>
+
+      {sheet.entries.length > 0 ? (
+        <SaveSheet key={suggested} ctx={ctx} suggested={suggested} entries={sheet.entries} overlap={overlap} onSaved={onSaved} />
+      ) : null}
+
+      <div className="folds">
+        {banker === "" && losers.length > 0 && winners.length > 0 && !isSnapshot(ctx.payload) ? (
+          <RequestCard
+            ctx={ctx}
+            losers={losers}
+            winners={winners}
+            requests={requests}
+            // An update is applied to the latest requests, not to the ones this card had when it was clicked.
+            onChange={(update) => setAsked((prev) => update(forSheet(prev, suggested)))}
+            onSaved={onSaved}
+          />
+        ) : null}
+        {receivers.length > 0 ? (
+          <details className="fold">
+            <summary>Who receives what</summary>
             <div className="tablewrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Receiver</th>
-                    <th className="num">Gets</th>
-                    <th>From</th>
+                    <th scope="col">Receiver</th>
+                    <th scope="col" className="num">
+                      Gets
+                    </th>
+                    <th scope="col">From</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -243,50 +295,43 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
                 </tbody>
               </table>
             </div>
-          </>
-        )}
-        {sheet.warnings.map((w, i) => (
-          <div key={i} className="down small">
-            {offByLines(w).map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-          </div>
-        ))}
-      </section>
-
-      {balances.length > 0 ? (
-        <section className="card">
-          <h2>Balances on this sheet</h2>
-          <p className="muted small">
-            Poker results plus payments and corrections (menu 17) · <a href={href("adjust")}>record a payment outside the sheet, or a correction</a>
-          </p>
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Player</th>
-                  <th className="num">Poker net</th>
-                  <th className="num">Payments</th>
-                  <th>Settles as</th>
-                </tr>
-              </thead>
-              <tbody>
-                {balances.map((b) => (
-                  <tr key={b.p.normalizedName} className={b.tone === "even" ? "dim" : ""}>
-                    <td>{b.p.displayName}</td>
-                    <td className="num">{b.poker}</td>
-                    <td className="num">{b.payments}</td>
-                    <td className={b.tone}>{b.settles}</td>
+          </details>
+        ) : null}
+        {balances.length > 0 ? (
+          <details className="fold">
+            <summary>Balances on this sheet</summary>
+            <p className="sub">
+              Poker results plus payments and corrections (menu 17) · <a href={href("adjust")}>record a payment outside the sheet, or a correction</a>
+            </p>
+            <div className="tablewrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Player</th>
+                    <th scope="col" className="num">
+                      Poker net
+                    </th>
+                    <th scope="col" className="num">
+                      Payments
+                    </th>
+                    <th scope="col">Settles as</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
-      {sheet.entries.length > 0 ? (
-        <SaveSheet key={suggested} ctx={ctx} suggested={suggested} entries={sheet.entries} overlap={overlap} onSaved={onSaved} />
-      ) : null}
+                </thead>
+                <tbody>
+                  {balances.map((b) => (
+                    <tr key={b.p.normalizedName} className={b.tone === "even" ? "dim" : ""}>
+                      <td>{b.p.displayName}</td>
+                      <td className="num">{b.poker}</td>
+                      <td className="num">{b.payments}</td>
+                      <td className={b.tone}>{b.settles}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        ) : null}
+      </div>
     </>
   );
 }
@@ -365,8 +410,8 @@ function RequestCard({
   };
 
   return (
-    <section className="card">
-      <h3>Anyone want to send their money to a specific person?</h3>
+    <details className="fold" open={requests.list.length > 0 ? true : undefined}>
+      <summary>Anyone want to send their money to a specific person?</summary>
       {requests.list.length > 0 ? (
         <ul className="plain pins">
           {requests.list.map((r) => (
@@ -419,9 +464,9 @@ function RequestCard({
           </button>
         ) : null}
       </div>
-      {problem !== null ? <p className="down small">{problem}</p> : null}
+      {problem !== null ? <p className="small down">{problem}</p> : null}
       {shown}
-    </section>
+    </details>
   );
 }
 
@@ -455,7 +500,7 @@ function SaveSheet({
   const [savedAs, setSavedAs] = useState<string | null>(null);
 
   if (!ctx.payload.canWrite) {
-    return <p className="muted small center">Saving a sheet works on the computer that runs the site.</p>;
+    return <p className="sub">Saving a sheet works on the computer that runs the site.</p>;
   }
   const save = async (): Promise<void> => {
     const id = name.trim();
@@ -486,15 +531,14 @@ function SaveSheet({
   };
 
   return (
-    <section className="card">
-      <h2>Track who has paid</h2>
-      <p className="muted small">
-        Saves this sheet (console menu 7). Then record payments as they come in on <a href={href("owed")}>Who owes</a>. Save
-        one sheet per night or one for the whole folder, not both: Who owes adds up every saved sheet, and a sheet does not
-        record which games it covers.
+    <section className="sec" aria-labelledby="track-h">
+      <h2 id="track-h">Track who has paid</h2>
+      <p className="sub">
+        Save this sheet, then tick off payments as they come in on <a href={href("owed")}>Who owes</a> (console menu 7). Save one sheet per
+        night or one for the whole folder, not both: Who owes adds up every saved sheet, and a sheet does not record which games it covers.
       </p>
       {overlap.length > 0 ? (
-        <p className="down small" role="status">
+        <p className="small down" role="status">
           {overlapWords(overlap)} some of these games. If so, saving this sheet too would ask for those nights twice.
         </p>
       ) : null}
@@ -503,12 +547,12 @@ function SaveSheet({
           <span className="muted">Sheet name</span>
           <input value={name} onChange={(e) => setName(e.target.value)} spellCheck={false} />
         </label>
-        <button onClick={() => void save()} disabled={busy || savedAs === name.trim()}>
+        <button className="ghost" onClick={() => void save()} disabled={busy || savedAs === name.trim()}>
           {busy ? "Saving…" : savedAs === name.trim() ? "Saved" : "Save sheet"}
         </button>
       </div>
       {note !== null ? (
-        <p className={note.ok ? "up small" : "down small"}>
+        <p className={note.ok ? "small up" : "small down"}>
           {note.text} {note.ok ? <a href={href("owed")}>See Who owes →</a> : null}
         </p>
       ) : null}

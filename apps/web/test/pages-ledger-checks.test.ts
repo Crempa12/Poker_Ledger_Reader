@@ -467,6 +467,7 @@ describe("the Games page against the console's game picker, menu 5 (made-up data
       // The picker lists every game in the folders: 14 in the synthetic data, 8 in the edge data.
       expect(recorded).toHaveLength(f.name === "synthetic" ? 14 : 8);
       const items = [...html.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1] ?? "");
+      // Each night links to its game by the picker's id (the list does not print the id; the night's page does).
       const ids = items.map((li) => decodeURIComponent(/href="[^"]*\/game\/([^"]*)"/.exec(li)?.[1] ?? "").replace(/^ledger_/, ""));
       expect(ids).toEqual(recorded.map((r) => r.id));
       items.forEach((li, i) => {
@@ -474,7 +475,6 @@ describe("the Games page against the console's game picker, menu 5 (made-up data
         if (r === undefined) return;
         const text = textOf(li);
         expect(text).toContain(r.folder);
-        expect(text).toContain(r.id);
         expect(text).toContain(r.players === 1 ? "1 player" : `${r.players} players`);
         expect(text).toContain(`${r.buyIns} bought in`);
         const [day, clock] = pageDateTime(r.date, r.time);

@@ -1,9 +1,9 @@
 import { Fragment, useState } from "react";
-import { fixed2Cents, sessions, type SessionBalance } from "@plr/core";
+import { fixed2Cents, players, sessions, type SessionBalance } from "@plr/core";
 
 import { CopyForChat } from "../components/copychat.tsx";
 import type { Ctx } from "../context.ts";
-import { moneyCents } from "../format.ts";
+import { moneyCents, plural } from "../format.ts";
 import { href } from "../router.ts";
 import { errorText, typedCents, writeSaved } from "../saved.ts";
 import { owedCopyText } from "../settle-sheet.ts";
@@ -13,64 +13,107 @@ function pairKey(b: SessionBalance): string {
 }
 
 export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
-  const { view, world } = ctx;
+  const { view, world, me } = ctx;
   const [paying, setPaying] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const rows = sessions.sortedRows(world.balances, false);
   const bySheet = new Map<string, SessionBalance[]>();
   for (const r of rows) bySheet.set(r.sessionId, [...(bySheet.get(r.sessionId) ?? []), r]);
+  const total = view.owed.reduce((s, d) => s + d.totalCents, 0);
+  const isYou = (n: string): boolean => me !== "" && players.resolveCanonical(world.rules, n) === me;
+  // Your side of it, in one line: on the computer that keeps the data only (a phone or a snapshot is read by others).
+  const youOwe = view.owed.filter((d) => isYou(d.fromNormalized)).reduce((s, d) => s + d.totalCents, 0);
+  const owedYou = view.owed.filter((d) => isYou(d.toNormalized)).reduce((s, d) => s + d.totalCents, 0);
+  const open = [...bySheet.values()].filter((list) => list.some((b) => b.remainingCents > 0)).length;
 
   return (
     <>
-      <section className="card">
-        <h2>Who still owes whom</h2>
-        <p className="muted small">
-          Everything still unpaid, added up across every saved sheet (menu 11 in the console app). It is for every game, whatever the
-          Folder and Dates at the top say. A payment recorded here (Paid…) changes this list only; Payments &amp; corrections change
-          Settle up only and are not counted here. Names stay as each sheet saved them, even after a merge.
+      <h1>Who owes</h1>
+      <p className="lede">
+        Everything still unpaid on the saved sheets, for every game: the Folder and Dates do not change it (menu 11 in the console app).
+      </p>
+      {ctx.payload.canWrite && me !== "" && view.owed.length > 0 ? (
+        <p className="mine">
+          {youOwe === 0 && owedYou === 0
+            ? "You owe nothing, and nobody owes you."
+            : youOwe > 0 && owedYou > 0
+              ? `You owe ${moneyCents(youOwe)} and are owed ${moneyCents(owedYou)}.`
+              : youOwe > 0
+                ? `You owe ${moneyCents(youOwe)}.`
+                : `You are owed ${moneyCents(owedYou)}.`}
         </p>
+      ) : null}
+      <section className="sec" aria-labelledby="owed-h">
+        <h2 id="owed-h" className="sr-only">
+          Who still owes whom
+        </h2>
         {view.owed.length === 0 ? (
-          <p className="up">Nobody. Every saved sheet is paid.</p>
+          <p className="lede up">Nobody. Every saved sheet is paid.</p>
         ) : (
-          <ul className="payments">
-            {view.owed.map((d) => (
-              <li key={`${d.fromNormalized}->${d.toNormalized}`}>
-                <a href={href("player", d.fromNormalized)}>{d.fromDisplay}</a>
-                <span className="arrow" aria-hidden="true">→</span>
-                <span className="sr-only"> owes </span>
-                <a href={href("player", d.toNormalized)}>{d.toDisplay}</a>
-                <strong className="amount">{moneyCents(d.totalCents)}</strong>
-              </li>
-            ))}
-          </ul>
+          <>
+            <p className="hero-s">
+              {moneyCents(total)}
+              <small>
+                still owed{open > 0 ? `, on ${plural(open, "sheet")}` : ""}
+              </small>
+            </p>
+            <div className="slip">
+              <ul className="payments">
+                {view.owed.map((d) => (
+                  <li key={`${d.fromNormalized}->${d.toNormalized}`} className={isYou(d.fromNormalized) || isYou(d.toNormalized) ? "pl you" : "pl"}>
+                    <a className="who" href={href("player", d.fromNormalized)}>
+                      {d.fromDisplay}
+                    </a>
+                    <span className="lead" aria-hidden="true" />
+                    <strong className="amount">{moneyCents(d.totalCents)}</strong>
+                    <span className="to">
+                      <span aria-hidden="true">→ </span>
+                      <span className="sr-only"> owes </span>
+                      <a href={href("player", d.toNormalized)}>{d.toDisplay}</a>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <CopyForChat text={owedCopyText(view.owed)} label="Copy a reminder for the group chat" what="Reminder text" />
+          </>
         )}
-        {view.owed.length > 0 ? <CopyForChat text={owedCopyText(view.owed)} label="Copy a reminder for the group chat" what="Reminder text" /> : null}
       </section>
 
-      <section className="card">
-        <h2>Saved sheets</h2>
-        {done !== null ? <p className="up small">{done}</p> : null}
+      <section className="sec" aria-labelledby="sheets-h">
+        <h2 id="sheets-h">Saved sheets</h2>
+        {done !== null ? (
+          <p className="small up" role="status">
+            {done}
+          </p>
+        ) : null}
         {bySheet.size === 0 ? (
-          <p className="muted">
-            No saved sheets yet. Build one on <a href={href("settle")}>Settle up</a> and press Save sheet; then record payments
-            here as they come in.
+          <p className="sub">
+            No saved sheets yet. Build one on <a href={href("settle")}>Settle up</a> and press Save sheet; then record payments here as they
+            come in.
           </p>
         ) : (
           [...bySheet.entries()].map(([id, list]) => {
-            const open = list.reduce((s, b) => s + b.remainingCents, 0);
+            const left = list.reduce((s, b) => s + b.remainingCents, 0);
             return (
               <div key={id} className="sheet">
                 <h3>
-                  {id} <span className={open > 0 ? "down small" : "up small"}>{open > 0 ? `${moneyCents(open)} unpaid` : "all paid"}</span>
+                  {id} <span className={left > 0 ? "small down" : "small up"}>{left > 0 ? `${moneyCents(left)} unpaid` : "all paid"}</span>
                 </h3>
                 <table>
                   <thead>
                     <tr>
-                      <th>From</th>
-                      <th>To</th>
-                      <th className="num hide-xs">Owed</th>
-                      <th className="num">Still owed</th>
-                      <th className="hide-xs">Status</th>
+                      <th scope="col">From</th>
+                      <th scope="col">To</th>
+                      <th scope="col" className="num hide-xs">
+                        Owed
+                      </th>
+                      <th scope="col" className="num">
+                        Still owed
+                      </th>
+                      <th scope="col" className="hide-xs">
+                        Status
+                      </th>
                       {ctx.payload.canWrite ? <th aria-label="Record a payment" /> : null}
                     </tr>
                   </thead>
@@ -78,9 +121,10 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                     {list.map((b) => {
                       const key = pairKey(b);
                       const owing = b.remainingCents > 0;
+                      const mine = isYou(b.fromNormalized) || isYou(b.toNormalized);
                       return (
                         <Fragment key={key}>
-                          <tr className={b.status === "paid" ? "dim" : ""}>
+                          <tr className={[b.status === "paid" ? "dim" : "", mine && owing ? "me" : ""].filter((c) => c !== "").join(" ") || undefined}>
                             <td>{b.fromDisplay}</td>
                             <td>{b.toDisplay}</td>
                             <td className="num hide-xs">{moneyCents(b.originalCents)}</td>
@@ -95,7 +139,7 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                               <td className="num">
                                 {owing ? (
                                   <button
-                                    className="small"
+                                    className="small ghost"
                                     onClick={() => setPaying(paying === key ? null : key)}
                                     aria-expanded={paying === key}
                                     aria-label={`${paying === key ? "Close" : "Paid…"} the payment from ${b.fromDisplay} to ${b.toDisplay}`}
@@ -132,6 +176,14 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
           })
         )}
       </section>
+
+      <details className="fold">
+        <summary>Paid…, or Payments &amp; corrections?</summary>
+        <p className="sub">
+          A payment recorded here (Paid…) changes this list only. Payments &amp; corrections change Settle up only and are not counted here.
+          Names stay as each sheet saved them, even after a merge.
+        </p>
+      </details>
     </>
   );
 }
@@ -188,7 +240,7 @@ function PaymentForm({ ctx, balance, onRecorded }: { ctx: Ctx; balance: SessionB
       <button type="submit" disabled={busy || cents === null}>
         {busy ? "Saving…" : cents === balance.remainingCents ? "Paid in full" : "Record payment"}
       </button>
-      {error !== null ? <p className="down small">{error}</p> : null}
+      {error !== null ? <p className="small down">{error}</p> : null}
     </form>
   );
 }

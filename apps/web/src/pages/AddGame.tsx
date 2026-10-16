@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { ledger, scopeContains, type Game } from "@plr/core";
 
 import type { Ctx } from "../context.ts";
-import { getLocalJSON, postJSON } from "../data.ts";
+import { currentBasis, getLocalJSON, postJSON } from "../data.ts";
 import { clockTime, longDate, moneyCents, moneySignedCents, plural, shortDate } from "../format.ts";
 import { startOfFile, suggestFolder } from "../folders.ts";
 import { resultsOf } from "../game.ts";
@@ -32,6 +32,7 @@ interface DownloadsList {
   unreadable?: string; // why the folder could not be opened (EPERM ...), when it is there but closed to the site
 }
 
+// A file on this page, waiting to be filed: a ledger fetched from a link, or a file from Downloads or picked by hand.
 interface Item {
   key: string;
   kind: "ledger" | "poker_now_log";
@@ -41,6 +42,9 @@ interface Item {
   folder: string;
   status: Status;
   message: string;
+  picked: boolean; // ticked to be filed by the one button
+  source: "link" | "file";
+  bytes?: number;
 }
 
 // Where a game id already sits in the data, if anywhere.
@@ -48,6 +52,12 @@ function findExisting(ctx: Ctx, kind: Item["kind"], gameId: string): string | nu
   const name = `${kind}_${gameId}`;
   const paths = kind === "ledger" ? ctx.payload.ledgers.map((l) => l.relativePath) : ctx.payload.logs;
   return paths.find((p) => (p.split("/").pop() ?? "").startsWith(name)) ?? null;
+}
+
+// The last two parts of a folder's path, for the page's words: ".../Poker_Ledger_Web/data".
+function shortPath(path: string): string {
+  const parts = path.split(/[\\/]/).filter((p) => p !== "");
+  return parts.length <= 2 ? path : `…/${parts.slice(-2).join("/")}`;
 }
 
 function folderOfPath(path: string): string {
@@ -62,7 +72,10 @@ export function savedLabel(folder: string, gamesFolder: boolean): string {
   return gamesFolder ? `Games/${folder}` : folder;
 }
 
-export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
+// + Add a game: paste the link (the ledger comes at once), and the PokerNow files in Downloads are listed
+// and ticked; one button files them all. With no data folder yet, the same button starts one first.
+// first: the data has no games yet, so this is the whole start page (Standings shows it then).
+export function AddGame({ ctx, onSaved, first = false }: { ctx: Ctx; onSaved: () => void | Promise<void>; first?: boolean }) {
   const { world, tz } = ctx;
   // Older payloads (and a snapshot, which never saves) do not say: the Games folder is assumed.
   const gamesFolder = ctx.payload.gamesFolder ?? true;
@@ -70,11 +83,14 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   const [links, setLinks] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
-  // The basis the server checks each save against. A save returns the new one, so the next game of the
+  const [choosing, setChoosing] = useState(false);
+  const [filed, setFiled] = useState<string | null>(null);
+  // The basis the server checks each save against. A save returns the new one, so the next file of the
   // batch goes through without a reload; a reload of the data (after a save) sets it again.
-  // While saves run (one, or a Save all), a reload that lands (Refresh pressed meanwhile) may carry the basis
-  // from before the last save, so it is not taken then; the reload after the saves sets it.
+  // While saves run, a reload that lands (Refresh pressed meanwhile) may carry the basis from before the
+  // last save, so it is not taken then; the reload after the saves sets it.
   const basis = useRef(ctx.payload.basis);
   const saving = useRef(0);
   useEffect(() => {
@@ -105,39 +121,65 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
     };
   }, [ctx.payload.loadedAt, ctx.payload.canWrite]);
 
+  // The newest copy of each game's file in Downloads that is not in the data yet, nor on this page.
+  const seen = new Set<string>();
+  const fresh = (downloads?.files ?? []).filter((f) => {
+    const key = `${f.kind}_${f.gameId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return findExisting(ctx, f.kind, f.gameId) === null && !items.some((x) => x.key === key);
+  });
+  // Each new file in Downloads is read and put on the page, ticked, as menu 19 takes every PokerNow file
+  // it finds there. A file is read once (unticking it keeps it off the button).
+  const reading = useRef(new Set<string>());
+  const freshKey = fresh.map((f) => f.name).join("\n");
+  useEffect(() => {
+    const todo = fresh.filter((f) => !reading.current.has(`${f.kind}_${f.gameId}`));
+    if (todo.length === 0) return;
+    for (const f of todo) reading.current.add(`${f.kind}_${f.gameId}`);
+    void (async () => {
+      const why: string[] = [];
+      for (const f of todo) {
+        try {
+          const r = await getLocalJSON<{ name: string; text: string }>(`/api/downloads/${encodeURIComponent(f.name)}`);
+          add({ key: `${f.kind}_${f.gameId}`, kind: f.kind, gameId: f.gameId, fileName: f.name, text: r.text, source: "file", bytes: f.bytes });
+        } catch (err) {
+          reading.current.delete(`${f.kind}_${f.gameId}`);
+          why.push(`${f.name}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+      if (why.length > 0) setProblems((p) => [...p, ...why]);
+    })();
+    // fresh is worked out each render; its file names say when it changed.
+  }, [freshKey]);
+
   if (!ctx.payload.canWrite) {
-    return <div className="card pad">Adding games works only on the computer that holds the data.</div>;
+    return <p className="lede">Adding games works only on the computer that holds the data.</p>;
   }
-  // No data folder yet: a game has nowhere to go. A group without the console app starts one on the Overview.
-  if (ctx.payload.dataReady === false) {
+  // No data folder, and none may be started here: say what to do instead.
+  const starting = ctx.payload.dataReady === false;
+  if (starting && ctx.payload.canStartData !== true) {
     return (
-      <div className="card pad">
-        <p>There is no data folder to add games to yet.</p>
-        <p className="muted">
-          {ctx.payload.canStartData === true ? (
+      <>
+        <h1>Add a game</h1>
+        <p className="lede">There is no data folder to add games to yet.</p>
+        <p className="sub">
+          The site reads the console app&apos;s folder: put it next to this one (or set PLR_DATA_ROOT to it), then press{" "}
+          <strong>Refresh</strong>.
+          {ctx.payload.dataStartable === true ? (
             <>
-              Not using the console app? Start one on the <a href={href()}>Overview</a>, then come back here.
+              {" "}
+              Not using the console app? The site starts a data folder of its own only in a folder that is empty (or not there yet), that
+              it may write to, and that is not a link. If <code>{ctx.payload.dataRoot}</code> holds other files, move them out; otherwise set
+              PLR_DATA_ROOT to such a folder. Then press <strong>Refresh</strong>.
             </>
-          ) : (
-            <>
-              The site reads the console app&apos;s folder: put it next to this one (or set PLR_DATA_ROOT to it), then press{" "}
-              <strong>Refresh</strong>.
-              {ctx.payload.dataStartable === true ? (
-                <>
-                  {" "}
-                  Not using the console app? The site starts a data folder of its own only in a folder that is empty (or not
-                  there yet), that it may write to, and that is not a link. If <code>{ctx.payload.dataRoot}</code> holds other
-                  files, move them out; otherwise set PLR_DATA_ROOT to such a folder. Then press <strong>Refresh</strong>.
-                </>
-              ) : null}
-            </>
-          )}
+          ) : null}
         </p>
-      </div>
+      </>
     );
   }
 
-  const add = (item: Omit<Item, "status" | "message" | "folder"> & { folder?: string }): void => {
+  function add(item: Omit<Item, "status" | "message" | "folder" | "picked"> & { folder?: string }): void {
     const there = findExisting(ctx, item.kind, item.gameId);
     // A hand log goes next to its ledger: the one already filed in a folder, or the one on this page. A ledger at
     // the top of Games has no folder to share, and a game is never saved there. Anything else gets the folder
@@ -154,37 +196,42 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
           (item.kind === "poker_now_log" && inherited === ""
             ? (list.find((x) => x.kind === "ledger" && x.gameId === item.gameId)?.folder ?? suggested)
             : suggested),
-        status: there !== null ? "there" : "ready", message: there !== null ? `already in your data: ${there}. To file it somewhere else, move that file (and its hand log) to the other folder yourself, in Finder or File Explorer, then press Refresh.` : "",
+        status: there !== null ? "there" : "ready",
+        picked: there === null,
+        message:
+          there !== null
+            ? `already in your data: ${there}. To file it somewhere else, move that file (and its hand log) to the other folder yourself, in Finder or File Explorer, then press Refresh.`
+            : "",
       },
     ]);
-  };
+  }
 
   // Every link is tried. The ones that fail stay in the box, each with what went wrong, to fix or try again.
-  const fetchLinks = async (): Promise<void> => {
+  const fetchLinks = async (text: string): Promise<void> => {
     setProblems([]);
-    const wanted = links.split(/\s+/).filter((l) => l !== "");
+    setFiled(null);
+    const wanted = text.split(/\s+/).filter((l) => l !== "");
     if (wanted.length === 0) return;
-    setBusy(true);
+    setFetching(true);
     const failed: string[] = [];
     const why: string[] = [];
     for (const link of wanted) {
       try {
         const r = await postJSON<{ gameId: string; fileName: string; text: string }>("/api/pokernow", { link });
-        add({ key: `ledger_${r.gameId}`, kind: "ledger", gameId: r.gameId, fileName: r.fileName, text: r.text });
+        add({ key: `ledger_${r.gameId}`, kind: "ledger", gameId: r.gameId, fileName: r.fileName, text: r.text, source: "link" });
       } catch (err) {
         failed.push(link);
         why.push(`${link}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
-    setBusy(false);
+    setFetching(false);
     setProblems(why);
     setLinks(failed.join("\n"));
   };
 
-  const pickFiles = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const pickFiles = async (files: File[]): Promise<void> => {
     setProblems([]);
-    const files = [...(e.target.files ?? [])];
-    e.target.value = "";
+    setFiled(null);
     const why: string[] = [];
     for (const f of files) {
       const m = FILE_NAME.exec(f.name);
@@ -194,14 +241,24 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       }
       const kind = m[1] as Item["kind"];
       const gameId = m[2] ?? "";
-      add({ key: `${kind}_${gameId}`, kind, gameId, fileName: f.name, text: await f.text() });
+      add({ key: `${kind}_${gameId}`, kind, gameId, fileName: f.name, text: await f.text(), source: "file", bytes: f.size });
     }
     setProblems(why);
   };
+  const onPick = (e: ChangeEvent<HTMLInputElement>): void => {
+    const files = [...(e.target.files ?? [])];
+    e.target.value = "";
+    void pickFiles(files);
+  };
+  const onDrop = (e: DragEvent<HTMLElement>): void => {
+    if (e.dataTransfer.files.length === 0) return;
+    e.preventDefault();
+    void pickFiles([...e.dataTransfer.files]);
+  };
 
-  // reload: whether the page reads the data again afterwards. Save all reads it once, at the end, so a
-  // reload that lands between two saves cannot hand the next save an older basis.
-  const save = async (item: Item, reload = true): Promise<void> => {
+  // Files one item. reload: whether the page reads the data again afterwards (the batch reads it once, at the
+  // end, so a reload that lands between two saves cannot hand the next save an older basis).
+  const save = async (item: Item, reload = true): Promise<boolean> => {
     setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saving" } : x)));
     saving.current++;
     try {
@@ -213,37 +270,62 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       });
       basis.current = r.basis;
       const notes = afterSaveNotes(ctx, item, r.saved, items);
-      const message = [`saved as ${savedLabel(r.saved, gamesFolder)}`, ...notes].join(" · ");
-      setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saved", message } : x)));
-      if (reload) onSaved();
+      const message = [`filed as ${savedLabel(r.saved, gamesFolder)}`, ...notes].join(" · ");
+      setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saved", picked: false, message } : x)));
+      if (reload) void onSaved();
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "error", message } : x)));
+      return false;
     } finally {
       saving.current--;
     }
   };
 
-  const saveAll = async (list: Item[]): Promise<void> => {
+  // Ledgers first, so a game's hand log is filed after the game itself.
+  const toFile = items
+    .filter((x) => x.picked && (x.status === "ready" || x.status === "error") && x.folder.trim() !== "")
+    .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "ledger" ? -1 : 1));
+  const targets = [...new Set(toFile.map((x) => x.folder))];
+
+  // The one button: (with no data folder yet, start one first), then file every ticked file.
+  const fileAll = async (): Promise<void> => {
+    if (toFile.length === 0) return;
     setBusy(true);
+    setProblems([]);
     saving.current++;
+    let done = 0;
     try {
-      for (const item of list) await save(item, false);
+      if (starting) {
+        await postJSON<{ started: string }>("/api/start-data", {});
+        const now = await currentBasis();
+        if (now === null) throw new Error("The data folder was started, but the site could not read it back. Press Refresh, then file the game again.");
+        basis.current = now;
+      }
+      for (const item of toFile) if (await save(item, false)) done++;
+      setFiled(
+        done === 0
+          ? null
+          : `Filed ${done === toFile.length ? (done === 1 ? "it" : `all ${done}`) : `${done} of ${toFile.length}`}${targets.length === 1 ? ` into ${savedLabel(targets[0] ?? "", gamesFolder)}` : ""}. ${done === 1 ? "It shows" : "They show"} on every page now.`,
+      );
+    } catch (err) {
+      setProblems([err instanceof Error ? err.message : String(err)]);
     } finally {
       saving.current--;
       setBusy(false);
-      onSaved();
+      void onSaved();
     }
   };
 
-  // The newest copy of each game's file in Downloads that is not in the data yet, nor on this page.
-  const seen = new Set<string>();
-  const fresh = (downloads?.files ?? []).filter((f) => {
-    const key = `${f.kind}_${f.gameId}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return findExisting(ctx, f.kind, f.gameId) === null && !items.some((x) => x.key === key);
-  });
+  const setPicked = (key: string, picked: boolean): void => setItems((list) => list.map((x) => (x.key === key ? { ...x, picked } : x)));
+  // "Choose another folder": every ticked file moves there, except a hand log whose ledger is filed already
+  // (it always goes next to its ledger).
+  const moveAll = (folder: string): void =>
+    setItems((list) =>
+      list.map((x) => (x.picked && !(x.kind === "poker_now_log" && findExisting(ctx, "ledger", x.gameId) !== null) ? { ...x, folder } : x)),
+    );
+
   // Downloads bigger than the copy of the same game already filed: most likely the whole file of a game filed
   // early (a hand log downloaded before the night ended). The site never files over a game, so they are
   // pointed out instead of being left out with the other filed games. The biggest copy of each game is shown.
@@ -255,153 +337,201 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
     else if (f.bytes > (bigger[at]?.bytes ?? 0)) bigger[at] = f;
   }
 
-  const addFromDownloads = async (files: Downloaded[]): Promise<void> => {
-    setProblems([]);
-    setBusy(true);
-    const why: string[] = [];
-    for (const f of files) {
-      try {
-        const r = await getLocalJSON<{ name: string; text: string }>(`/api/downloads/${encodeURIComponent(f.name)}`);
-        add({ key: `${f.kind}_${f.gameId}`, kind: f.kind, gameId: f.gameId, fileName: f.name, text: r.text });
-      } catch (err) {
-        why.push(`${f.name}: ${err instanceof Error ? err.message : String(err)}`);
-      }
-    }
-    setBusy(false);
-    setProblems(why);
-  };
-
-  // Ledgers first, so a game's hand log is filed after the game itself.
-  const saveable = items
-    .filter((x) => (x.status === "ready" || x.status === "error") && x.folder.trim() !== "")
-    .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "ledger" ? -1 : 1));
-
-  const setFolder = (key: string, folder: string): void =>
-    setItems((list) => list.map((x) => (x.key === key ? { ...x, folder } : x)));
-
+  const fromLinks = items.filter((x) => x.source === "link");
+  // The files, each game's ledger before its hand log, the games in the order they came (newest download first).
+  const order = [...new Set(items.filter((x) => x.source === "file").map((x) => x.gameId))];
+  const files = items
+    .filter((x) => x.source === "file")
+    .sort((a, b) => order.indexOf(a.gameId) - order.indexOf(b.gameId) || (a.kind === b.kind ? 0 : a.kind === "ledger" ? -1 : 1));
+  const linkIds = new Set(fromLinks.map((x) => x.gameId));
   // Games with no hand log yet, newest first, with a link to download it.
   const missing = [...world.games]
     .reverse()
     .filter((g) => findExisting(ctx, "poker_now_log", logId(g)) === null)
     .slice(0, 12);
+  const one = toFile.length === 1;
+  const games = new Set(toFile.map((x) => x.gameId)).size;
+  const label = starting
+    ? games === 1
+      ? "Start with this game"
+      : `Start with these ${games} games`
+    : `File ${one ? "it" : toFile.length === 2 ? "both" : `all ${toFile.length}`}${targets.length === 1 ? ` into ${targets[0] ?? ""}` : ""}`;
 
   return (
-    <>
-      <section className="card">
-        <h2>Add a game from PokerNow</h2>
-        <p className="muted small">
-          Paste the game's link (or several, one per line). The ledger is fetched straight from PokerNow and filed into your{" "}
+    <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+      <h1>{first ? "Start with your first game" : "Add a game"}</h1>
+      {first ? (
+        <>
+          <p className="lede">
+            Paste the PokerNow link of a game your group played, then press the one button. The site keeps the results on this computer, in the
+            same files the console app uses, and adds every next game the same way.
+          </p>
+          <p className="sub">
+            {starting ? (
+              <>
+                The first game also makes the data folder, <code title={ctx.payload.dataRoot}>{shortPath(ctx.payload.dataRoot)}</code>. Keep it
+                out of git: it holds everyone&apos;s names and results.{" "}
+              </>
+            ) : null}
+            Already use the console app? Put its <code>Poker_Ledger_Reader</code> folder next to this one and press <strong>Refresh</strong>{" "}
+            instead.
+          </p>
+        </>
+      ) : (
+        <p className="lede">
+          Paste the game&apos;s link; the PokerNow files in your Downloads folder are listed too. One button files them all into your{" "}
           {gamesFolder ? (
             <>
-              <code>Games</code> folder, the same place the console app's menu 19 puts it.
+              <code>Games</code> folder, the same place the console app&apos;s menu 19 puts it.
             </>
           ) : (
             <>
-              data folder, in a folder of its own at the top level (there is no <code>Games</code> folder yet, so the console app
-              reads games from there too).
+              data folder, in a folder of its own at the top level (there is no <code>Games</code> folder yet, so the console app reads games
+              from there too).
             </>
           )}
         </p>
-        {ctx.payload.consoleOpen > 0 ? (
-          <p className="banner" role="status">
-            The console app is open. A game filed here is saved at once, but the console app lists it only after it is restarted.
-          </p>
-        ) : null}
+      )}
+      {ctx.payload.consoleOpen > 0 ? (
+        <p className="banner" role="status">
+          The console app is open. A game filed here is saved at once, but the console app lists it only after it is restarted.
+        </p>
+      ) : null}
+
+      <section className="sec paste" aria-labelledby="paste-h">
+        <h2 id="paste-h">
+          <label htmlFor="pokernow-links">Paste the PokerNow link</label>
+        </h2>
         <textarea
+          id="pokernow-links"
           className="links"
-          rows={3}
+          rows={2}
           placeholder="https://www.pokernow.com/games/pgl…"
           value={links}
           onChange={(e) => setLinks(e.target.value)}
-          aria-label="PokerNow links, one per line"
+          onPaste={(e) => {
+            const text = e.clipboardData.getData("text");
+            if (!/pgl[A-Za-z0-9_-]{6,}/.test(text)) return;
+            e.preventDefault();
+            const next = links.trim() === "" ? text.trim() : `${links.trim()}\n${text.trim()}`;
+            setLinks(next);
+            void fetchLinks(next);
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter" || e.shiftKey) return;
+            e.preventDefault();
+            void fetchLinks(links);
+          }}
+          aria-describedby="paste-how"
+          disabled={fetching || busy}
+        />
+        <p id="paste-how" className="sub">
+          {fetching
+            ? "Fetching the ledger from PokerNow…"
+            : "The ledger is fetched as soon as the link is pasted. Several links work too, one per line."}
+          {links.trim() !== "" && !fetching ? (
+            <>
+              {" "}
+              <button className="link" onClick={() => void fetchLinks(links)} disabled={busy}>
+                Fetch the ledger
+              </button>
+            </>
+          ) : null}
+        </p>
+        {problems.length > 0 ? (
+          <div className="warnbox small down" role="alert">
+            {problems.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      {fromLinks.map((item) => (
+        <FoundSlip
+          key={item.key}
+          ctx={ctx}
+          item={item}
+          gamesFolder={gamesFolder}
+          log={items.find((x) => x.kind === "poker_now_log" && x.gameId === item.gameId)}
+          onPick={(p) => setPicked(item.key, p)}
           disabled={busy}
         />
-        <div className="row">
-          <button onClick={() => void fetchLinks()} disabled={busy || links.trim() === ""}>
-            {busy ? "Fetching…" : "Fetch ledger"}
-          </button>
+      ))}
+
+      <section className="sec" aria-labelledby="dl-h">
+        <div className="sec-h">
+          <h2 id="dl-h">
+            In Downloads
+            {files.some((x) => x.status !== "saved") ? ` · ${plural(files.filter((x) => x.status !== "saved").length, "new file")}` : ""}
+          </h2>
+          <label className="choosefile">
+            <input type="file" accept=".csv,text/csv" multiple onChange={onPick} aria-label="Downloaded game files to add" />
+            <span>Choose files…</span>
+          </label>
         </div>
-      </section>
-
-      <section className="card">
-        <h2>Add downloaded files</h2>
-        <p className="muted small">
-          Hand logs can only be downloaded by a person (PokerNow puts a captcha on them): open the game on PokerNow and choose{" "}
-          <em>Download log</em>. The PokerNow files in your Downloads folder show up here when you come back to this page (or press{" "}
-          <strong>Refresh</strong>); ledger files work too.
-        </p>
-        <DownloadsFound
-          list={downloads}
-          fresh={fresh}
-          bigger={bigger}
-          gamesFolder={gamesFolder}
-          listed={(downloads?.files ?? []).some((f) => items.some((x) => x.key === `${f.kind}_${f.gameId}`))}
-          busy={busy}
-          tz={ctx.tz}
-          onAdd={(files) => void addFromDownloads(files)}
-        />
-        <p className="muted small">Or pick the files yourself:</p>
-        <input type="file" accept=".csv,text/csv" multiple onChange={(e) => void pickFiles(e)} aria-label="Downloaded game files to add" />
-      </section>
-
-      {problems.length > 0 ? (
-        <div className="card pad down" role="alert">
-          {problems.map((p, i) => (
-            <p key={i}>{p}</p>
-          ))}
-        </div>
-      ) : null}
-
-      {items.length > 0 ? (
-        <section className="card">
-          <h2>Ready to file</h2>
-          {saveable.length > 1 ? (
-            <div className="row tight">
-              <button onClick={() => void saveAll(saveable)} disabled={busy}>
-                Save all {saveable.length}
-              </button>
-              <span className="muted small">each to the folder shown with it</span>
-            </div>
-          ) : null}
-          <ul className="plain">
-            {items.map((item) => (
-              <li key={item.key} className="additem">
-                <Preview ctx={ctx} item={item} />
-                <div className="row">
-                  <label>
-                    <span className="muted small">Folder</span>
-                    <FolderPicker
-                      folders={folders}
-                      value={item.folder}
-                      onChange={(f) => setFolder(item.key, f)}
-                      disabled={busy || (item.status !== "ready" && item.status !== "error")}
-                    />
-                  </label>
-                  {item.status === "ready" || item.status === "error" ? (
-                    <button onClick={() => void save(item)} disabled={busy || item.folder.trim() === ""}>
-                      Save to {savedLabel(item.folder, gamesFolder)}
-                    </button>
-                  ) : null}
-                  {item.status === "saving" ? <span className="muted">Saving…</span> : null}
-                </div>
-                {item.message !== "" ? (
-                  <p className={item.status === "error" ? "down small" : item.status === "saved" ? "up small" : "muted small"}>{item.message}</p>
-                ) : null}
-              </li>
+        <DownloadsNote list={downloads} any={files.length > 0} />
+        {files.length > 0 ? (
+          <ul className="files">
+            {files.map((item) => (
+              <FileRow
+                key={item.key}
+                ctx={ctx}
+                item={item}
+                paired={items.some((x) => x.kind === "ledger" && x.gameId === item.gameId && x.key !== item.key)}
+                gamesFolder={gamesFolder}
+                tag={linkIds.size === 0 ? "" : linkIds.has(item.gameId) ? "this game" : "another game"}
+                onPick={(p) => setPicked(item.key, p)}
+                disabled={busy}
+              />
             ))}
           </ul>
-          <p className="muted small">
-            After saving, the game shows on every page at once (when the Folder and Dates at the top include it); the console app
-            lists it after it is restarted. Game files hold everyone&apos;s
-            names and results: keep them out of git, or keep that repository private.
-          </p>
-        </section>
+        ) : null}
+        <BiggerNote bigger={bigger} gamesFolder={gamesFolder} />
+      </section>
+
+      {toFile.length > 0 || filed !== null ? (
+        <div className="filebar">
+          {toFile.length > 0 ? (
+            <>
+              <button className="block" onClick={() => void fileAll()} disabled={busy}>
+                {busy ? "Filing…" : label}
+              </button>
+              <p className="sub">
+                {targets.length > 1 ? "Each to the folder shown with it. " : ""}
+                {choosing ? (
+                  <span className="row tight">
+                    <FolderPicker folders={folders} value={targets[0] ?? ""} onChange={moveAll} disabled={busy} />
+                    <button className="link" onClick={() => setChoosing(false)}>
+                      Done
+                    </button>
+                  </span>
+                ) : (
+                  <button className="link" onClick={() => setChoosing(true)} disabled={busy}>
+                    Choose another folder
+                  </button>
+                )}
+              </p>
+            </>
+          ) : (
+            <p className="small up" role="status">
+              ✓ {filed}
+            </p>
+          )}
+        </div>
       ) : null}
 
-      {missing.length > 0 ? (
-        <section className="card">
-          <h2>Games without a hand log</h2>
-          <p className="muted small">Newest first. Open the game on PokerNow, download its log, then add it above.</p>
+      {items.some((x) => x.status === "saved") ? (
+        <p className="note">
+          A filed game shows on every page at once (when the Folder and Dates at the top include it); the console app lists it after it is
+          restarted. Game files hold everyone&apos;s names and results: keep them out of git, or keep that repository private.
+        </p>
+      ) : null}
+
+      {missing.length > 0 && !starting ? (
+        <details className="fold">
+          <summary>Nights without a hand log ({missing.length})</summary>
+          <p className="sub">Newest first. Open the game on PokerNow and choose Download log; it shows up above when you come back.</p>
           <ul className="plain">
             {missing.map((g: Game) => (
               <li key={g.id}>
@@ -412,111 +542,202 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
               </li>
             ))}
           </ul>
-        </section>
+        </details>
       ) : null}
-    </>
+    </div>
   );
 }
 
-// The PokerNow files the Downloads folder holds that are not filed yet, to add with one press. Nothing is
-// said when the folder cannot be looked at (a phone, or no Downloads folder).
-function DownloadsFound({
-  list,
-  fresh,
-  bigger,
+// The game a link fetched, as a slip: when, how many, how much, and whether its hand log is here too.
+function FoundSlip({
+  ctx,
+  item,
   gamesFolder,
-  listed,
-  busy,
-  tz,
-  onAdd,
+  log,
+  onPick,
+  disabled,
 }: {
-  list: DownloadsList | null;
-  fresh: Downloaded[];
-  bigger: Downloaded[]; // bigger than the copy of the same game already filed
+  ctx: Ctx;
+  item: Item;
   gamesFolder: boolean;
-  listed: boolean; // some of its files are on this page already
-  busy: boolean;
-  tz: string;
-  onAdd: (files: Downloaded[]) => void;
+  log: Item | undefined;
+  onPick: (picked: boolean) => void;
+  disabled: boolean;
 }) {
+  const loaded = ledger.loadAllGames([{ relativePath: `${item.folder || "new"}/${item.fileName}`, text: item.text }]);
+  const game = loaded.games[0];
+  const logFiled = findExisting(ctx, "poker_now_log", item.gameId);
+  const results = game === undefined ? [] : resultsOf(game, ctx.world.rules);
+  const offBy = results.reduce((s, r) => s + r.netCents, 0);
+  const top = results[0];
+  return (
+    <section className="sec found" aria-label="The game from the link">
+      <div className="sec-h">
+        <h2>Found from the link</h2>
+        <Tick item={item} onPick={onPick} disabled={disabled} />
+      </div>
+      {game === undefined ? (
+        <p className="down">The ledger has no played seats.</p>
+      ) : (
+        <div className="slip">
+          <Line k="Game" v={`${longDate(game.start, ctx.tz)} · ${clockTime(game.start, ctx.tz)}`} />
+          <Line k="Players" v={String(results.length)} mono />
+          <Line k="Bought in" v={moneyCents(game.totalBuyInCents)} mono />
+          {top !== undefined && top.netCents > 0 ? <Line k="Top" v={`${ctx.nameOf(top.person)} ${moneySignedCents(top.netCents)}`} /> : null}
+          <Line k="Books" v={offBy === 0 ? "add up to $0.00 ✓" : `off by ${moneySignedCents(offBy)}`} tone={offBy === 0 ? "" : "down"} />
+          <Line
+            k="Hand log"
+            v={logFiled !== null ? "filed already ✓" : log !== undefined ? (log.status === "saved" ? "filed ✓" : "in Downloads ✓") : "not downloaded yet"}
+          />
+        </div>
+      )}
+      <ItemNote item={item} gamesFolder={gamesFolder} />
+      {game !== undefined && logFiled === null && log === undefined ? (
+        <details className="fold">
+          <summary>How to get the hand log</summary>
+          <ol className="steps">
+            <li>
+              Open{" "}
+              <a href={`https://www.pokernow.com/games/${item.gameId}`} target="_blank" rel="noreferrer">
+                the game on PokerNow ↗
+              </a>
+              .
+            </li>
+            <li>Choose Download log (PokerNow asks a person to do this, so the site cannot).</li>
+            <li>Come back here: the file shows up under In Downloads, ticked.</li>
+          </ol>
+        </details>
+      ) : null}
+    </section>
+  );
+}
+
+function Line({ k, v, mono = false, tone = "" }: { k: string; v: string; mono?: boolean; tone?: string }) {
+  return (
+    <div className="pl">
+      <span className="who">{k}</span>
+      <span className="lead" aria-hidden="true" />
+      <span className={`${mono ? "amt " : ""}${tone}`}>{v}</span>
+    </div>
+  );
+}
+
+// A file from Downloads (or picked by hand): its kind, which game it is, its size, and where it goes.
+function FileRow({
+  ctx,
+  item,
+  paired,
+  gamesFolder,
+  tag,
+  onPick,
+  disabled,
+}: {
+  ctx: Ctx;
+  item: Item;
+  paired: boolean; // its ledger is on this page too
+  gamesFolder: boolean;
+  tag: string;
+  onPick: (picked: boolean) => void;
+  disabled: boolean;
+}) {
+  return (
+    <li>
+      <Tick item={item} onPick={onPick} disabled={disabled} />
+      <div>
+        <div className="fn">{item.fileName}</div>
+        <div className="meta">
+          <Preview ctx={ctx} item={item} paired={paired} />
+          {item.bytes !== undefined ? ` · ${fileSize(item.bytes)}` : ""}
+        </div>
+        <ItemNote item={item} gamesFolder={gamesFolder} />
+      </div>
+      {tag !== "" ? <span className="tag">{tag}</span> : <span />}
+    </li>
+  );
+}
+
+// The tick that puts a file on the one button (or a word saying why it is not there).
+function Tick({ item, onPick, disabled }: { item: Item; onPick: (picked: boolean) => void; disabled: boolean }) {
+  if (item.status === "saved") return <span className="tickdone" aria-label="Filed">✓</span>;
+  if (item.status === "saving") return <span className="sub">…</span>;
+  return (
+    <input
+      type="checkbox"
+      checked={item.picked}
+      disabled={disabled || item.status === "there"}
+      onChange={(e) => onPick(e.target.checked)}
+      aria-label={`File ${item.fileName}`}
+    />
+  );
+}
+
+// Where the file goes, or what happened to it.
+function ItemNote({ item, gamesFolder }: { item: Item; gamesFolder: boolean }) {
+  if (item.message !== "") {
+    return <p className={item.status === "error" ? "small down" : item.status === "saved" ? "small up" : "sub"}>{item.message}</p>;
+  }
+  if (!item.picked) return null;
+  return <p className="sub">Goes to {savedLabel(item.folder, gamesFolder)}</p>;
+}
+
+// What the Downloads folder said, when there is nothing to list from it.
+function DownloadsNote({ list, any }: { list: DownloadsList | null; any: boolean }) {
   if (list !== null && list.unreadable !== undefined) {
     return (
-      <p className="muted small">
-        The site may not open your Downloads folder ({list.unreadable}). On a Mac, allow the app that runs the site (Terminal) in
-        System Settings → Privacy &amp; Security → Files and Folders, then press <strong>Refresh</strong>. You can still pick the
-        files below.
+      <p className="sub">
+        The site may not open your Downloads folder ({list.unreadable}). On a Mac, allow the app that runs the site (Terminal) in System
+        Settings → Privacy &amp; Security → Files and Folders, then press <strong>Refresh</strong>. You can still choose the files yourself.
       </p>
     );
   }
-  if (list === null || !list.found) return null;
-  const biggerNote =
-    bigger.length > 0 ? (
-      <div className="downloads">
-        <p>
-          <strong>{plural(bigger.length, "download")}</strong> bigger than the copy already filed:
-        </p>
-        <ul className="plain small">
-          {bigger.map((f) => (
-            <li key={f.name}>
-              <code>{f.name}</code>{" "}
-              <span className="muted">
-                · {sizes(f.bytes, f.filed?.bytes ?? 0)[0]}; filed at {savedLabel(f.filed?.path ?? "", gamesFolder)},{" "}
-                {sizes(f.bytes, f.filed?.bytes ?? 0)[1]}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <p className="muted small">
-          A game filed before the night ended holds less. The site never files over a game: to use the bigger copy, move the filed
-          file out of its folder yourself (in Finder or File Explorer), press <strong>Refresh</strong>, then add this one.
-        </p>
-      </div>
-    ) : null;
-  if (fresh.length === 0) {
-    return (
-      <>
-        <p className="muted small">
-          {listed ? "The new PokerNow files from your Downloads folder are listed below." : "No new PokerNow files in your Downloads folder."}
-        </p>
-        {biggerNote}
-      </>
-    );
-  }
+  if (any) return null;
   return (
-    <>
+    <p className="sub">
+      {list === null || !list.found ? "Choose the files yourself, or drop them on this page." : "No new PokerNow files in Downloads."} Hand
+      logs come from PokerNow&apos;s Download log; they show up here when you come back to this page.
+    </p>
+  );
+}
+
+// Downloads bigger than the copy of the same game already filed.
+function BiggerNote({ bigger, gamesFolder }: { bigger: Downloaded[]; gamesFolder: boolean }) {
+  if (bigger.length === 0) return null;
+  return (
     <div className="downloads">
       <p>
-        <strong>{plural(fresh.length, "new PokerNow file")}</strong> in your Downloads folder:
+        <strong>{plural(bigger.length, "download")}</strong> bigger than the copy already filed:
       </p>
       <ul className="plain small">
-        {fresh.map((f) => (
+        {bigger.map((f) => (
           <li key={f.name}>
-            {f.kind === "ledger" ? "Ledger" : "Hand log"} <code>{f.name}</code>{" "}
-            <span className="muted">· downloaded {shortDate(Math.floor(f.modified / 1000), tz)} {clockTime(Math.floor(f.modified / 1000), tz)}</span>
+            <code>{f.name}</code>{" "}
+            <span className="muted">
+              · {sizes(f.bytes, f.filed?.bytes ?? 0)[0]}; filed at {savedLabel(f.filed?.path ?? "", gamesFolder)}, {sizes(f.bytes, f.filed?.bytes ?? 0)[1]}
+            </span>
           </li>
         ))}
       </ul>
-      <div className="row">
-        <button onClick={() => onAdd(fresh)} disabled={busy}>
-          {fresh.length === 1 ? "Add it" : `Add all ${fresh.length}`}
-        </button>
-        <span className="muted small">They stay in Downloads; a copy is filed when you save.</span>
-      </div>
+      <p className="sub">
+        A game filed before the night ended holds less. The site never files over a game: to use the bigger copy, move the filed file out of its
+        folder yourself (in Finder or File Explorer), press <strong>Refresh</strong>, then add this one.
+      </p>
     </div>
-    {biggerNote}
-    </>
   );
+}
+
+// A file's size in KB: "184 KB" (never "0 KB").
+function fileSize(n: number): string {
+  return `${Math.max(1, Math.round(n / 1024)).toLocaleString("en-US")} KB`;
 }
 
 // Two file sizes, in KB, or in bytes when the KB would read the same (a small ledger), so the bigger one shows.
 export function sizes(a: number, b: number): [string, string] {
-  const kb = (n: number): string => `${Math.max(1, Math.round(n / 1024)).toLocaleString("en-US")} KB`;
-  if (kb(a) !== kb(b)) return [kb(a), kb(b)];
+  if (fileSize(a) !== fileSize(b)) return [fileSize(a), fileSize(b)];
   const exact = (n: number): string => `${n.toLocaleString("en-US")} bytes`;
   return [exact(a), exact(b)];
 }
 
-// What to add to "saved as ..." for a game just filed: that the Folder or Dates at the top hide it, and,
+// What to add to "filed as ..." for a game just filed: that the Folder or Dates at the top hide it, and,
 // for a hand log, that its ledger is not filed yet (nor on this page to file).
 export function afterSaveNotes(ctx: Ctx, item: Pick<Item, "kind" | "gameId" | "text">, saved: string, items: readonly Pick<Item, "kind" | "gameId">[]): string[] {
   const notes: string[] = [];
@@ -534,37 +755,28 @@ export function afterSaveNotes(ctx: Ctx, item: Pick<Item, "kind" | "gameId" | "t
   return notes;
 }
 
-function Preview({ ctx, item }: { ctx: Ctx; item: Item }) {
+// One line about a file: a ledger's night, a hand log's hands and which game it pairs with.
+function Preview({ ctx, item, paired = false }: { ctx: Ctx; item: Item; paired?: boolean }) {
   if (item.kind === "poker_now_log") {
     const ledgerAt = findExisting(ctx, "ledger", item.gameId);
     const hands = (item.text.match(/-- starting hand #/g) ?? []).length;
+    const pairs = ledgerAt !== null ? `pairs with ${ledgerAt}` : paired ? "pairs with the ledger on this page" : "its ledger is not in your data yet; add that too";
     return (
-      <div>
-        <strong>Hand log</strong> <code>{item.gameId}</code>
-        <div className="muted small">
-          {plural(hands, "hand")} · {ledgerAt !== null ? `pairs with ${ledgerAt}` : "its ledger is not in your data yet; add that too"}
-        </div>
-      </div>
+      <>
+        Hand log · {plural(hands, "hand")} · {pairs}
+      </>
     );
   }
   const loaded = ledger.loadAllGames([{ relativePath: `${item.folder || "new"}/${item.fileName}`, text: item.text }]);
   const game = loaded.games[0];
-  if (game === undefined) return <div className="down">The ledger has no played seats.</div>;
+  if (game === undefined) return <span className="down">The ledger has no played seats.</span>;
   const results = resultsOf(game, ctx.world.rules);
   const offBy = results.reduce((s, r) => s + r.netCents, 0);
-  const top = results[0];
   return (
-    <div>
-      <strong>{longDate(game.start, ctx.tz)}</strong>{" "}
-      <span className="muted small">
-        {clockTime(game.start, ctx.tz)} · {shortDate(game.end, ctx.tz)}
-      </span>
-      <div className="muted small">
-        {plural(results.length, "player")} · {moneyCents(game.totalBuyInCents)} bought in
-        {top !== undefined && top.netCents > 0 ? ` · top ${ctx.nameOf(top.person)} ${moneySignedCents(top.netCents)}` : ""} ·{" "}
-        <span className={offBy === 0 ? "up" : "down"}>{offBy === 0 ? "balanced" : `off by ${moneySignedCents(offBy)}`}</span>
-      </div>
-    </div>
+    <>
+      Ledger · {shortDate(game.start, ctx.tz)} · {plural(results.length, "player")} · {moneyCents(game.totalBuyInCents)} bought in ·{" "}
+      <span className={offBy === 0 ? "" : "down"}>{offBy === 0 ? "balanced" : `off by ${moneySignedCents(offBy)}`}</span>
+    </>
   );
 }
 
@@ -587,7 +799,7 @@ export function FolderPicker({
   if (typing) {
     return (
       <span className="row tight">
-        <input type="text" value={value} placeholder="e.g. Nov 2026" onChange={(e) => onChange(e.target.value)} disabled={disabled} />
+        <input type="text" value={value} placeholder="e.g. Nov 2026" onChange={(e) => onChange(e.target.value)} disabled={disabled} aria-label="Folder name" />
         {folders.length > 0 ? (
           <button className="link" onClick={() => setTyping(false)} disabled={disabled}>
             pick existing
@@ -600,6 +812,7 @@ export function FolderPicker({
     <select
       value={value}
       disabled={disabled}
+      aria-label="Folder"
       onChange={(e) => {
         if (e.target.value === "__new__") {
           setTyping(true);

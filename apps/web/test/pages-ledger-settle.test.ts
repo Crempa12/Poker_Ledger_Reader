@@ -217,13 +217,13 @@ function consoleSubtotals(text: string): Subtotal[] {
   return out;
 }
 
-// The same totals in the page's transfer list: its items that are not transfers (no links, no amount).
+// The same totals in the page's transfer list: its items marked as a payer's total ("per"), not transfers.
 function pageSubtotals(html: string): Subtotal[] {
   const list = /<ul class="payments">([\s\S]*?)<\/ul>/.exec(html)?.[1] ?? "";
   const out: Subtotal[] = [];
   let transfers = 0;
-  for (const m of list.matchAll(/<li( class="[^"]*")?>([\s\S]*?)<\/li>/g)) {
-    if (m[1] === undefined) transfers++;
+  for (const m of list.matchAll(/<li class="([^"]*)">([\s\S]*?)<\/li>/g)) {
+    if (!(m[1] ?? "").split(" ").includes("per")) transfers++;
     else out.push({ after: transfers, text: textOfHtml(m[2] ?? "") });
   }
   return out;
@@ -252,9 +252,9 @@ function consoleReceivers(text: string): Receiver[] {
   return out;
 }
 
-// The "Who receives what" table under the sheet, one row per receiver.
+// The "Who receives what" table under the sheet (in its fold), one row per receiver.
 function pageReceivers(html: string): Receiver[] {
-  const start = html.indexOf("<h3>Who receives what</h3>");
+  const start = html.indexOf("<summary>Who receives what</summary>");
   if (start === -1) return [];
   const table = html.slice(start, html.indexOf("</table>", start));
   return tableRows(table)
@@ -275,7 +275,8 @@ function sendersAsPrinted(printed: string, page: string): boolean {
 // The transfers in a payments list (the sheet, or who owes whom).
 function pageTransfers(html: string): Transfer[] {
   const list = /<ul class="payments">([\s\S]*?)<\/ul>/.exec(html)?.[1] ?? "";
-  return [...list.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => {
+  // Each transfer is a receipt line ("pl", or "pl you" for your own); a payer's total ("pl per") is not one.
+  return [...list.matchAll(/<li class="pl(?: you)?">([\s\S]*?)<\/li>/g)].map((m) => {
     const li = m[1] ?? "";
     const links = [...li.matchAll(/<a [^>]*>([\s\S]*?)<\/a>/g)].map((a) => textOfHtml(a[1] ?? ""));
     return {

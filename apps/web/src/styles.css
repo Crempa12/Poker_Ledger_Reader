@@ -896,6 +896,57 @@ details.fold + details.fold {
   border-color: var(--down);
 }
 
+.pl .amount {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 16px;
+  white-space: nowrap;
+}
+/* The name of a sheet under its total: plain words, not a section label. */
+h2.sheet-title {
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+  margin: 0 0 8px;
+}
+/* What to settle: the two usual choices, then any night. */
+.pickrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 10px 0 22px;
+}
+.pickrow .pick select {
+  max-width: 100%;
+}
+.warnbox {
+  border-left: 3px solid var(--down);
+  padding: 8px 12px;
+  margin: 14px 0;
+}
+.warnbox p {
+  margin: 0 0 4px;
+}
+.folds {
+  margin: 8px 0 32px;
+}
+.folds details.fold:last-of-type,
+.folds details.fold {
+  border-bottom: 0;
+}
+.folds details.fold:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+/* Your side of what is owed, first on Who owes. */
+.mine {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
 /* ---------- tables ---------- */
 .tablewrap {
   overflow-x: auto;
@@ -998,6 +1049,18 @@ tr.dim td:not(.up):not(.down) {
   color: var(--ink-2);
   margin-top: 12px;
 }
+.whoyou {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.whoyou .hint {
+  margin: 0 0 8px;
+}
+.whoyou select {
+  min-width: 12rem;
+  max-width: 100%;
+}
 .board td.rk {
   width: 30px;
   font-family: var(--mono);
@@ -1078,6 +1141,12 @@ tr.dim td:not(.up):not(.down) {
   display: block;
   font-weight: 600;
 }
+.nights .when {
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--ink-2);
+  margin-left: 4px;
+}
 .nights .f {
   display: block;
   font-size: 14px;
@@ -1115,6 +1184,10 @@ tr.dim td:not(.up):not(.down) {
   font-family: var(--mono);
   font-size: 18px;
   font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.facts3 .sub {
   overflow-wrap: anywhere;
 }
 
@@ -1195,6 +1268,58 @@ tr.dim td:not(.up):not(.down) {
   font-size: 13px;
   color: var(--ink-2);
 }
+.paste h2 label {
+  cursor: pointer;
+}
+.paste textarea {
+  min-height: 56px;
+}
+/* "Choose files…": the file input, drawn as a quiet button. */
+.choosefile {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  font-size: 15px;
+  text-decoration: underline;
+  text-decoration-color: var(--ink-3);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.choosefile input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.choosefile:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.files > li > input[type="checkbox"],
+.found .sec-h input[type="checkbox"] {
+  margin-top: 3px;
+  width: 20px;
+  height: 20px;
+}
+.files .meta + .sub,
+.files .meta + p {
+  margin: 4px 0 0;
+}
+.tickdone {
+  color: var(--up);
+  font-weight: 600;
+  width: 20px;
+  text-align: center;
+}
+.found .slip .pl {
+  min-height: 40px;
+  padding: 8px 0;
+}
+.found .slip .pl .who {
+  font-weight: 600;
+}
+
 /* The one button that files everything, kept in reach above the bottom bar. */
 .filebar {
   position: sticky;

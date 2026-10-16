@@ -252,7 +252,7 @@ const SCOPED = new Set(["", "games", "settle", "style", "player", "adjust", "che
 // The pages laid out across a wide screen (a table or two columns); the others keep a readable measure.
 const WIDE = new Set(["", "style", "player", "check"]);
 // The pages that show a heading of their own (their h1).
-const PAGES_WITH_OWN_HEADING = new Set(["player", "game", "help", "games", "more"]);
+const PAGES_WITH_OWN_HEADING = new Set(["player", "game", "help", "games", "more", "settle", "owed"]);
 
 // The page's name (the browser tab and the page heading use it too).
 export function pageName(route: string[]): string {
