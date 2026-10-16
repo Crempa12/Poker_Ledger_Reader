@@ -241,8 +241,16 @@ function git(args: string[]): string {
 function main(): number {
   const argv = process.argv.slice(2);
   const at = argv.indexOf("--data");
-  const dataRoot = at >= 0 && argv[at + 1] ? resolve(argv[at + 1] ?? "") : resolve(REPO, "..", "Poker_Ledger_Reader");
-  if (!existsSync(dataRoot) || !statSync(dataRoot).isDirectory()) {
+  const given = at >= 0 && argv[at + 1] !== undefined && argv[at + 1] !== "";
+  const dataRoot = given ? resolve(argv[at + 1] ?? "") : resolve(REPO, "..", "Poker_Ledger_Reader");
+  const there = existsSync(dataRoot) && statSync(dataRoot).isDirectory();
+  // On a computer with no console app folder next to this one there is no real data to look for, so
+  // there is nothing to check (npm run verify still passes there). A folder named with --data must exist.
+  if (!there && !given) {
+    console.log(`privacy check: SKIPPED, there is no console app folder at ${dataRoot} to check against (use --data <folder>).`);
+    return 0;
+  }
+  if (!there) {
     console.error(`privacy check: no real data folder at --data ${dataRoot}`);
     return 2;
   }

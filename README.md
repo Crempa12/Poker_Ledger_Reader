@@ -136,7 +136,8 @@ npm run verify
 ```
 
 Type checks, the tests, and the privacy check (nothing git would commit may hold a
-real name, id, timestamp or note). `npm run parity` compares every number with the
+real name, id, timestamp or note; it is skipped, and says so, on a computer with no
+console app folder next to this one). `npm run parity` compares every number with the
 console app on made-up data; `npm run parity:real` does it on your real games
 (results stay on this computer). `reference/README.md` explains how the console
 app's numbers are produced for that.
