@@ -209,7 +209,9 @@ export interface CombinedDebt {
 
 // What each pair still owes across every saved sheet, biggest first. Pairs with the
 // same total keep their payer-then-payee byte order. The display names come from
-// the first sheet (in print order) that has the pair.
+// the first sheet (in print order) that has the pair. (The C++ printCombinedUnpaid takes
+// them from the last row its unordered_map visits, an order no other build can repeat;
+// the two differ only when one pair was saved under different display names.)
 export function combinedUnpaid(balances: Balances): CombinedDebt[] {
   const byPair = new Map<string, CombinedDebt>();
   for (const b of sortedRows(balances, false)) {

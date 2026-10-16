@@ -1,3 +1,5 @@
+import { handlog } from "@plr/core";
+
 import type { Ctx } from "../context.ts";
 import { clockTime, longDate, moneyCents, moneySignedCents, plural, toneOfCents } from "../format.ts";
 import { resultsOf } from "../game.ts";
@@ -21,7 +23,7 @@ export function Games({ ctx }: { ctx: Ctx }) {
                   <strong>{longDate(g.start, tz)}</strong>
                   <span className="muted small">
                     {" "}
-                    {clockTime(g.start, tz)} · {g.folder}
+                    {clockTime(g.start, tz)} · {g.folder} · {handlog.logIdOf(g)}
                   </span>
                 </span>
                 <span className="what muted small">

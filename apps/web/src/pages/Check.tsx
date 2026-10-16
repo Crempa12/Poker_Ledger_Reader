@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { moneySigned, players, seats } from "@plr/core";
 
+import { Notes } from "../components/handlines.tsx";
 import { useSaver, type Saver } from "../components/saver.tsx";
 import type { Ctx } from "../context.ts";
 import { plural } from "../format.ts";
+import { useHandLogs } from "../handlogs.ts";
 import { chosenOption, confirmNames } from "../saved.ts";
 import { SavedSeatOwners, SharedSeats } from "./Seats.tsx";
 
-// How many things the console app would ask you to look at.
+// How many things the console app would ask you to look at: the alerts on its menu (new
+// names, seats to check, duplicates found, as menus 4, 20 and 16 flag them) and the
+// ledgers that do not balance (the startup's WARNING lines).
 export function checkCount(ctx: Ctx): number {
   const { world, view } = ctx;
-  return view.mergeSuggestions.length + view.seatFlags.length + world.duplicates.filter((d) => !d.skipped || d.kind === "overlap").length + world.messages.filter((m) => m.startsWith("WARNING")).length;
+  return view.mergeSuggestions.length + view.seatFlags.length + world.duplicates.length + world.messages.filter((m) => m.startsWith("WARNING")).length;
 }
 
 // Poker result over every game, the way the console app prints it next to a name.
@@ -21,10 +25,11 @@ function netOf(ctx: Ctx, normalized: string): string {
 
 export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   const { world, view } = ctx;
-  const unbalanced = world.messages.filter((m) => m.startsWith("WARNING"));
-  const notes = world.messages.filter((m) => !m.startsWith("WARNING"));
   // Kept here, so the answer to the last question still shows once the card is gone.
   const answers = useSaver(ctx, onSaved);
+  // The startup's hand-log lines (skipped and duplicate logs) are the same for every scope; they show once the results are read.
+  const hand = useHandLogs(ctx);
+  const handNotes = hand.status === "ready" && hand.data !== undefined ? hand.data.messages : [];
 
   return (
     <>
@@ -57,22 +62,35 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
               <li key={i}>
                 <code>{d.path}</code> <span className="muted">{d.kind === "overlap" ? `shares ${plural(d.sharedRows, "sit-down")} with` : d.kind === "identical" ? "is a copy of" : "is an earlier export of"}</span>{" "}
                 <code>{d.otherPath}</code> {d.skipped ? <span className="tag">not counted</span> : <span className="tag down">counted twice?</span>}
+                {d.kind === "overlap" ? (
+                  <span className="muted small">
+                    {" "}
+                    Both files are still counted. If they are the same game, delete the older export.
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>
         </section>
       ) : null}
 
-      {unbalanced.length > 0 || notes.length > 0 ? (
+      {world.messages.length > 0 ? (
         <section className="card">
           <h3>Ledger notes</h3>
           <ul className="plain">
-            {[...unbalanced, ...notes].map((m, i) => (
+            {world.messages.map((m, i) => (
               <li key={i} className={m.startsWith("WARNING") ? "down" : "muted"}>
                 {m}
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {handNotes.length > 0 ? (
+        <section className="card">
+          <h3>Hand logs · Play style</h3>
+          <Notes messages={handNotes} />
         </section>
       ) : null}
 

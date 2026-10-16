@@ -1,3 +1,5 @@
+import { handlog } from "@plr/core";
+
 import type { Ctx } from "../context.ts";
 import { SeatEditor } from "./Seats.tsx";
 import { clockTime, longDate, moneyCents, moneySignedCents, plural, toneOfCents } from "../format.ts";
@@ -22,7 +24,8 @@ export function GamePage({ ctx, id, onSaved }: { ctx: Ctx; id: string; onSaved: 
       <section className="card">
         <h1>{longDate(game.start, tz)}</h1>
         <p className="muted small">
-          {clockTime(game.start, tz)} – {clockTime(game.end, tz)} · {game.folder} · {plural(results.length, "player")} ·{" "}
+          {clockTime(game.start, tz)} – {clockTime(game.end, tz)} · {game.folder} · {handlog.logIdOf(game)} ·{" "}
+          {plural(results.length, "player")} ·{" "}
           {moneyCents(game.totalBuyInCents)} bought in
           {game.skippedRows > 0 ? ` · ${plural(game.skippedRows, "never-played seat")} left out` : ""}
         </p>

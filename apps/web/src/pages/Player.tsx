@@ -51,7 +51,16 @@ export function PlayerPage({ ctx, normalized }: { ctx: Ctx; normalized: string }
           <Tile label="Best night" value={moneySigned(d.biggestWin)} tone={toneOf(d.biggestWin)} />
           <Tile label="Worst night" value={moneySigned(d.biggestLoss)} tone={toneOf(d.biggestLoss)} />
           {p.adjustmentsCents !== 0 ? (
-            <Tile label="Payments & corrections" value={moneySignedCents(p.adjustmentsCents)} tone={toneOfCents(p.adjustmentsCents)} />
+            <>
+              <Tile label="Payments & corrections" value={moneySignedCents(p.adjustmentsCents)} tone={toneOfCents(p.adjustmentsCents)} />
+              {/* The console's header line: poker net plus payments and corrections, the figure a settlement sheet uses. */}
+              <Tile
+                label="Balance"
+                value={moneySigned(players.balanceDollars(p))}
+                tone={toneOf(players.balanceDollars(p))}
+                sub="net plus payments"
+              />
+            </>
           ) : null}
         </div>
       </section>
@@ -103,6 +112,7 @@ export function PlayerPage({ ctx, normalized }: { ctx: Ctx; normalized: string }
               <tr>
                 <th>Date</th>
                 <th className="hide-xs">Folder</th>
+                <th className="num hide-xs">Buy-ins</th>
                 <th className="num">Result</th>
                 <th className="num">Running</th>
               </tr>
@@ -120,6 +130,7 @@ export function PlayerPage({ ctx, normalized }: { ctx: Ctx; normalized: string }
                     )}
                   </td>
                   <td className="hide-xs muted">{h.folder}</td>
+                  <td className="num hide-xs muted">{h.adjustment ? "-" : h.buyIns}</td>
                   <td className={`num ${toneOfCents(h.netCents)}`}>{moneySignedCents(h.netCents)}</td>
                   <td className={`num ${toneOfCents(runningCents)}`}>{h.adjustment ? "" : moneySignedCents(runningCents)}</td>
                 </tr>

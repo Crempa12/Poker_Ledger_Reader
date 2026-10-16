@@ -138,6 +138,7 @@ export function SharedSeats({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void })
       <p className="muted small">
         PokerNow credits a seat to the name and account it was bought on. When someone played on a friend's account or under a
         friend's name, hand the seat to the person whose money it was. Someone who only changed nickname is a merge instead.
+        Until you answer, each seat counts for the name on it.
       </p>
       <ul className="plain questions">
         {groups.map((g) => {

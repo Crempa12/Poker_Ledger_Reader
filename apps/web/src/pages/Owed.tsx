@@ -60,8 +60,8 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                     <tr>
                       <th>From</th>
                       <th>To</th>
-                      <th className="num hide-xs">Amount</th>
-                      <th className="num">Left</th>
+                      <th className="num hide-xs">Owed</th>
+                      <th className="num">Still owed</th>
                       <th className="hide-xs">Status</th>
                       {ctx.payload.canWrite ? <th aria-label="Record a payment" /> : null}
                     </tr>

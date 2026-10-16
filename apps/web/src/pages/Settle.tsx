@@ -1,19 +1,9 @@
 import { useState } from "react";
-import {
-  boardFor,
-  players,
-  sessions,
-  settlement,
-  util,
-  type PaymentPreference,
-  type PlayerStats,
-  type SettlementEntry,
-  type SettlementReason,
-} from "@plr/core";
+import { boardFor, sessions, settlement, type PaymentPreference, type PlayerStats, type SettlementEntry, type SettlementReason } from "@plr/core";
 
 import { useSaver } from "../components/saver.tsx";
 import { dayScope, type Ctx } from "../context.ts";
-import { longDate, money, moneyCents, plural, shortDate } from "../format.ts";
+import { longDate, moneyCents, plural, shortDate } from "../format.ts";
 import { href } from "../router.ts";
 import {
   chosenOption,
@@ -25,6 +15,7 @@ import {
   pinsToWrite,
   writeSaved,
 } from "../saved.ts";
+import { balanceRows, copyText, offByLines, printOrder, receiversOf, scopeWords, sheetCsv, sheetRows, sheetSummary } from "../settle-sheet.ts";
 
 const TAG: Record<SettlementReason, string> = { preference: "pinned", requested: "requested", banker: "banker", auto: "" };
 
@@ -71,30 +62,32 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
   const requests = forSheet(asked, suggested);
 
   const board = boardFor(world, games, target);
-  const byBalance = board.map((p) => ({ p, dollars: players.balanceDollars(p) }));
-  const losers = byBalance.filter((b) => b.dollars < -util.EPSILON_DOLLARS).map((b) => b.p);
-  const winners = byBalance.filter((b) => b.dollars > util.EPSILON_DOLLARS).map((b) => b.p);
+  // Menu 5's balances: every player, highest balance first. Who owes and who is owed here are the
+  // only choices for a request, in that order.
+  const balances = balanceRows(board);
+  const losers = balances.filter((b) => b.owes).map((b) => b.p);
+  const winners = balances.filter((b) => b.owed).map((b) => b.p);
   // As menu 5 does it: the pins saved when the sheet was started, then this sheet's
   // requests. A pair pinned from here counts as a request, as the console keeps it.
   // With a banker there are no requests.
   const prefs = banker !== "" ? world.prefs : [...world.prefs.filter((p) => !requests.pinnedHere.includes(pairOf(p))), ...requests.list];
   const sheet = settlement.calculateSheet(board, prefs, banker);
+  // The transfers as menu 5 prints them: grouped by payer, the biggest payers first, each payer's total under their last line.
+  const entries = printOrder(sheet.entries);
+  const rows = sheetRows(sheet.entries);
+  // Who receives what (menu 5's block under the sheet): each receiver's total and who sends it.
+  const receivers = receiversOf(sheet.entries);
   // Menu 5's hint: payments and corrections saved under all folders that this sheet leaves out.
   const notHere = notOnThisSheet(world.adjustments, target);
-  const balances = byBalance.filter((b) => Math.abs(b.dollars) >= 0.005).sort((a, b) => a.dollars - b.dollars);
   const pinsHere = world.prefs.filter(
     (p) => losers.some((l) => l.normalizedName === p.payerNormalized) && winners.some((w) => w.normalizedName === p.payeeNormalized),
   );
 
-  const title = game !== undefined ? `Game on ${longDate(game.start, tz)}` : `Everything in scope (${plural(view.games.length, "game")})`;
-  const text = [
-    `Poker settle-up: ${title}`,
-    ...sheet.entries.map((e) => `${e.fromDisplay} → ${e.toDisplay}: ${moneyCents(e.amountCents)}`),
-  ].join("\n");
+  const title = game !== undefined ? `Game on ${longDate(game.start, tz)}` : `Everything in ${scopeWords(ctx.choice)}, ${plural(games.length, "game")}`;
 
   const copy = (): void => {
     navigator.clipboard
-      .writeText(text)
+      .writeText(copyText(title, sheet.entries))
       .then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -128,8 +121,8 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
         </div>
         {banker !== "" ? (
           <p className="muted small">
-            Banker mode is on: everyone settles through {ctx.nameOf(banker)} · change it in{" "}
-            {ctx.payload.canWrite ? <a href={href("settings")}>Settings</a> : "Settings"}
+            Banker mode is on: everyone settles through {ctx.nameOf(banker)}. Pins and one-off requests are skipped. Turn the banker off to use
+            them: change it in {ctx.payload.canWrite ? <a href={href("settings")}>Settings</a> : "Settings"}
           </p>
         ) : pinsHere.length > 0 ? (
           <p className="muted small">
@@ -164,33 +157,65 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
             folder to include them).
           </p>
         ) : null}
-        {sheet.entries.length === 0 ? (
+        {board.length === 0 ? (
+          <p className="muted">No players found in that selection.</p>
+        ) : entries.length === 0 ? (
           <p className="muted">Nobody owes anything here.</p>
         ) : (
           <>
+            <p className="muted small">{sheetSummary(entries)}</p>
             <ul className="payments">
-              {sheet.entries.map((e, i) => (
-                <li key={i}>
-                  <a href={href("player", e.fromNormalized)}>{e.fromDisplay}</a>
-                  <span className="arrow" aria-label="pays">→</span>
-                  <a href={href("player", e.toNormalized)}>{e.toDisplay}</a>
-                  <strong className="amount">{moneyCents(e.amountCents)}</strong>
-                  {TAG[e.reason] !== "" ? <span className="tag">{TAG[e.reason]}</span> : null}
-                </li>
-              ))}
+              {rows.map((row, i) =>
+                row.kind === "total" ? (
+                  <li key={i} className="muted small">
+                    {row.text}
+                  </li>
+                ) : (
+                  <li key={i}>
+                    <a href={href("player", row.entry.fromNormalized)}>{row.entry.fromDisplay}</a>
+                    <span className="arrow" aria-label="pays">→</span>
+                    <a href={href("player", row.entry.toNormalized)}>{row.entry.toDisplay}</a>
+                    <strong className="amount">{moneyCents(row.entry.amountCents)}</strong>
+                    {TAG[row.entry.reason] !== "" ? <span className="tag">{TAG[row.entry.reason]}</span> : null}
+                  </li>
+                ),
+              )}
             </ul>
             <div className="controls">
               <button onClick={copy}>{copied ? "Copied" : "Copy for the group chat"}</button>
-              <button className="ghost" onClick={() => download("settlements.csv", settlement.settlementsCSV(sheet.entries))}>
+              <button className="ghost" onClick={() => download("settlements.csv", sheetCsv(sheet.entries))}>
                 Download CSV
               </button>
+            </div>
+            <h3>Who receives what</h3>
+            <div className="tablewrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Receiver</th>
+                    <th className="num">Gets</th>
+                    <th>From</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {receivers.map((r) => (
+                    <tr key={r.name}>
+                      <td>{r.name}</td>
+                      <td className="num">{moneyCents(r.cents)}</td>
+                      <td className="muted">{r.from.join(", ")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </>
         )}
         {sheet.warnings.map((w, i) => (
-          <p key={i} className="down small">
-            The balances add up to {moneyCents(w.totalCents)} instead of $0.00, so this sheet is off by that much.
-          </p>
+          <div key={i} className="down small">
+            {offByLines(w).map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
         ))}
       </section>
 
@@ -200,16 +225,28 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
           <p className="muted small">
             Poker results plus payments and corrections (menu 17) · <a href={href("adjust")}>record a payment outside the sheet, or a correction</a>
           </p>
-          <ul className="balances">
-            {balances.map(({ p, dollars }) => (
-              <li key={p.normalizedName}>
-                <span>{p.displayName}</span>
-                <span className={dollars < 0 ? "down" : "up"}>
-                  {dollars < 0 ? `owes ${money(-dollars)}` : `is owed ${money(dollars)}`}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th className="num">Poker net</th>
+                  <th className="num">Payments</th>
+                  <th>Settles as</th>
+                </tr>
+              </thead>
+              <tbody>
+                {balances.map((b) => (
+                  <tr key={b.p.normalizedName} className={b.tone === "even" ? "dim" : ""}>
+                    <td>{b.p.displayName}</td>
+                    <td className="num">{b.poker}</td>
+                    <td className="num">{b.payments}</td>
+                    <td className={b.tone}>{b.settles}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       ) : null}
       {sheet.entries.length > 0 ? (
@@ -372,14 +409,15 @@ function SaveSheet({
     const id = name.trim();
     if (id === "") return setNote({ ok: false, text: "Give the sheet a name first." });
     const exists = [...ctx.world.balances.values()].some((b) => b.sessionId === id);
-    if (exists && !window.confirm(`A sheet named "${id}" is already saved. Add these amounts on top of it?`)) return;
+    if (exists && !window.confirm(`A sheet named "${id}" is already saved. Add these amounts on top of it?`))
+      return setNote({ ok: false, text: "Nothing saved. Pick a different sheet name next time." });
     setBusy(true);
     setNote(null);
     try {
       const next = sessions.addSettlementBatch(ctx.world.balances, id, entries);
       // false: the person declined the question writeSaved asks, so the sheet is not saved.
       if (!(await writeSaved(ctx, "session_balances.csv", sessions.serializeSessionBalances(next)))) return;
-      setNote({ ok: true, text: `Saved ${plural(entries.length, "payment")} under "${id}".` });
+      setNote({ ok: true, text: `Saved ${plural(entries.length, "balance")} under "${id}".` });
       onSaved();
     } catch (err) {
       setNote({ ok: false, text: errorText(err) });
