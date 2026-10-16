@@ -1563,11 +1563,14 @@ td button.link:hover {
   display: flex;
   flex-wrap: nowrap;
   gap: 0;
-  margin: -2px 0 12px;
-  padding: 6px 4px 0;
+  margin: 4px 0 18px;
   border-bottom: 1px solid var(--rule);
   overflow-x: auto;
   scrollbar-width: none;
+}
+/* The row scrolls, which clips anything drawn outside it: the focus ring is drawn inside each tab. */
+.subtabs a:focus-visible {
+  outline-offset: -3px;
 }
 .subtabs a {
   display: inline-flex;
@@ -1785,6 +1788,12 @@ td button.link:hover {
     font-size: 14px;
     white-space: nowrap;
     overflow-wrap: normal;
+  }
+}
+@media (max-width: 360px) {
+  .facts3 .big {
+    font-size: 13px;
+    letter-spacing: -0.02em;
   }
 }
 /* Desktop: the five pages as a top row; no bottom bar. */

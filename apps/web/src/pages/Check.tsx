@@ -43,7 +43,7 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 
       {view.mergeSuggestions.length > 0 ? (
         <NewNames ctx={ctx} saver={answers} />
-      ) : answers.shown !== null ? (
+      ) : answers.said ? (
         <section className="sec">
           <h2>New names to check · menu 4</h2>
           {answers.shown}

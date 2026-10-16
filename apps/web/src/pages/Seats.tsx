@@ -132,7 +132,7 @@ export function SharedSeats({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void })
   }
 
   if (groups.length === 0) {
-    return saver.shown === null ? null : (
+    return !saver.said ? null : (
       <section className="sec">
         <h2>Seats that look shared · menu 20</h2>
         {saver.shown}

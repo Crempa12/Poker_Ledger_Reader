@@ -37,7 +37,13 @@ export function Overview({ ctx, onSaved = () => undefined }: { ctx: Ctx; onSaved
     return <NoGames ctx={ctx} />;
   }
   if (view.games.length === 0) {
-    return <p className="lede">No games in this scope. Pick another folder or date range above.</p>;
+    return (
+      <>
+        <p className="lede">No games in this scope. Pick another folder or date range above.</p>
+        {/* Who owes is for every game, so what you owe is said even here. */}
+        {ctx.me !== "" ? <OwesLine ctx={ctx} you={ctx.payload.canWrite ? null : ctx.nameOf(ctx.me)} /> : null}
+      </>
+    );
   }
 
   const board = view.board;

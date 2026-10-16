@@ -230,13 +230,18 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
               <button className="block" onClick={copy}>
                 {copied ? "Copied" : "Copy for the group chat"}
               </button>
+              <span className="sr-only" role="status">
+                {copied ? "Copied" : ""}
+              </span>
               <button className="ghost block" onClick={() => download("settlements.csv", sheetCsv(sheet.entries))}>
                 Download CSV
               </button>
             </div>
             {copyFailed ? (
               <>
-                <p className="small down">This browser would not copy it. Select the text below and copy it by hand.</p>
+                <p className="small down" role="alert">
+                  This browser would not copy it. Select the text below and copy it by hand.
+                </p>
                 <textarea
                   className="links"
                   readOnly

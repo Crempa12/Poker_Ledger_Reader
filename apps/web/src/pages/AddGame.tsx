@@ -46,14 +46,18 @@ interface Item {
   picked: boolean; // ticked to be filed by the one button
   source: "link" | "file";
   bytes?: number;
+  filedAt?: number; // the data's loadedAt when this page filed it (a reload after that has it in the data)
 }
 
-// The newest copy of each game's file in Downloads that is not in the data yet (filed says), nor on this page
-// (or is bigger than the copy on this page that is not filed yet: a log downloaded again after the night ended).
+// The newest copy of each game's file in Downloads that is not in the data yet (filed says), nor on this page.
+// A bigger copy takes the place of a smaller one on the page that is not filed yet (a log downloaded again
+// after the night ended), or of one this page filed that the data no longer has (moved out to make room for
+// the bigger one, then read again: loadedAt is that read).
 export function freshDownloads(
   files: readonly Downloaded[],
-  items: readonly Pick<Item, "key" | "source" | "status" | "bytes">[],
+  items: readonly Pick<Item, "key" | "source" | "status" | "bytes" | "filedAt">[],
   filed: (kind: Downloaded["kind"], gameId: string) => boolean,
+  loadedAt: number,
 ): Downloaded[] {
   const seen = new Set<string>();
   return files.filter((f) => {
@@ -62,7 +66,9 @@ export function freshDownloads(
     seen.add(key);
     if (filed(f.kind, f.gameId)) return false;
     const here = items.find((x) => x.key === key);
-    return here === undefined || (here.source === "file" && (here.status === "ready" || here.status === "error") && (here.bytes ?? 0) < f.bytes);
+    if (here === undefined) return true;
+    if (here.source !== "file" || (here.bytes ?? 0) >= f.bytes) return false;
+    return here.status === "ready" || here.status === "error" || (here.status === "saved" && (here.filedAt ?? Infinity) < loadedAt);
   });
 }
 
@@ -142,13 +148,15 @@ export function AddGame({ ctx, onSaved, first = false }: { ctx: Ctx; onSaved: ()
     };
   }, [ctx.payload.loadedAt, ctx.payload.canWrite]);
 
-  const fresh = freshDownloads(downloads?.files ?? [], items, (kind, gameId) => findExisting(ctx, kind, gameId) !== null);
+  const fresh = freshDownloads(downloads?.files ?? [], items, (kind, gameId) => findExisting(ctx, kind, gameId) !== null, ctx.payload.loadedAt);
   // Each new file in Downloads is read and put on the page, ticked, as menu 19 takes every PokerNow file
   // it finds there. A file is read once, by its name and size (unticking it keeps it off the button).
   const reading = useRef(new Set<string>());
   const readKey = (f: Downloaded): string => `${f.name}|${f.bytes}`;
   const freshKey = fresh.map(readKey).join("\n");
   useEffect(() => {
+    // Not while the button is filing: a file swapped under the batch would be marked filed with the other copy.
+    if (busy) return;
     const todo = fresh.filter((f) => !reading.current.has(readKey(f)));
     if (todo.length === 0) return;
     for (const f of todo) reading.current.add(readKey(f));
@@ -166,7 +174,7 @@ export function AddGame({ ctx, onSaved, first = false }: { ctx: Ctx; onSaved: ()
       if (why.length > 0) setProblems((p) => [...p, ...why]);
     })();
     // fresh is worked out each render; its file names say when it changed.
-  }, [freshKey]);
+  }, [freshKey, busy]);
 
   if (!ctx.payload.canWrite) {
     return (
@@ -217,6 +225,7 @@ export function AddGame({ ctx, onSaved, first = false }: { ctx: Ctx; onSaved: ()
         ...item,
         folder:
           item.folder ??
+          (item.kind === "poker_now_log" && inherited !== "" ? inherited : undefined) ??
           keep?.folder ??
           (item.kind === "poker_now_log" && inherited === ""
             ? (list.find((x) => x.kind === "ledger" && x.gameId === item.gameId)?.folder ?? suggested)
@@ -298,7 +307,7 @@ export function AddGame({ ctx, onSaved, first = false }: { ctx: Ctx; onSaved: ()
       basis.current = r.basis;
       const notes = afterSaveNotes(ctx, item, r.saved, items);
       const message = [`filed as ${savedLabel(r.saved, gamesFolder)}`, ...notes].join(" · ");
-      setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saved", picked: false, message } : x)));
+      setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saved", picked: false, message, filedAt: ctx.payload.loadedAt } : x)));
       if (reload) void onSaved();
       return null;
     } catch (err) {
@@ -339,6 +348,8 @@ export function AddGame({ ctx, onSaved, first = false }: { ctx: Ctx; onSaved: ()
       // On a first run, Standings takes this page's place once a game is in, so the rest is said above it.
       if (first && done > 0 && failed.length > 0) {
         setNotice(`Filed ${done} of ${toFile.length}. Not filed: ${failed.join("; ")}. Add ${failed.length === 1 ? "it" : "them"} again on + Add.`);
+      } else if (failed.length === 0) {
+        setNotice(null); // everything this time: an earlier "not filed" no longer holds
       }
       setFiled(
         done === 0
@@ -350,6 +361,8 @@ export function AddGame({ ctx, onSaved, first = false }: { ctx: Ctx; onSaved: ()
     } finally {
       saving.current--;
       setBusy(false);
+      setChoosing(false);
+      setDraft(null);
       void onSaved();
     }
   };
@@ -854,7 +867,15 @@ export function FolderPicker({
       <span className="row tight">
         <input type="text" value={value} placeholder="e.g. Nov 2026" onChange={(e) => onChange(e.target.value)} disabled={disabled} aria-label="Folder name" />
         {folders.length > 0 ? (
-          <button className="link" onClick={() => setTyping(false)} disabled={disabled}>
+          <button
+            className="link"
+            onClick={() => {
+              setTyping(false);
+              // The list shows a folder of its own for a blank name: the files go to the one it shows.
+              if (value.trim() === "" && folders[0] !== undefined) onChange(folders[0]);
+            }}
+            disabled={disabled}
+          >
             pick existing
           </button>
         ) : null}

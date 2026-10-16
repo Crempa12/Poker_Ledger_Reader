@@ -25,7 +25,9 @@ export function CopyForChat({ text, label = "Copy for the group chat", what }: {
       </div>
       {failed ? (
         <>
-          <p className="down small">This browser would not copy it. Select the text below and copy it by hand.</p>
+          <p className="down small" role="alert">
+            This browser would not copy it. Select the text below and copy it by hand.
+          </p>
           <textarea
             className="links"
             readOnly

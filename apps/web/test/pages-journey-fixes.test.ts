@@ -207,13 +207,17 @@ describe("the redesign's review fixes", () => {
     const early = { key: "poker_now_log_pglMadeUpLog00001", source: "file" as const, status: "ready" as const, bytes: 100 };
     const onPage = [early];
     const none = (): boolean => false;
+    const bigger = file("poker_now_log_pglMadeUpLog00001 (1).csv", 300);
     // Newest first: the whole log, downloaded again, then the early one.
-    expect(freshDownloads([file("poker_now_log_pglMadeUpLog00001 (1).csv", 300), file("poker_now_log_pglMadeUpLog00001.csv", 100)], onPage, none).map((f) => f.name)).toEqual([
-      "poker_now_log_pglMadeUpLog00001 (1).csv",
-    ]);
-    expect(freshDownloads([file("poker_now_log_pglMadeUpLog00001.csv", 100)], onPage, none)).toEqual([]);
-    // Filed already, or filed from this page: never listed again.
-    expect(freshDownloads([file("poker_now_log_pglMadeUpLog00001 (1).csv", 300)], onPage, () => true)).toEqual([]);
-    expect(freshDownloads([file("poker_now_log_pglMadeUpLog00001 (1).csv", 300)], [{ ...early, status: "saved" as const }], none)).toEqual([]);
+    expect(freshDownloads([bigger, file("poker_now_log_pglMadeUpLog00001.csv", 100)], onPage, none, 1).map((f) => f.name)).toEqual([bigger.name]);
+    expect(freshDownloads([file("poker_now_log_pglMadeUpLog00001.csv", 100)], onPage, none, 1)).toEqual([]);
+    // Filed already: never listed again.
+    expect(freshDownloads([bigger], onPage, () => true, 1)).toEqual([]);
+    // Filed from this page: not listed again until the data is read after that and no longer has it (the
+    // smaller copy was moved out to make room for the bigger one).
+    const filedHere = { ...early, status: "saved" as const, filedAt: 5 };
+    expect(freshDownloads([bigger], [filedHere], none, 5)).toEqual([]);
+    expect(freshDownloads([bigger], [filedHere], () => true, 9)).toEqual([]);
+    expect(freshDownloads([bigger], [filedHere], none, 9).map((f) => f.name)).toEqual([bigger.name]);
   });
 });

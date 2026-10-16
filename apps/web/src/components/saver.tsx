@@ -6,7 +6,8 @@ import { errorText, writeSaved, type SavedFile } from "../saved.ts";
 export interface Saver {
   busy: boolean;
   run: (file: SavedFile, text: string, done: string) => Promise<boolean>;
-  shown: ReactNode; // the outcome of the last save, or null
+  shown: ReactNode; // the outcome of the last save (an empty live region until there is one)
+  said: boolean; // whether there is an outcome to show yet
 }
 
 // One Saved_Data save at a time, with the outcome to show under the card. run says
@@ -31,11 +32,16 @@ export function useSaver(ctx: Ctx, onSaved: () => void | Promise<void>): Saver {
       setBusy(false);
     }
   };
-  const shown =
-    note === null ? null : (
-      <p className={note.ok ? "up small" : "down small"} role={note.ok ? "status" : "alert"}>
-        {note.text}
-      </p>
-    );
-  return { busy, run, shown };
+  // The status region is on the page before the outcome is written into it, so a screen reader reads it out.
+  const shown = (
+    <>
+      <div role="status">{note !== null && note.ok ? <p className="up small">{note.text}</p> : null}</div>
+      {note !== null && !note.ok ? (
+        <p className="down small" role="alert">
+          {note.text}
+        </p>
+      ) : null}
+    </>
+  );
+  return { busy, run, shown, said: note !== null };
 }
