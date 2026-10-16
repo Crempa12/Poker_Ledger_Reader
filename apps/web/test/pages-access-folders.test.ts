@@ -94,13 +94,15 @@ describe("the README and the starter say what to install", () => {
 
 describe("the page names", () => {
   it("names each page as the tab bar does", () => {
-    expect(pageName([])).toBe("Overview");
+    expect(pageName([])).toBe("Standings");
+    expect(pageName(["games"])).toBe("Nights");
+    expect(pageName(["more"])).toBe("More");
     expect(pageName(["settle"])).toBe("Settle up");
     expect(pageName(["owed"])).toBe("Who owes");
     expect(pageName(["style", "games"])).toBe("Play style");
     expect(pageName(["adjust"])).toBe("Payments & corrections");
     expect(pageName(["player", "della"])).toBe("Player");
-    expect(pageName(["game", "pgl0"])).toBe("Game");
+    expect(pageName(["game", "pgl0"])).toBe("Night");
     expect(pageName(["nowhere"])).toBe("Page not found");
   });
 });
@@ -135,9 +137,10 @@ describe("the colour pairs in styles.css", () => {
   const tokens = (text: string): Record<string, string> =>
     Object.fromEntries([...text.matchAll(/(--[\w-]+):\s*(#[0-9a-fA-F]{3,6})\s*;/g)].map((m) => [m[1] ?? "", (m[2] ?? "").toLowerCase()]));
   const light = tokens(block(/:root\s*\{([^}]*)\}/));
-  const dark = { ...light, ...tokens(block(/@media \(prefers-color-scheme: dark\) \{\s*:root \{([^}]*)\}/)) };
-  const badge = /\.badge \{[^}]*color: (#[0-9a-fA-F]{6})/.exec(css)?.[1]?.toLowerCase() ?? "";
-  const badgeFill = /\.badge \{[^}]*background: (#[0-9a-fA-F]{6})/.exec(css)?.[1]?.toLowerCase() ?? "";
+  // Dark comes twice: the device's (unless More forces light) and forced from More. They must be the same.
+  const deviceDark = tokens(block(/@media \(prefers-color-scheme: dark\) \{\s*:root:not\(\[data-theme="light"\]\) \{([^}]*)\}/));
+  const forcedDark = tokens(block(/:root\[data-theme="dark"\]\s*\{([^}]*)\}/));
+  const dark = { ...light, ...deviceDark };
 
   function luminance(hex: string): number {
     const short = hex.replace("#", "");
@@ -158,15 +161,20 @@ describe("the colour pairs in styles.css", () => {
     ["dark", dark],
   ] as const) {
     const pairs: [string, string, string][] = [
-      ["text on card", "--text", "--card"],
-      ["muted on card (dim rows, notes)", "--muted", "--card"],
-      ["muted on page background", "--muted", "--bg"],
-      ["muted on the highlighted row", "--muted", "--me"],
-      ["green on card (amounts, paid)", "--up", "--card"],
-      ["green on page background", "--up", "--bg"],
-      ["green on the highlighted row", "--up", "--me"],
-      ["red status word (open, partial) on card", "--down", "--card"],
-      ["button label on the accent", "--on-accent", "--accent"],
+      ["text on the page", "--ink", "--paper"],
+      ["text on a field or a pressed row", "--ink", "--paper-2"],
+      ["text on the highlighted row (yours)", "--ink", "--you"],
+      ["secondary text on the page (dim rows, notes)", "--ink-2", "--paper"],
+      ["secondary text on a field", "--ink-2", "--paper-2"],
+      ["secondary text on the highlighted row", "--ink-2", "--you"],
+      ["green on the page (amounts won, paid)", "--up", "--paper"],
+      ["green on a field", "--up", "--paper-2"],
+      ["green on the highlighted row", "--up", "--you"],
+      ["red on the page (amounts lost, open, partial)", "--down", "--paper"],
+      ["red on a field", "--down", "--paper-2"],
+      ["red on the highlighted row", "--down", "--you"],
+      ["the warning colour on the page", "--warn", "--paper"],
+      ["a button's label", "--on-solid", "--solid"],
     ];
     for (const [what, fg, bg] of pairs) {
       it(`${name}: ${what} is at least 4.5:1`, () => {
@@ -175,9 +183,19 @@ describe("the colour pairs in styles.css", () => {
     }
   }
 
-  it("the badge's count is dark on amber in both themes (8.2:1)", () => {
-    expect(badge).toBe("#16181d");
-    expect(contrast(badge, badgeFill)).toBeGreaterThanOrEqual(4.5);
+  it("the forced dark theme is the device's dark theme, colour for colour", () => {
+    expect(Object.keys(deviceDark).length).toBeGreaterThan(10);
+    expect(forcedDark).toEqual(deviceDark);
+  });
+
+  it("the dotted leaders and slip edges (never text) are at least 3:1, as a line must be", () => {
+    expect(contrast(light["--ink-3"] ?? "", light["--paper"] ?? "")).toBeGreaterThanOrEqual(3);
+    expect(contrast(dark["--ink-3"] ?? "", dark["--paper"] ?? "")).toBeGreaterThanOrEqual(3);
+  });
+
+  it("the badge's count is ink on the highlighter in both themes", () => {
+    expect(/\.badge \{[^}]*color: var\(--ink\)/.test(css)).toBe(true);
+    expect(/\.badge \{[^}]*background: var\(--you\)/.test(css)).toBe(true);
   });
 
   it("settled and even rows are muted by colour, not by opacity", () => {

@@ -1,6 +1,6 @@
 // The results pages rendered from the made-up data and checked against the console app's recorded
-// output: the leaderboard row by row (menu 2) for every scope the reference holds, the overview's box
-// facts (startup.txt), the payments & corrections list with its verdict line, and each player's page:
+// output: the standings row by row (menu 2) for every scope the reference holds, the startup box's
+// facts (startup.txt, on More and under the standings), the payments & corrections list with its verdict line, and each player's page:
 // the tiles, the header line, and every night row against that player's history_<n>.txt (menu 3).
 // Made-up data only (fixtures/synthetic and fixtures/synthetic-edge).
 import { readFileSync, readdirSync } from "node:fs";
@@ -15,6 +15,7 @@ import { loadDataRoot } from "../../../tools/load.ts";
 import { handWorldFromInputs, snapshotHandLogs } from "../server/handlogs.ts";
 import { buildCtx, type Ctx } from "../src/context.ts";
 import { EVERYTHING, type Payload, type ScopeChoice } from "../src/data.ts";
+import { More } from "../src/pages/More.tsx";
 import { Overview } from "../src/pages/Overview.tsx";
 import { PlayerPage } from "../src/pages/Player.tsx";
 
@@ -224,14 +225,17 @@ function rowsOf(table: string): { open: string; inner: string }[] {
 // The text of each cell of a row, in order.
 const cellsOf = (inner: string): string[] => [...inner.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((m) => textOf(at(m, 1)));
 
-// The leaderboard table as the page shows it: each row's cells, and the sign of each sparkline bar.
+// The standings table as the page shows it: each row's cells, and the sign of each sparkline bar (the last
+// ten nights; the phone's last-five signs are text, not bars).
 function webBoard(html: string): Board[] {
   const table = /<table class="board">([\s\S]*?)<\/table>/.exec(html)?.[1] ?? "";
   return rowsOf(table).map(({ inner }) => {
-    const cells = cellsOf(inner);
+    const raw = [...inner.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((m) => at(m, 1));
+    const cells = raw.map(textOf);
     return {
       rank: cells[0] ?? "",
-      name: cells[1] ?? "",
+      // The name is the link; the line under it (nights and average, for a phone) is not part of it.
+      name: textOf(at(/<a[^>]*>([\s\S]*?)<\/a>/.exec(raw[1] ?? ""), 1)),
       nights: cells[2] ?? "",
       updown: cells[3] ?? "",
       net: cells[4] ?? "",
@@ -333,9 +337,12 @@ function exportedBoard(rows: Exported[]): Figures[] {
 
 // The books: the sum of every player's poker net, in cents, as the console adds them.
 const bookCents = (rows: Exported[]): number => rows.reduce((sum, r) => sum + Math.round(r.net * 100), 0);
-function booksTile(cents: number): string {
-  return cents === 0 ? "✓ balanced" : `off by ${moneySigned(cents / 100)}`;
+// The line under the standings about the books: balanced, or off by.
+function booksLine(cents: number): string {
+  return cents === 0 ? "Every net adds up to $0.00." : `The games are off by ${moneySigned(cents / 100)}: a ledger does not balance (see Checks).`;
 }
+// The players the standings count, the ones with payments only included: "47 players · net after buy-ins".
+const playersOf = (html: string): string => at(/(\d+) players? · net after buy-ins/.exec(textOf(html)), 1);
 
 // The leaderboard, and the export it must match, for one scope.
 async function expectMatchesExport(root: string, choice: ScopeChoice, csv: string): Promise<void> {
@@ -344,9 +351,9 @@ async function expectMatchesExport(root: string, choice: ScopeChoice, csv: strin
   const exported = exportedOf(csv);
   expect(webBoard(html).map(figuresOf), csv).toEqual(exportedBoard(exported));
   webBoard(html).forEach((row, i) => expect(row.rank, `${csv} row ${i + 1}`).toBe(String(i + 1)));
-  // The box counts every player, the ones with payments only included.
-  expect(tilesOf(html).get("Players"), csv).toBe(String(exported.length));
-  expect(tilesOf(html).get("Books"), csv).toBe(booksTile(bookCents(exported)));
+  // The standings count every player, the ones with payments only included.
+  expect(playersOf(html), csv).toBe(String(exported.length));
+  expect(textOf(html), csv).toContain(booksLine(bookCents(exported)));
 }
 
 // ---- tests ---------------------------------------------------------------------------------
@@ -429,42 +436,43 @@ describe("the payments & corrections under the leaderboard, against the console'
   });
 });
 
-describe("the overview's box, against the console's startup box", () => {
+describe("the console's startup box, on More and under the standings", () => {
   it("games, players, books, me, banker, pins and hand logs are the box's", async () => {
-    const html = renderToStaticMarkup(createElement(Overview, { ctx: await snapshotCtx(SYNTHETIC, ALL) }));
-    const tiles = tilesOf(html);
-    expect(tiles.get("Games")).toBe("14");
-    expect(tiles.get("Players")).toBe("47");
-    expect(tiles.get("Books")).toBe("off by +$5.00");
+    const ctx = await snapshotCtx(SYNTHETIC, ALL);
+    const html = renderToStaticMarkup(createElement(Overview, { ctx }));
+    const more = renderToStaticMarkup(createElement(More, { ctx }));
+    expect(textOf(more)).toContain("Games 14");
+    expect(playersOf(html)).toBe("47");
+    expect(textOf(html)).toContain("The games are off by +$5.00");
     // startup.txt: "47 players | hand logs 2/14 | books off by +$5.00" and "me Zaqvin | banker off | pinned payments 2".
     expect(read(REF + "startup/startup.txt")).toContain("hand logs 2/14");
-    expect(textOf(html)).toContain("hand logs 2/14 · banker off · pinned payments 2 · me Zaqvin");
+    expect(textOf(more)).toContain("hand logs 2/14 · banker off · pinned payments 2 · me Zaqvin");
   });
 
   it("the edge data's hand logs count the logs that load and pair with a game: 6 of 8, not the 7 files", async () => {
     // The seventh file (pglEDGE0007) has no hands, so the console skips it and does not count it.
-    const html = renderToStaticMarkup(createElement(Overview, { ctx: await snapshotCtx(EDGE, EDGE_ALL) }));
+    const html = renderToStaticMarkup(createElement(More, { ctx: await snapshotCtx(EDGE, EDGE_ALL) }));
     expect(read(EDGE_REF + "startup/startup.txt")).toContain("hand logs 6/8");
     expect(textOf(html)).toContain("hand logs 6/8 · banker off · pinned payments 2 · me Zaqvin");
   });
 
   it("the hand-log count is left out until the results are read, not shown as a wrong number", async () => {
-    const html = renderToStaticMarkup(createElement(Overview, { ctx: await pageCtx(SYNTHETIC, ALL) }));
+    const html = renderToStaticMarkup(createElement(More, { ctx: await pageCtx(SYNTHETIC, ALL) }));
     expect(textOf(html)).toContain("banker off · pinned payments 2 · me Zaqvin");
-    expect(textOf(html)).not.toContain("hand logs");
+    expect(textOf(html)).not.toMatch(/hand logs \d/);
   });
 
   it("a banker and a pin count are named as the box names them", async () => {
     const banker = await pageCtx(SYNTHETIC, ALL, { "settings.csv": "key,value\nme,zaqvin\nbanker,cavlorn\ndisplay,fancy\n" });
-    expect(textOf(renderToStaticMarkup(createElement(Overview, { ctx: banker })))).toContain("banker Cavlorn");
+    expect(textOf(renderToStaticMarkup(createElement(More, { ctx: banker })))).toContain("banker Cavlorn");
     const pins = await pageCtx(SYNTHETIC, ALL, { "payment_preferences.csv": "payer_normalized,payee_normalized,note\n" });
-    expect(textOf(renderToStaticMarkup(createElement(Overview, { ctx: pins })))).toContain("pinned payments 0");
+    expect(textOf(renderToStaticMarkup(createElement(More, { ctx: pins })))).toContain("pinned payments 0");
     expect(read(REF + "banker/logs/summary.txt")).toContain("| me Zaqvin | banker Cavlorn | pinned payments 2");
   });
 
-  it("the edge data's box counts every player, the ones with payments only included", async () => {
+  it("the edge data's standings count every player, the ones with payments only included", async () => {
     const html = renderToStaticMarkup(createElement(Overview, { ctx: await pageCtx(EDGE, EDGE_ALL) }));
-    expect(tilesOf(html).get("Players")).toBe("13");
+    expect(playersOf(html)).toBe("13");
   });
 });
 

@@ -11,6 +11,7 @@ import { AddGame } from "./pages/AddGame.tsx";
 import { Adjust } from "./pages/Adjust.tsx";
 import { Games } from "./pages/Games.tsx";
 import { Help } from "./pages/Help.tsx";
+import { More } from "./pages/More.tsx";
 import { Overview } from "./pages/Overview.tsx";
 import { Owed } from "./pages/Owed.tsx";
 import { PlayerPage } from "./pages/Player.tsx";
@@ -100,22 +101,30 @@ export function App() {
     saveScope(next);
   };
 
-  if (state.status === "loading") return <Shell><p className="muted pad">Loading your games…</p></Shell>;
+  if (state.status === "loading") {
+    return (
+      <Shell>
+        <p className="sub">Reading your games…</p>
+      </Shell>
+    );
+  }
   if (state.status === "error" || ctx === null) {
     return (
       <Shell>
-        <div className="card pad">
-          <h2>Could not load the data</h2>
-          <p>{state.status === "error" ? state.message : "Unknown problem."}</p>
-          <p className="muted">Start the site with <code>npm run web</code> from the Poker_Ledger_Web folder, then reload this page.</p>
-          <button onClick={() => void refresh()}>Try again</button>
-        </div>
+        <h1>Could not read the data</h1>
+        <p>{state.status === "error" ? state.message : "Unknown problem."}</p>
+        <p className="sub">
+          Start the site with <code>npm run web</code> in the Poker_Ledger_Web folder (or open <strong>Start Poker Ledger</strong>), then
+          press Try again.
+        </p>
+        <button onClick={() => void refresh()}>Try again</button>
       </Shell>
     );
   }
 
   const snapshot = isSnapshot(ctx.payload);
   const taken = Math.floor(ctx.payload.loadedAt / 1000);
+  const page = route[0] ?? "";
   return (
     <Shell ctx={ctx} onRefresh={snapshot ? undefined : refresh} route={route}>
       {snapshot ? (
@@ -125,32 +134,31 @@ export function App() {
         </p>
       ) : null}
       {ctx.payload.consoleOpen > 0 && ctx.payload.canWrite ? (
-        <p className="banner" role="status">
-          The console app is open. It saves its own copy of the names, sheets and settings when it quits, so the site will not save
-          those until it is closed: quit it with <strong>0. Save and exit</strong>, then press Refresh. A new game can still be filed;
-          the console app lists it after it restarts.
-        </p>
+        <div className="banner" role="status">
+          <details>
+            <summary>The console app is open, so names, sheets and settings are not saved here until it quits.</summary>
+            <p>
+              It saves its own copy of the names, sheets and settings when it quits, so the site will not save those until it is closed:
+              quit it with <strong>0. Save and exit</strong>, then press Refresh. A new game can still be filed; the console app lists it
+              after it restarts.
+            </p>
+          </details>
+        </div>
       ) : ctx.payload.consoleOpen === -1 && ctx.payload.canWrite ? (
         <p className="banner" role="status">
           Could not tell whether the console app is open; saving will check again.
         </p>
       ) : null}
-      <ScopeBar ctx={ctx} onChange={changeScope} />
-      <PageBoundary key={route.join("/")}>
-        {/* The pages that have no heading of their own still name themselves to a screen reader. */}
-        {PAGES_WITH_OWN_HEADING.has(route[0] ?? "") ? null : <h1 className="sr-only">{pageName(route)}</h1>}
-        <Page ctx={ctx} route={route} onSaved={refresh} />
-      </PageBoundary>
-      <footer className="footer muted">
-        {snapshot ? (
-          <>Snapshot of {plural(ctx.world.games.length, "game")} · taken {shortDate(taken, ctx.tz)} {clockTime(taken, ctx.tz)} · </>
-        ) : (
-          <>
-            Reading <code>{folderName(ctx.payload.dataRoot)}</code> on this computer · loaded {clockTime(taken, ctx.tz)} ·{" "}
-          </>
-        )}
-        times in {ctx.tz}
-      </footer>
+      {SCOPED.has(page) && !(page === "settle" && (route[1] ?? "") !== "") && ctx.world.games.length > 0 ? (
+        <ScopeLine ctx={ctx} onChange={changeScope} />
+      ) : null}
+      <main id="main" tabIndex={-1} className={WIDE.has(page) ? "screen wide" : "screen"}>
+        <PageBoundary key={route.join("/")}>
+          {/* The pages that have no heading of their own still name themselves to a screen reader. */}
+          {PAGES_WITH_OWN_HEADING.has(page) ? null : <h1 className="sr-only">{pageName(route)}</h1>}
+          <Page ctx={ctx} route={route} onSaved={refresh} />
+        </PageBoundary>
+      </main>
     </Shell>
   );
 }
@@ -173,17 +181,13 @@ class PageBoundary extends Component<{ children: ReactNode }, { failed: boolean 
       return (
         <div className="card pad">
           <h2>This page could not be shown</h2>
-          <p>Something on it failed. Go back to the overview, or press Refresh and try again.</p>
-          <a href={href()}>Back to the overview</a>
+          <p>Something on it failed. Go back to the standings, or press Refresh and try again.</p>
+          <a href={href()}>Back to the standings</a>
         </div>
       );
     }
     return this.props.children;
   }
-}
-
-function folderName(path: string): string {
-  return path.split("/").filter(Boolean).pop() ?? path;
 }
 
 function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () => void }) {
@@ -211,85 +215,134 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
       return <Settings ctx={ctx} onSaved={onSaved} />;
     case "help":
       return <Help ctx={ctx} />;
+    case "more":
+      return <More ctx={ctx} />;
     case "add":
-      if (isSnapshot(ctx.payload)) return <div className="card pad">Games are added on the computer that runs the site.</div>;
+      if (isSnapshot(ctx.payload)) return <p>Games are added on the computer that runs the site.</p>;
       return <AddGame ctx={ctx} onSaved={onSaved} />;
     default:
       return (
-        <div className="card pad">
+        <>
           <p>That page does not exist.</p>
-          <a href={href()}>Back to the overview</a>
-        </div>
+          <a href={href()}>Back to the standings</a>
+        </>
       );
   }
 }
 
-const TABS: { path: string; label: string }[] = [
-  { path: "", label: "Overview" },
-  { path: "games", label: "Games" },
-  { path: "style", label: "Play style" },
-  { path: "settle", label: "Settle up" },
-  { path: "owed", label: "Who owes" },
-  { path: "check", label: "Checks" },
-  { path: "settings", label: "Settings" },
-  { path: "add", label: "+ Add game" },
-  { path: "help", label: "Help" },
-];
+// Every page's name, as the bars and the browser tab word it.
+const NAMES: Record<string, string> = {
+  "": "Standings",
+  games: "Nights",
+  game: "Night",
+  settle: "Settle up",
+  owed: "Who owes",
+  add: "Add a game",
+  more: "More",
+  style: "Play style",
+  check: "Checks",
+  adjust: "Payments & corrections",
+  settings: "Settings",
+  help: "Help",
+  player: "Player",
+};
 
-// The pages that show a heading of their own (their h1), and the names of the others that are not tabs.
-const PAGES_WITH_OWN_HEADING = new Set(["player", "game", "help"]);
-const OTHER_PAGE_NAMES: Record<string, string> = { player: "Player", game: "Game", adjust: "Payments & corrections" };
+// The pages the Folder and Dates line changes; the others (Who owes, + Add, Settings, a night) do not show it.
+const SCOPED = new Set(["", "games", "settle", "style", "player", "adjust", "check"]);
+// The pages laid out across a wide screen (a table or two columns); the others keep a readable measure.
+const WIDE = new Set(["", "style", "player", "check"]);
+// The pages that show a heading of their own (their h1).
+const PAGES_WITH_OWN_HEADING = new Set(["player", "game", "help", "games", "more"]);
 
-// The page's name, as the tab bar words it (the browser tab and the page heading use it too).
+// The page's name (the browser tab and the page heading use it too).
 export function pageName(route: string[]): string {
-  const first = route[0] ?? "";
-  if (first === "") return "Overview";
-  const tab = TABS.find((t) => t.path === first);
-  return tab?.label ?? OTHER_PAGE_NAMES[first] ?? "Page not found";
+  return NAMES[route[0] ?? ""] ?? "Page not found";
 }
 
-function Shell({ ctx, onRefresh, route, children }: { ctx?: Ctx; onRefresh?: () => void; route?: string[]; children: React.ReactNode }) {
-  const active = route?.[0] === "player" ? "" : route?.[0] === "game" ? "games" : (route?.[0] ?? "");
-  // The tab that is this page says so. A game is one of the Games list, so Games is marked as the place
-  // the reader is in; a player's page is not any tab's, so Overview is only highlighted.
-  const current = (path: string): "page" | "true" | undefined =>
-    active !== path || route?.[0] === "player" ? undefined : route?.[0] === "game" ? "true" : "page";
+// The part of the site a page belongs to, for the bars: a player is one of the standings, a night one of
+// the nights, and the pages under More are More's.
+function sectionOf(page: string | undefined): string {
+  if (page === undefined || page === "" || page === "player") return "";
+  if (page === "game") return "games";
+  if (page === "settle" || page === "owed" || page === "add" || page === "games") return page;
+  return "more";
+}
+
+interface Tab {
+  path: string;
+  label: string;
+  add?: boolean;
+}
+
+function Shell({ ctx, onRefresh, route, children }: { ctx?: Ctx; onRefresh?: () => void; route?: string[]; children: ReactNode }) {
+  const page = route?.[0] ?? "";
+  const section = route === undefined ? "" : sectionOf(route[0]);
+  const snapshot = ctx !== undefined && isSnapshot(ctx.payload);
   const checks = ctx === undefined ? 0 : checkCount(ctx);
+  // This page is the tab's own ("page"), or one inside it ("true": a player under Standings, a night under Nights).
+  const current = (path: string): "page" | "true" | undefined => (section !== path ? undefined : page === path ? "page" : "true");
+  // Phone: four places and the one thing to do. A snapshot never adds a game, so Settle up takes that place.
+  const phone: Tab[] = [
+    { path: "", label: "Standings" },
+    { path: "games", label: "Nights" },
+    snapshot ? { path: "settle", label: "Settle up" } : { path: "add", label: "+ Add", add: true },
+    { path: "owed", label: "Who owes" },
+    { path: "more", label: "More" },
+  ];
+  const desktop: Tab[] = [
+    { path: "", label: "Standings" },
+    { path: "games", label: "Nights" },
+    { path: "settle", label: "Settle up" },
+    { path: "owed", label: "Who owes" },
+    ...(snapshot ? [] : [{ path: "add", label: "+ Add game", add: true }]),
+    { path: "more", label: "More" },
+  ];
+  // Settle up has no tab on a phone (it is reached from a night): Nights stays lit there.
+  const phoneCurrent = (path: string): "page" | "true" | undefined =>
+    !snapshot && section === "settle" && path === "games" ? "true" : current(path);
+  const badge =
+    checks > 0 ? (
+      <>
+        <span className="badge" aria-hidden="true">
+          {checks}
+        </span>
+        <span className="sr-only"> ({plural(checks, "item")} to check)</span>
+      </>
+    ) : null;
+  const link = (t: Tab, at: (path: string) => "page" | "true" | undefined) => (
+    <a key={t.path} href={t.path === "" ? href() : href(t.path)} className={t.add === true ? "add" : undefined} aria-current={at(t.path)}>
+      {t.label}
+      {t.path === "more" ? badge : null}
+    </a>
+  );
   return (
     <div className="app">
+      <button className="skip" onClick={() => document.getElementById("main")?.focus()}>
+        Skip to the page
+      </button>
       <header className="top">
-        <a className="brand" href={href()}>
-          <span aria-hidden="true">♠</span> Poker Ledger
+        <a className="brand" href={href()} aria-current={page === "" && ctx !== undefined ? "page" : undefined}>
+          Poker Ledger
         </a>
-        {onRefresh !== undefined ? (
-          <button className="ghost" onClick={onRefresh} title="Read the data folder again">
-            Refresh
-          </button>
-        ) : null}
         {ctx !== undefined ? (
-          <nav className="tabs" aria-label="Pages">
-            {TABS.filter((t) => !(isSnapshot(ctx.payload) && (t.path === "add" || t.path === "settings"))).map((t) => (
-              <a
-                key={t.path}
-                href={t.path === "" ? href() : href(t.path)}
-                className={active === t.path ? "active" : ""}
-                aria-current={current(t.path)}
-              >
-                {t.label}
-                {t.path === "check" && checks > 0 ? (
-                  <>
-                    <span className="badge" aria-hidden="true">
-                      {checks}
-                    </span>
-                    <span className="sr-only"> ({plural(checks, "item")} to check)</span>
-                  </>
-                ) : null}
-              </a>
-            ))}
+          <nav className="topnav" aria-label="Pages">
+            {desktop.map((t) => link(t, current))}
           </nav>
         ) : null}
+        <span className="top-end">
+          {onRefresh !== undefined ? (
+            <button className="plain" onClick={onRefresh} title="Read the data folder again">
+              Refresh
+            </button>
+          ) : null}
+        </span>
       </header>
-      <main>{children}</main>
+      {ctx === undefined ? <main className="screen">{children}</main> : children}
+      {ctx !== undefined ? (
+        <nav className="tabbar" aria-label="Pages">
+          {phone.map((t) => link(t, phoneCurrent))}
+        </nav>
+      ) : null}
     </div>
   );
 }
@@ -300,11 +353,22 @@ const PRESETS: { id: string; label: string; days: number | null }[] = [
   { id: "90", label: "Past 90 days", days: 90 },
 ];
 
-function ScopeBar({ ctx, onChange }: { ctx: Ctx; onChange: (c: ScopeChoice) => void }) {
+// "Oct 3 – now", "start – Oct 31", "Oct 3 – Oct 31" for a range typed by hand (dates as typed, 2026-10-03).
+function rangeWords(from: string, to: string): string {
+  const day = (iso: string): string => {
+    const [y, m, d] = iso.split("-").map(Number);
+    if (y === undefined || m === undefined || d === undefined || !Number.isFinite(d)) return iso;
+    return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  };
+  return `${from === "" ? "start" : day(from)} – ${to === "" ? "now" : day(to)}`;
+}
+
+// The Folder and Dates choice, as one line that opens: "All folders · All time". The presets are kept as
+// their number of days, so "Past 30 days" moves on with the calendar (data.ts withDays).
+function ScopeLine({ ctx, onChange }: { ctx: Ctx; onChange: (c: ScopeChoice) => void }) {
   const { choice, view, world, tz } = ctx;
   const folders = ledger.listFolders(world.games);
-  // A preset is kept as its number of days. A range saved as dates (before presets kept days) still shows
-  // as its preset on the day it matches.
+  // A range saved as dates (before presets kept days) still shows as its preset on the day it matches.
   const preset =
     choice.days !== undefined
       ? (PRESETS.find((p) => p.days === choice.days)?.id ?? "custom")
@@ -314,6 +378,27 @@ function ScopeBar({ ctx, onChange }: { ctx: Ctx; onChange: (c: ScopeChoice) => v
   // The dates as typed: editing From or To ends a preset.
   const fixed: ScopeChoice = { folder: choice.folder, from: choice.from, to: choice.to };
   const [custom, setCustom] = useState(preset === "custom");
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDetailsElement>(null);
+
+  // A tap outside the panel, or Escape, closes it.
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: Event): void => {
+      if (box.current !== null && e.target instanceof Node && !box.current.contains(e.target)) setOpen(false);
+    };
+    const key = (e: KeyboardEvent): void => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      box.current?.querySelector("summary")?.focus();
+    };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
 
   const pickPreset = (id: string): void => {
     if (id === "custom") {
@@ -325,56 +410,80 @@ function ScopeBar({ ctx, onChange }: { ctx: Ctx; onChange: (c: ScopeChoice) => v
     onChange(p?.days == null ? { ...fixed, from: "", to: "" } : { ...fixed, from: "", to: "", days: p.days });
   };
 
+  const datesNow = custom || preset === "custom" ? rangeWords(choice.from, choice.to) : (PRESETS.find((p) => p.id === preset)?.label ?? "All time");
   const first = view.games[0];
   const last = view.games[view.games.length - 1];
+  const narrowed = choice.folder !== "" || choice.from !== "" || choice.to !== "";
   return (
-    <section className="scopebar" aria-label="What to look at">
-      <label>
-        <span className="muted">Folder</span>
-        <select value={choice.folder} onChange={(e) => onChange({ ...choice, folder: e.target.value })}>
-          <option value="">All folders</option>
-          {folders.map((f) => (
-            <option key={f} value={f}>
-              {f}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        <span className="muted">Dates</span>
-        <select value={custom ? "custom" : preset} onChange={(e) => pickPreset(e.target.value)}>
-          {PRESETS.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.label}
-            </option>
-          ))}
-          <option value="custom">Custom range…</option>
-        </select>
-      </label>
-      {custom ? (
-        <>
-          <label>
-            <span className="muted">From</span>
-            <input type="date" value={choice.from} onChange={(e) => onChange({ ...fixed, from: e.target.value })} />
-          </label>
-          <label>
-            <span className="muted">To</span>
-            <input type="date" value={choice.to} onChange={(e) => onChange({ ...fixed, to: e.target.value })} />
-          </label>
-        </>
-      ) : null}
-      <p className="scopeinfo muted">
-        {plural(view.games.length, "game")}
-        {first !== undefined && last !== undefined ? ` · ${shortDate(first.start, tz)} – ${shortDate(last.start, tz)}` : ""}
-        {choice.folder !== "" || choice.from !== "" || choice.to !== "" ? (
-          <>
-            {" · "}
-            <button className="link" onClick={() => { setCustom(false); onChange(EVERYTHING); }}>
-              show everything
+    <div className="scoperow">
+      <details className="scope" ref={box} open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
+        <summary aria-label={`Showing ${choice.folder === "" ? "all folders" : choice.folder}, ${datesNow}. Change`}>
+          <span className="scope-now">
+            {choice.folder === "" ? "All folders" : choice.folder} · {datesNow}
+          </span>
+          <span className="caret" aria-hidden="true">
+            ▼
+          </span>
+        </summary>
+        <div className="scope-pop">
+          <fieldset>
+            <legend className="label">Folder</legend>
+            {["", ...folders].map((f) => (
+              <label key={f === "" ? "(all)" : f} className="opt">
+                <input type="radio" name="scope-folder" checked={choice.folder === f} onChange={() => onChange({ ...choice, folder: f })} />
+                {f === "" ? "All folders" : f}
+              </label>
+            ))}
+          </fieldset>
+          <fieldset>
+            <legend className="label">Dates</legend>
+            {PRESETS.map((p) => (
+              <label key={p.id} className="opt">
+                <input type="radio" name="scope-dates" checked={!custom && preset === p.id} onChange={() => pickPreset(p.id)} />
+                {p.label}
+              </label>
+            ))}
+            <label className="opt">
+              <input type="radio" name="scope-dates" checked={custom || preset === "custom"} onChange={() => pickPreset("custom")} />
+              Custom range
+            </label>
+            {custom || preset === "custom" ? (
+              <div className="dates">
+                <label>
+                  From
+                  <input type="date" value={choice.from} onChange={(e) => onChange({ ...fixed, from: e.target.value })} />
+                </label>
+                <label>
+                  To
+                  <input type="date" value={choice.to} onChange={(e) => onChange({ ...fixed, to: e.target.value })} />
+                </label>
+              </div>
+            ) : null}
+          </fieldset>
+          <div className="foot">
+            {narrowed ? (
+              <button
+                className="link"
+                onClick={() => {
+                  setCustom(false);
+                  onChange(EVERYTHING);
+                }}
+              >
+                Show everything
+              </button>
+            ) : (
+              <span />
+            )}
+            <button className="small" onClick={() => setOpen(false)}>
+              Done
             </button>
-          </>
-        ) : null}
-      </p>
-    </section>
+          </div>
+        </div>
+      </details>
+      <span className="stamp">
+        {plural(view.games.length, "game")}
+        {first !== undefined && last !== undefined ? <span className="hide-xs">{` · ${shortDate(first.start, tz)} – ${shortDate(last.start, tz)}`}</span> : null}
+      </span>
+    </div>
   );
 }

@@ -129,12 +129,13 @@ describe("a save over the console app's own unknown date", () => {
 });
 
 describe("a read-only copy (a phone, a snapshot)", () => {
-  it("names whose net the tile is, and says where answers are made", async () => {
+  it("names whose number is first, and says where answers are made", async () => {
     const phone = await pageCtx({ canWrite: false });
     const overview = show(createElement(Overview, { ctx: phone }));
-    expect(overview).toContain("Zaqvin's net");
-    expect(overview).not.toContain("Your net");
-    expect(show(createElement(Overview, { ctx: await pageCtx() }))).toContain("Your net");
+    expect(overview).toContain("Zaqvin · 47th of 47");
+    expect(overview).not.toContain("You ·");
+    expect(overview).not.toContain("You owe");
+    expect(show(createElement(Overview, { ctx: await pageCtx() }))).toContain("You · Zaqvin · 47th of 47");
     expect(show(createElement(Check, { ctx: phone, onSaved: () => undefined }))).toContain("This copy is read-only");
   });
 });
