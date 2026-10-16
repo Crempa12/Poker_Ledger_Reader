@@ -211,6 +211,10 @@ export function pageName(route: string[]): string {
 
 function Shell({ ctx, onRefresh, route, children }: { ctx?: Ctx; onRefresh?: () => void; route?: string[]; children: React.ReactNode }) {
   const active = route?.[0] === "player" ? "" : route?.[0] === "game" ? "games" : (route?.[0] ?? "");
+  // The tab that is this page says so. A game is one of the Games list, so Games is marked as the place
+  // the reader is in; a player's page is not any tab's, so Overview is only highlighted.
+  const current = (path: string): "page" | "true" | undefined =>
+    active !== path || route?.[0] === "player" ? undefined : route?.[0] === "game" ? "true" : "page";
   const checks = ctx === undefined ? 0 : checkCount(ctx);
   return (
     <div className="app">
@@ -230,7 +234,7 @@ function Shell({ ctx, onRefresh, route, children }: { ctx?: Ctx; onRefresh?: () 
                 key={t.path}
                 href={t.path === "" ? href() : href(t.path)}
                 className={active === t.path ? "active" : ""}
-                aria-current={active === t.path ? "page" : undefined}
+                aria-current={current(t.path)}
               >
                 {t.label}
                 {t.path === "check" && checks > 0 ? (

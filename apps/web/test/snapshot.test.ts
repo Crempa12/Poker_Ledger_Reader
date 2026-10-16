@@ -91,8 +91,17 @@ describe("a snapshot file", () => {
     expect(json).not.toContain("player_summary");
   }, 120_000);
 
+  it("refuses a folder that is not the console app's, and writes nothing", async () => {
+    const root = mkdtempSync(join(tmpdir(), "plr-snap-empty-"));
+    const out = mkdtempSync(join(tmpdir(), "plr-snap-out-"));
+    await expect(makeSnapshot(root, TZ, out)).rejects.toThrow(/no snapshot was made/);
+    await expect(makeSnapshot(join(root, "missing"), TZ, out)).rejects.toThrow(/no snapshot was made/);
+    expect(readdirSync(out)).toEqual([]);
+  });
+
   it("leaves no build folder behind", async () => {
     const root = mkdtempSync(join(tmpdir(), "plr-snap-clean-"));
+    mkdirSync(join(root, "Saved_Data"));
     const out = mkdtempSync(join(tmpdir(), "plr-snap-out-"));
     const before = new Set(readdirSync(tmpdir()).filter((n) => n.startsWith("plr-snapshot-")));
     await makeSnapshot(root, TZ, out);

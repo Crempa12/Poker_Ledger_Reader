@@ -46,6 +46,7 @@ import {
 } from "../../../packages/core/src/settlement.ts";
 import { isExcludedDir } from "../../../packages/core/src/util.ts";
 import { SAVED_DATA_FILES, loadDataRoot } from "../../../tools/load.ts";
+import { dataRootReady, notADataFolder } from "./dataroot.ts";
 import { SNAPSHOT_NAME, SNAPSHOTS, savedForPage } from "./snapshot.ts";
 import { handLogCache, parseHandScope, type HandLogCache } from "./handlogs.ts";
 
@@ -181,24 +182,6 @@ function gamesDir(dataRoot: string): string {
   return existsSync(g) ? g : dataRoot;
 }
 
-// The data folder must be there and hold the console app's data: a Games or Saved_Data folder, or
-// CSV files directly in it. Anything else is refused before a file or folder is made, so a mistyped
-// PLR_DATA_ROOT cannot collect saves in a folder the console app never reads.
-async function dataRootReady(root: string): Promise<boolean> {
-  const s = await stat(root).catch(() => null);
-  if (s === null || !s.isDirectory()) return false;
-  if (existsSync(join(root, "Games")) || existsSync(join(root, "Saved_Data"))) return true;
-  const names = await readdir(root).catch(() => [] as string[]);
-  return names.some((n) => /\.csv$/i.test(n));
-}
-
-function notADataFolder(root: string): string {
-  return (
-    `The data folder ${root} is not there, or holds no console app data (no Games or Saved_Data folder, no game files). ` +
-    "Nothing was changed. If it is the console app's folder, run the console app once in it (it creates Saved_Data), " +
-    "then press Refresh. If it is not, set PLR_DATA_ROOT to the console app's folder and restart the site."
-  );
-}
 
 // The folder inside the backups folder that holds one data folder's old versions: a short code made
 // from its full path. Data folders that share a backups folder (a test copy, say) then never count,
@@ -416,10 +399,20 @@ async function consoleCheckForPage(cfg: ApiConfig): Promise<ConsoleCheck> {
   return check;
 }
 
+// Whether an Accept-Encoding header takes gzip: listed as gzip or x-gzip, without q=0 (which says no).
+export function acceptsGzip(header: string): boolean {
+  return header.split(",").some((part) => {
+    const [coding, ...params] = part.trim().toLowerCase().split(";");
+    if (coding?.trim() !== "gzip" && coding?.trim() !== "x-gzip") return false;
+    const q = params.map((x) => x.trim()).find((x) => x.startsWith("q="));
+    return q === undefined || Number(q.slice(2)) > 0;
+  });
+}
+
 // A large answer goes out gzipped when the browser takes gzip (the hand-log results repeat their text,
 // and are about five times smaller that way). Any other browser gets the same JSON as send() gives.
 function sendLarge(req: IncomingMessage, res: ServerResponse, status: number, body: unknown): void {
-  if (!/\bgzip\b/.test(String(req.headers["accept-encoding"] ?? ""))) return send(res, status, body);
+  if (!acceptsGzip(String(req.headers["accept-encoding"] ?? ""))) return send(res, status, body);
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Content-Encoding", "gzip");
@@ -752,6 +745,8 @@ const SNAPSHOT_SCRIPT = fileURLToPath(new URL("./snapshot.ts", import.meta.url))
 // development build of React, among them) must not reach the file people are sent.
 export async function handleSnapshot(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (!writeAllowed(req)) return send(res, 403, { error: NOT_YOURS });
+  // A snapshot of a folder that is not the console app's would be a page with no games in it.
+  if (!(await dataRootReady(cfg.dataRoot))) return send(res, 409, { error: notADataFolder(cfg.dataRoot) });
   const env = {
     ...process.env,
     NODE_ENV: "production",

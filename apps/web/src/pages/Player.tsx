@@ -19,6 +19,7 @@ export function PlayerPage({ ctx, normalized }: { ctx: Ctx; normalized: string }
     const known = ctx.everyone.some((x) => x.normalizedName === normalized);
     return (
       <div className="card pad">
+        <h1 className="sr-only">Player</h1>
         <p>{known ? `${ctx.nameOf(normalized)} has no games in this scope.` : "No player by that name."}</p>
         <a href={href()}>Back to the leaderboard</a>
       </div>

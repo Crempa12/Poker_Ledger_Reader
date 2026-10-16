@@ -255,7 +255,7 @@ tr.me td {
 }
 /* A settled or even row is muted by its text colour, not by opacity: opacity would fade the words
    below 4.5:1 on the card. The up, down and status colours keep their full strength (see .up). */
-tr.dim td {
+tr.dim td:not(.up):not(.down) {
   color: var(--muted);
 }
 

@@ -8,8 +8,9 @@ unchanged, and keeps working as before.
 
 Double-click **Start Poker Ledger.command** in this folder (the first run installs
 what it needs, which takes a minute, and needs [Node.js](https://nodejs.org) 22.18 or
-newer). Your browser opens at <http://127.0.0.1:5173>. Or, from a terminal in this
-folder, install once and start it:
+newer). Your browser opens at <http://127.0.0.1:5173> (if another program already uses
+that port, the next free one: the window shows the address). Or, from a terminal in
+this folder, install once and start it:
 
 ```bash
 npm install
@@ -87,7 +88,8 @@ place of the file there, then press **Refresh**.
 
 Paste the game's link on **+ Add game**. The ledger is fetched from PokerNow and saved
 into `Games/<folder>/` in the console app's folder, the same place menu 19 puts it,
-so the console app sees it too. PokerNow puts a captcha on hand logs, so download
+so the console app sees it too. (A data folder with no `Games` folder yet gets the
+folder at its top, where the console app also reads games.) PokerNow puts a captcha on hand logs, so download
 the log yourself (the page links to each game missing one) and pick the file there.
 Game files hold everyone's names, PokerNow ids and results. If the console app's
 repository is public on GitHub, committing them there publishes all of that: keep them

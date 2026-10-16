@@ -22,6 +22,7 @@ import { build } from "vite";
 import { looksLikeLedger } from "../../../packages/core/src/ledger.ts";
 import { formatLocalDate } from "../../../packages/core/src/util.ts";
 import { loadDataRoot } from "../../../tools/load.ts";
+import { dataRootReady } from "./dataroot.ts";
 import { handWorldFromInputs, savedForPage, snapshotHandLogs } from "./handlogs.ts";
 
 // The saved files a page sees are listed in handlogs.ts, shared with the server.
@@ -44,6 +45,13 @@ function scriptSafe(text: string): string {
 }
 
 export async function makeSnapshot(dataRoot: string, timeZone: string, outDir: string = SNAPSHOTS): Promise<SnapshotResult> {
+  // A folder that is not the console app's would make a page with no games in it.
+  if (!(await dataRootReady(dataRoot))) {
+    throw new Error(
+      `${dataRoot} is not there, or holds no console app data (no Games or Saved_Data folder, no game files), ` +
+        "so no snapshot was made. Set PLR_DATA_ROOT to the console app's folder.",
+    );
+  }
   const work = await mkdtemp(join(tmpdir(), "plr-snapshot-"));
   try {
     await build({
@@ -121,7 +129,10 @@ export async function makeSnapshot(dataRoot: string, timeZone: string, outDir: s
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const dataRoot = resolve(process.env.PLR_DATA_ROOT ?? resolve(APP, "../../../Poker_Ledger_Reader"));
   const timeZone = process.env.PLR_TZ ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const r = await makeSnapshot(dataRoot, timeZone, process.env.PLR_SNAPSHOT_DIR ?? SNAPSHOTS);
+  const r = await makeSnapshot(dataRoot, timeZone, process.env.PLR_SNAPSHOT_DIR ?? SNAPSHOTS).catch((err: unknown) => {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  });
   if (process.argv.includes("--json")) {
     console.log(JSON.stringify(r)); // for the site's "Make a snapshot" button (api.ts)
   } else {

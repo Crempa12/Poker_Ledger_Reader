@@ -12,6 +12,7 @@ export function GamePage({ ctx, id, onSaved }: { ctx: Ctx; id: string; onSaved: 
   if (game === undefined) {
     return (
       <div className="card pad">
+        <h1 className="sr-only">Game</h1>
         <p>That game is not in the data.</p>
         <a href={href("games")}>All games</a>
       </div>

@@ -13,6 +13,11 @@ if ! command -v npm >/dev/null 2>&1; then
   echo "Install Node.js 22.18 or newer from https://nodejs.org, then double-click this file again."
   pause_then_exit
 fi
+if ! node -e 'const [a, b] = process.versions.node.split(".").map(Number); process.exit(a > 22 || (a === 22 && b >= 18) ? 0 : 1)'; then
+  echo "This needs Node.js 22.18 or newer; this computer has $(node -v 2>/dev/null || echo none)."
+  echo "Install it from https://nodejs.org, then double-click this file again."
+  pause_then_exit
+fi
 if [ ! -d node_modules ]; then
   echo "First run: installing (one time only)..."
   npm install || {
@@ -20,4 +25,7 @@ if [ ! -d node_modules ]; then
     pause_then_exit
   }
 fi
-npm run web
+npm run web || {
+  echo "The site stopped or did not start. The lines above say why."
+  pause_then_exit
+}

@@ -92,7 +92,9 @@ export function Overview({ ctx }: { ctx: Ctx }) {
               <span className="muted small">
                 {" "}
                 {me === ""
-                  ? '(top earner; set "me" in Settings)'
+                  ? isSnapshot(ctx.payload)
+                    ? "(top earner)"
+                    : '(top earner; set "me" in Settings)'
                   : `(${meName} has no games in this scope, so the top earner is shown)`}
               </span>
             ) : null}

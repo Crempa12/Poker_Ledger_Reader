@@ -42,6 +42,7 @@ function folderOfPath(path: string): string {
 // Where a saved game's folder is, for the page's words: under Games/ when the data has a Games
 // folder, else at the top of the data folder (the console app reads games there then too).
 export function savedLabel(folder: string, gamesFolder: boolean): string {
+  if (folder.trim() === "") return "a folder"; // none typed yet
   return gamesFolder ? `Games/${folder}` : folder;
 }
 
@@ -55,7 +56,7 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   const [links, setLinks] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
-  const [problem, setProblem] = useState("");
+  const [problems, setProblems] = useState<string[]>([]);
   // The basis the server checks each save against. A save returns the new one, so the next game of the
   // batch goes through without a reload; a reload of the data (after a save) sets it again.
   const basis = useRef(ctx.payload.basis);
@@ -69,46 +70,55 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 
   const add = (item: Omit<Item, "status" | "message" | "folder"> & { folder?: string }): void => {
     const there = findExisting(ctx, item.kind, item.gameId);
-    // A hand log goes next to its ledger when the ledger is already filed.
+    // A hand log goes next to its ledger when the ledger is already filed in a folder. A ledger at the
+    // top of Games has no folder to share, and a game is never saved there, so the usual folder is offered.
     const ledgerAt = findExisting(ctx, "ledger", item.gameId);
-    const folder = item.folder ?? (ledgerAt !== null ? folderOfPath(ledgerAt) : defaultFolder);
+    const inherited = ledgerAt !== null ? folderOfPath(ledgerAt) : "";
+    const folder = item.folder ?? (inherited !== "" ? inherited : defaultFolder);
     setItems((list) => [
       ...list.filter((x) => x.key !== item.key),
       { ...item, folder, status: there !== null ? "there" : "ready", message: there !== null ? `already in your data: ${there}` : "" },
     ]);
   };
 
+  // Every link is tried. The ones that fail stay in the box, each with what went wrong, to fix or try again.
   const fetchLinks = async (): Promise<void> => {
-    setProblem("");
+    setProblems([]);
     const wanted = links.split(/\s+/).filter((l) => l !== "");
     if (wanted.length === 0) return;
     setBusy(true);
+    const failed: string[] = [];
+    const why: string[] = [];
     for (const link of wanted) {
       try {
         const r = await postJSON<{ gameId: string; fileName: string; text: string }>("/api/pokernow", { link });
         add({ key: `ledger_${r.gameId}`, kind: "ledger", gameId: r.gameId, fileName: r.fileName, text: r.text });
       } catch (err) {
-        setProblem(`${link}: ${err instanceof Error ? err.message : String(err)}`);
+        failed.push(link);
+        why.push(`${link}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
     setBusy(false);
-    setLinks("");
+    setProblems(why);
+    setLinks(failed.join("\n"));
   };
 
   const pickFiles = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    setProblem("");
+    setProblems([]);
     const files = [...(e.target.files ?? [])];
     e.target.value = "";
+    const why: string[] = [];
     for (const f of files) {
       const m = FILE_NAME.exec(f.name);
       if (m === null) {
-        setProblem(`${f.name} is not a PokerNow ledger_… or poker_now_log_… file, so it was left out.`);
+        why.push(`${f.name} is not a PokerNow ledger_… or poker_now_log_… file, so it was left out.`);
         continue;
       }
       const kind = m[1] as Item["kind"];
       const gameId = m[2] ?? "";
       add({ key: `${kind}_${gameId}`, kind, gameId, fileName: f.name, text: await f.text() });
     }
+    setProblems(why);
   };
 
   const save = async (item: Item): Promise<void> => {
@@ -184,7 +194,13 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         <input type="file" accept=".csv,text/csv" multiple onChange={(e) => void pickFiles(e)} aria-label="Downloaded game files to add" />
       </section>
 
-      {problem !== "" ? <p className="card pad down">{problem}</p> : null}
+      {problems.length > 0 ? (
+        <div className="card pad down" role="alert">
+          {problems.map((p, i) => (
+            <p key={i}>{p}</p>
+          ))}
+        </div>
+      ) : null}
 
       {items.length > 0 ? (
         <section className="card">

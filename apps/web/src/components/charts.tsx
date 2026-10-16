@@ -35,6 +35,7 @@ export interface LinePoint {
 // and End or Escape goes back to the latest one.
 export function LineChart({ points, height = 200, label = "Running total" }: { points: LinePoint[]; height?: number; label?: string }) {
   const [hover, setHover] = useState<number | null>(null);
+  const [said, setSaid] = useState(""); // the keyboard reading, for screen readers
   const width = 640;
   const pad = { top: 16, right: 12, bottom: 18, left: 12 };
   const geo = useMemo(() => {
@@ -51,7 +52,9 @@ export function LineChart({ points, height = 200, label = "Running total" }: { p
   if (points.length === 0) return <p className="muted">No nights in this scope.</p>;
   const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${geo.x(i).toFixed(1)},${geo.y(p.value).toFixed(1)}`).join(" ");
   const last = points[points.length - 1];
-  const shown = hover === null ? null : points[hover];
+  // A reading kept from a longer scope is held to the last night of this one.
+  const at = hover === null ? null : Math.min(hover, points.length - 1);
+  const shown = at === null ? null : points[at];
 
   const onMove = (e: PointerEvent<SVGSVGElement>): void => {
     const box = e.currentTarget.getBoundingClientRect();
@@ -61,13 +64,17 @@ export function LineChart({ points, height = 200, label = "Running total" }: { p
   };
 
   const onKey = (e: KeyboardEvent<SVGSVGElement>): void => {
-    const at = hover ?? points.length - 1;
-    if (e.key === "ArrowLeft") setHover(Math.max(0, at - 1));
-    else if (e.key === "ArrowRight") setHover(Math.min(points.length - 1, at + 1));
-    else if (e.key === "Home") setHover(0);
-    else if (e.key === "End" || e.key === "Escape") setHover(null);
+    const from = at ?? points.length - 1;
+    let next: number | null;
+    if (e.key === "ArrowLeft") next = Math.max(0, from - 1);
+    else if (e.key === "ArrowRight") next = Math.min(points.length - 1, from + 1);
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End" || e.key === "Escape") next = null;
     else return;
     e.preventDefault();
+    setHover(next);
+    const point = next === null ? last : points[next];
+    if (point !== undefined) setSaid(`${next === null ? "Now" : point.label} ${moneySigned(point.value)}`);
   };
   const summary = last === undefined ? "no nights" : `now ${moneySigned(last.value)} after ${points.length} ${points.length === 1 ? "night" : "nights"}`;
 
@@ -97,13 +104,16 @@ export function LineChart({ points, height = 200, label = "Running total" }: { p
       >
         <line x1={pad.left} x2={width - pad.right} y1={geo.y(0)} y2={geo.y(0)} className="zero" />
         <path d={path} className={`line ${toneOf(last?.value ?? 0)}`} vectorEffect="non-scaling-stroke" />
-        {hover !== null && shown !== undefined && shown !== null ? (
+        {at !== null && shown !== undefined && shown !== null ? (
           <>
-            <line x1={geo.x(hover)} x2={geo.x(hover)} y1={pad.top} y2={height - pad.bottom} className="cross" vectorEffect="non-scaling-stroke" />
-            <circle cx={geo.x(hover)} cy={geo.y(shown.value)} r={4} className={`dot ${toneOf(shown.value)}`} />
+            <line x1={geo.x(at)} x2={geo.x(at)} y1={pad.top} y2={height - pad.bottom} className="cross" vectorEffect="non-scaling-stroke" />
+            <circle cx={geo.x(at)} cy={geo.y(shown.value)} r={4} className={`dot ${toneOf(shown.value)}`} />
           </>
         ) : null}
       </svg>
+      <span className="sr-only" aria-live="polite">
+        {said}
+      </span>
     </figure>
   );
 }

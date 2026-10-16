@@ -12,7 +12,17 @@ import { gunzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 
 import { players } from "../../../packages/core/src/index.ts";
-import { dataBasis, handleData, handleHandLogs, handleSave, handleSavedFile, type ApiConfig, type ConsoleCheck } from "../server/api.ts";
+import {
+  acceptsGzip,
+  dataBasis,
+  handleData,
+  handleHandLogs,
+  handleSave,
+  handleSavedFile,
+  handleSnapshot,
+  type ApiConfig,
+  type ConsoleCheck,
+} from "../server/api.ts";
 import { createHandLogCache } from "../server/handlogs.ts";
 
 const PORT = 5173;
@@ -82,7 +92,29 @@ describe("the server's answers for the review fixes", () => {
     expect(zipped.headers["content-encoding"]).toBe("gzip");
     expect(zipped.body.length).toBeLessThan(plain.body.length);
     expect(JSON.parse(gunzipSync(zipped.body).toString("utf8"))).toEqual(JSON.parse(plain.body.toString("utf8")));
+    // q=0 says the client does not take gzip.
+    const refused = await reply((res) => handleHandLogs(cfg, request("GET", "/api/handlogs", { "accept-encoding": "gzip;q=0, identity" }), res));
+    expect(refused.headers["content-encoding"]).toBeUndefined();
+    expect(refused.body.equals(plain.body)).toBe(true);
     handLogs.close();
+  });
+
+  it("reads Accept-Encoding with its q-values", () => {
+    for (const yes of ["gzip", "gzip, deflate, br", "br;q=1.0, gzip;q=0.8", "GZIP", " x-gzip ", "deflate, gzip; q=0.5"]) {
+      expect(acceptsGzip(yes), yes).toBe(true);
+    }
+    for (const no of ["", "identity", "deflate, br", "gzip;q=0", "gzip; q=0.0, identity", "x-gzip;q=0", "*", "gzipped"]) {
+      expect(acceptsGzip(no), no).toBe(false);
+    }
+  });
+
+  it("makes no snapshot of a folder that is not the console app's, and says why", async () => {
+    const root = mkdtempSync(join(tmpdir(), "plr-review-snapshot-"));
+    const cfg: ApiConfig = { dataRoot: join(root, "missing"), timeZone: TZ, consoleProbe: async () => ({ open: 0 }), snapshotDir: join(root, "out") };
+    const r = await reply((res) => handleSnapshot(cfg, request("POST", "/api/snapshot", WRITE, "{}"), res));
+    expect(r.status).toBe(409);
+    expect(JSON.parse(r.body.toString("utf8")).error).toContain("is not there, or holds no console app data");
+    expect(existsSync(join(root, "out"))).toBe(false);
   });
 
   it("keeps the page's console check for a few seconds, and a save checks at once", async () => {

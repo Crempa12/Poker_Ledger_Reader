@@ -60,6 +60,8 @@ describe("Add game with no Games folder", () => {
   it("names the saved folder by the data's real place: under Games only when there is a Games folder", () => {
     expect(savedLabel("Nov", true)).toBe("Games/Nov");
     expect(savedLabel("Nov", false)).toBe("Nov");
+    expect(savedLabel("", true)).toBe("a folder");
+    expect(savedLabel("  ", false)).toBe("a folder");
   });
 
   it("says where a game goes, from the data's Games folder", async () => {
