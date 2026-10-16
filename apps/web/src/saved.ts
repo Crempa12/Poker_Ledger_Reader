@@ -2,7 +2,7 @@
 // file with @plr/core, exactly as the console menu would, and the local server writes
 // it (only over the version this page was showing, and never while the console app is
 // open, because it writes its own copy when it quits).
-import { formatLocalDate, seats, type Game, type Scope, type SeatOwner, type World } from "@plr/core";
+import { formatLocalDate, seats, type Adjustment, type Game, type Scope, type SeatOwner, type World } from "@plr/core";
 
 import type { Ctx } from "./context.ts";
 import { postJSON } from "./data.ts";
@@ -43,6 +43,24 @@ export function typedCents(text: string): number | null {
   if (m === null) return null;
   const cents = Number(m[1] === "" ? "0" : m[1]) * 100 + Number((m[2] ?? "").padEnd(2, "0"));
   return cents > 0 ? cents : null;
+}
+
+// The same with a sign: "-20" takes away, "20" or "+20" adds; null when it is not
+// an amount, or is zero.
+export function typedSignedCents(text: string): number | null {
+  const t = text.trim();
+  const negative = t.startsWith("-");
+  const cents = typedCents(negative || t.startsWith("+") ? t.slice(1) : t);
+  return cents === null ? null : negative ? -cents : cents;
+}
+
+// A new adjustment group id, as the console app makes them (adjustments.cpp
+// newGroup): "adj<epoch seconds>-<n>", bumping n until no saved entry uses it.
+export function newGroup(list: readonly Adjustment[], nowSeconds: number): string {
+  for (let n = 1; ; n++) {
+    const candidate = `adj${nowSeconds}-${n}`;
+    if (!list.some((a) => a.group === candidate)) return candidate;
+  }
 }
 
 // "Different person, the name is right" for new names on an account (C++

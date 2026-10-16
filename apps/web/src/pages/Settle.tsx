@@ -159,7 +159,9 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
       {balances.length > 0 ? (
         <section className="card">
           <h2>Balances on this sheet</h2>
-          <p className="muted small">Poker results plus payments and corrections from the console app (menu 17).</p>
+          <p className="muted small">
+            Poker results plus payments and corrections (menu 17) · <a href={href("adjust")}>record a payment outside the sheet, or a correction</a>
+          </p>
           <ul className="balances">
             {balances.map(({ p, dollars }) => (
               <li key={p.normalizedName}>

@@ -8,6 +8,7 @@ import { href, useRoute } from "./router.ts";
 import { Check, checkCount } from "./pages/Check.tsx";
 import { GamePage } from "./pages/Game.tsx";
 import { AddGame } from "./pages/AddGame.tsx";
+import { Adjust } from "./pages/Adjust.tsx";
 import { Games } from "./pages/Games.tsx";
 import { Overview } from "./pages/Overview.tsx";
 import { Owed } from "./pages/Owed.tsx";
@@ -96,6 +97,8 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
       return <Owed ctx={ctx} onSaved={onSaved} />;
     case "check":
       return <Check ctx={ctx} onSaved={onSaved} />;
+    case "adjust":
+      return <Adjust ctx={ctx} onSaved={onSaved} />;
     case "settings":
       return <Settings ctx={ctx} onSaved={onSaved} />;
     case "add":

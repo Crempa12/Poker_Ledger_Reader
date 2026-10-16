@@ -113,7 +113,9 @@ export function Overview({ ctx }: { ctx: Ctx }) {
         {adjusted.length > 0 ? (
           <div className="adjusted">
             <h3>Payments &amp; corrections</h3>
-            <p className="muted small">These change who owes whom on a settlement sheet, not who won.</p>
+            <p className="muted small">
+              These change who owes whom on a settlement sheet, not who won · <a href={href("adjust")}>see or change them</a>
+            </p>
             <ul>
               {adjusted.map((p) => (
                 <li key={p.normalizedName}>

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { ledger, loadWorld, parseISO8601UTC, parseLocalDate, seats, viewOf, type Game, type Scope } from "../../../packages/core/src/index.ts";
 import { loadDataRoot } from "../../../tools/load.ts";
-import { confirmNames, defaultSessionId, gameSessionId, typedCents } from "../src/saved.ts";
+import { confirmNames, defaultSessionId, gameSessionId, newGroup, typedCents, typedSignedCents } from "../src/saved.ts";
 
 const TZ = "America/New_York";
 const EVERYTHING: Scope = { folder: "", from: null, to: null };
@@ -26,6 +26,22 @@ describe("typed payment amounts", () => {
     for (const t of ["", "0", "0.00", "-5", "12.345", "abc", "1e3", "$", ".", "12..5", "Infinity"]) {
       expect(typedCents(t), t).toBeNull();
     }
+  });
+});
+
+describe("signed amounts and new adjustment groups (menu 17)", () => {
+  it("reads a sign in front of an amount", () => {
+    expect(typedSignedCents("-12.50")).toBe(-1250);
+    expect(typedSignedCents("+20")).toBe(2000);
+    expect(typedSignedCents(" -$5 ")).toBe(-500);
+    expect(typedSignedCents("20")).toBe(2000);
+    for (const t of ["-", "-0", "+-5", "--5", "", "x"]) expect(typedSignedCents(t), t).toBeNull();
+  });
+
+  it("names a group adj<seconds>-<n>, with the first n nothing uses", () => {
+    const at = (group: string) => ({ group, date: 0, playerNormalized: "della", amountCents: 100, folder: "", note: "" });
+    expect(newGroup([], 1900000000)).toBe("adj1900000000-1");
+    expect(newGroup([at("adj1900000000-1"), at("adj1900000000-2"), at("adj1800000000-3")], 1900000000)).toBe("adj1900000000-3");
   });
 });
 
