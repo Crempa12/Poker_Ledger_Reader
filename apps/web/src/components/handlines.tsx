@@ -1,6 +1,19 @@
 // Small pieces the hand-log pages share: the console's dim explanation lines, its "Label  value"
 // lines, the loader's notes, and what to show while the results are missing.
 import type { HandLogs } from "../handlogs.ts";
+import { href } from "../router.ts";
+
+// How a game's hand log gets in. A read-only copy (a phone on the Wi-Fi, a snapshot) has no + Add game, so
+// it only says where that is done.
+export function AddLogHint({ canWrite }: { canWrite: boolean }) {
+  if (!canWrite) return <>Hand logs are added on the computer that runs the site.</>;
+  return (
+    <>
+      Download &quot;poker_now_log_&lt;id&gt;.csv&quot; from PokerNow, then pick it on <a href={href("add")}>+ Add game</a> (or
+      file it with the console app&apos;s menu 19).
+    </>
+  );
+}
 
 // The console's explanation under a table, one line each.
 export function Legend({ lines }: { lines: string[] }) {

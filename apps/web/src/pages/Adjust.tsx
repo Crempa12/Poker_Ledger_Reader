@@ -147,7 +147,10 @@ function PaymentForm({ ctx, people, nameOf, save, busy }: FormProps & { nameOf: 
       debtor,
       debtorName: nameOf(debtor),
     });
-    if (!rows.ok) return setProblem(rows.error === "Cancelled." ? "Pick two different players." : rows.error);
+    // The console's "Cancelled." covers both a missing payer and a payer who is also the one paid.
+    if (!rows.ok) {
+      return setProblem(rows.error !== "Cancelled." ? rows.error : debtor === "" ? "Pick who paid it, or was let off." : "Pick two different players.");
+    }
     if (!folderOk(ctx.scope.folder)) return;
     setProblem(null);
     const done = `${nameOf(debtor)} now owes ${moneyCents(cents)} less and ${nameOf(creditor)} is owed ${moneyCents(cents)} less. The leaderboard does not change.`;

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { ledger, type Game } from "@plr/core";
+import { ledger, scopeContains, type Game } from "@plr/core";
 
 import type { Ctx } from "../context.ts";
 import { getLocalJSON, postJSON } from "../data.ts";
 import { clockTime, longDate, moneyCents, moneySignedCents, plural, shortDate } from "../format.ts";
+import { startOfFile, suggestFolder } from "../folders.ts";
 import { resultsOf } from "../game.ts";
 import { href } from "../router.ts";
 
@@ -23,6 +24,7 @@ interface Downloaded {
   gameId: string;
   bytes: number;
   modified: number;
+  filed?: { path: string; bytes: number }; // the copy of this game's file already filed, if there is one
 }
 interface DownloadsList {
   found: boolean;
@@ -65,8 +67,6 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   // Older payloads (and a snapshot, which never saves) do not say: the Games folder is assumed.
   const gamesFolder = ctx.payload.gamesFolder ?? true;
   const folders = ledger.listFolders(world.games).filter((f) => f !== "(root)");
-  const newest = world.games[world.games.length - 1];
-  const defaultFolder = newest !== undefined && newest.folder !== "(root)" ? newest.folder : (folders[folders.length - 1] ?? "");
   const [links, setLinks] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
@@ -122,6 +122,14 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
             <>
               The site reads the console app&apos;s folder: put it next to this one (or set PLR_DATA_ROOT to it), then press{" "}
               <strong>Refresh</strong>.
+              {ctx.payload.dataStartable === true ? (
+                <>
+                  {" "}
+                  Not using the console app? The site starts a data folder of its own only in a folder that is empty (or not
+                  there yet), that it may write to, and that is not a link. If <code>{ctx.payload.dataRoot}</code> holds other
+                  files, move them out; otherwise set PLR_DATA_ROOT to such a folder. Then press <strong>Refresh</strong>.
+                </>
+              ) : null}
             </>
           )}
         </p>
@@ -131,14 +139,23 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 
   const add = (item: Omit<Item, "status" | "message" | "folder"> & { folder?: string }): void => {
     const there = findExisting(ctx, item.kind, item.gameId);
-    // A hand log goes next to its ledger when the ledger is already filed in a folder. A ledger at the
-    // top of Games has no folder to share, and a game is never saved there, so the usual folder is offered.
+    // A hand log goes next to its ledger: the one already filed in a folder, or the one on this page. A ledger at
+    // the top of Games has no folder to share, and a game is never saved there. Anything else gets the folder
+    // for its month (folders.ts), so filing it is one press.
     const ledgerAt = findExisting(ctx, "ledger", item.gameId);
     const inherited = ledgerAt !== null ? folderOfPath(ledgerAt) : "";
-    const folder = item.folder ?? (inherited !== "" ? inherited : defaultFolder);
+    const suggested = inherited !== "" ? inherited : suggestFolder(world.games, startOfFile(item.kind, item.text), tz);
     setItems((list) => [
       ...list.filter((x) => x.key !== item.key),
-      { ...item, folder, status: there !== null ? "there" : "ready", message: there !== null ? `already in your data: ${there}` : "" },
+      {
+        ...item,
+        folder:
+          item.folder ??
+          (item.kind === "poker_now_log" && inherited === ""
+            ? (list.find((x) => x.kind === "ledger" && x.gameId === item.gameId)?.folder ?? suggested)
+            : suggested),
+        status: there !== null ? "there" : "ready", message: there !== null ? `already in your data: ${there}. To file it somewhere else, move that file (and its hand log) to the other folder yourself, in Finder or File Explorer, then press Refresh.` : "",
+      },
     ]);
   };
 
@@ -195,7 +212,9 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         basis: basis.current,
       });
       basis.current = r.basis;
-      setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saved", message: `saved as ${savedLabel(r.saved, gamesFolder)}` } : x)));
+      const notes = afterSaveNotes(ctx, item, r.saved, items);
+      const message = [`saved as ${savedLabel(r.saved, gamesFolder)}`, ...notes].join(" · ");
+      setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saved", message } : x)));
       if (reload) onSaved();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -225,6 +244,16 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
     seen.add(key);
     return findExisting(ctx, f.kind, f.gameId) === null && !items.some((x) => x.key === key);
   });
+  // Downloads bigger than the copy of the same game already filed: most likely the whole file of a game filed
+  // early (a hand log downloaded before the night ended). The site never files over a game, so they are
+  // pointed out instead of being left out with the other filed games. The biggest copy of each game is shown.
+  const bigger: Downloaded[] = [];
+  for (const f of downloads?.files ?? []) {
+    if (f.filed === undefined || f.bytes <= f.filed.bytes) continue;
+    const at = bigger.findIndex((b) => b.kind === f.kind && b.gameId === f.gameId);
+    if (at === -1) bigger.push(f);
+    else if (f.bytes > (bigger[at]?.bytes ?? 0)) bigger[at] = f;
+  }
 
   const addFromDownloads = async (files: Downloaded[]): Promise<void> => {
     setProblems([]);
@@ -304,6 +333,8 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         <DownloadsFound
           list={downloads}
           fresh={fresh}
+          bigger={bigger}
+          gamesFolder={gamesFolder}
           listed={(downloads?.files ?? []).some((f) => items.some((x) => x.key === `${f.kind}_${f.gameId}`))}
           busy={busy}
           tz={ctx.tz}
@@ -360,7 +391,8 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
             ))}
           </ul>
           <p className="muted small">
-            After saving, the game shows here at once; the console app lists it after it is restarted. Game files hold everyone&apos;s
+            After saving, the game shows on every page at once (when the Folder and Dates at the top include it); the console app
+            lists it after it is restarted. Game files hold everyone&apos;s
             names and results: keep them out of git, or keep that repository private.
           </p>
         </section>
@@ -391,6 +423,8 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 function DownloadsFound({
   list,
   fresh,
+  bigger,
+  gamesFolder,
   listed,
   busy,
   tz,
@@ -398,6 +432,8 @@ function DownloadsFound({
 }: {
   list: DownloadsList | null;
   fresh: Downloaded[];
+  bigger: Downloaded[]; // bigger than the copy of the same game already filed
+  gamesFolder: boolean;
   listed: boolean; // some of its files are on this page already
   busy: boolean;
   tz: string;
@@ -413,14 +449,41 @@ function DownloadsFound({
     );
   }
   if (list === null || !list.found) return null;
+  const biggerNote =
+    bigger.length > 0 ? (
+      <div className="downloads">
+        <p>
+          <strong>{plural(bigger.length, "download")}</strong> bigger than the copy already filed:
+        </p>
+        <ul className="plain small">
+          {bigger.map((f) => (
+            <li key={f.name}>
+              <code>{f.name}</code>{" "}
+              <span className="muted">
+                · {sizes(f.bytes, f.filed?.bytes ?? 0)[0]}; filed at {savedLabel(f.filed?.path ?? "", gamesFolder)},{" "}
+                {sizes(f.bytes, f.filed?.bytes ?? 0)[1]}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="muted small">
+          A game filed before the night ended holds less. The site never files over a game: to use the bigger copy, move the filed
+          file out of its folder yourself (in Finder or File Explorer), press <strong>Refresh</strong>, then add this one.
+        </p>
+      </div>
+    ) : null;
   if (fresh.length === 0) {
     return (
-      <p className="muted small">
-        {listed ? "The new PokerNow files from your Downloads folder are listed below." : "No new PokerNow files in your Downloads folder."}
-      </p>
+      <>
+        <p className="muted small">
+          {listed ? "The new PokerNow files from your Downloads folder are listed below." : "No new PokerNow files in your Downloads folder."}
+        </p>
+        {biggerNote}
+      </>
     );
   }
   return (
+    <>
     <div className="downloads">
       <p>
         <strong>{plural(fresh.length, "new PokerNow file")}</strong> in your Downloads folder:
@@ -440,7 +503,35 @@ function DownloadsFound({
         <span className="muted small">They stay in Downloads; a copy is filed when you save.</span>
       </div>
     </div>
+    {biggerNote}
+    </>
   );
+}
+
+// Two file sizes, in KB, or in bytes when the KB would read the same (a small ledger), so the bigger one shows.
+export function sizes(a: number, b: number): [string, string] {
+  const kb = (n: number): string => `${Math.max(1, Math.round(n / 1024)).toLocaleString("en-US")} KB`;
+  if (kb(a) !== kb(b)) return [kb(a), kb(b)];
+  const exact = (n: number): string => `${n.toLocaleString("en-US")} bytes`;
+  return [exact(a), exact(b)];
+}
+
+// What to add to "saved as ..." for a game just filed: that the Folder or Dates at the top hide it, and,
+// for a hand log, that its ledger is not filed yet (nor on this page to file).
+export function afterSaveNotes(ctx: Ctx, item: Pick<Item, "kind" | "gameId" | "text">, saved: string, items: readonly Pick<Item, "kind" | "gameId">[]): string[] {
+  const notes: string[] = [];
+  const folder = folderOfPath(saved);
+  const start = item.kind === "ledger" ? (ledger.loadAllGames([{ relativePath: saved, text: item.text }]).games[0]?.start ?? null) : null;
+  const shown = item.kind === "ledger" ? scopeContains(ctx.scope, folder, start) : ctx.scope.folder === "" || ctx.scope.folder === folder;
+  if (!shown) notes.push("the Folder or Dates choice at the top hides it: pick All folders and All time to see it");
+  if (
+    item.kind === "poker_now_log" &&
+    findExisting(ctx, "ledger", item.gameId) === null &&
+    !items.some((x) => x.kind === "ledger" && x.gameId === item.gameId)
+  ) {
+    notes.push("its ledger is not filed yet: add that too");
+  }
+  return notes;
 }
 
 function Preview({ ctx, item }: { ctx: Ctx; item: Item }) {
@@ -516,6 +607,8 @@ export function FolderPicker({
         } else onChange(e.target.value);
       }}
     >
+      {/* A typed name not made yet: listed, so the box shows the folder the save will use. */}
+      {isNew ? <option value={value}>{value} (new)</option> : null}
       {folders.map((f) => (
         <option key={f} value={f}>
           {f}

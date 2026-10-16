@@ -17,9 +17,13 @@ npm install
 npm run web
 ```
 
+The first install may print an `npm warn` line about install scripts (fsevents): it is
+a notice, not a failure.
+
 On Windows, double-click **Start Poker Ledger.cmd** instead (it needs
-[Node.js](https://nodejs.org) 22.18 or newer). This folder must sit next to the console
-app's folder; from a checkout of the console app, make it with:
+[Node.js](https://nodejs.org) 22.18 or newer). If you use the console app, this folder
+must sit next to its folder (`Poker_Ledger_Reader`); from a checkout of the console app,
+make it with:
 
 ```bash
 git worktree add ../Poker_Ledger_Web web-app
@@ -29,7 +33,14 @@ The site's **Help** tab walks through a week of using it.
 
 ### Without the console app
 
-Another group can use the site on its own. With no `Poker_Ledger_Reader` folder next to
+Another group can use the site on its own. Get this folder with
+
+```bash
+git clone --branch web-app https://github.com/Crempa12/Poker_Ledger_Reader.git Poker_Ledger_Web
+```
+
+or download the `web-app` branch as a ZIP from GitHub (Code, then Download ZIP), then
+open it as above. With no `Poker_Ledger_Reader` folder next to
 this one, the site keeps its data in `data/` inside this folder (git ignores it): the
 Overview offers **Start a new data folder**, then add games on **+ Add game**. The files
 are the same ones the console app reads, so it can be pointed at that folder later.
@@ -79,7 +90,12 @@ other:
   first. A saved file keeps its own line endings (a file the console wrote on Windows
   has CRLF line ends, and stays that way) and its byte order mark, if it has one.
 - If a file has rows the site could not read (the Checks page lists them), a save
-  asks first, because it would leave those rows out.
+  asks first, because it would leave those rows out. A date or time it cannot read
+  stops the save of that file until it is fixed by hand, so the text is never lost.
+- Close these files in Excel, Numbers or any other program before you save here. A
+  program that still has the old copy open writes it back over the change the next
+  time it saves (on a Mac nothing stops it; on Windows, Excel locks the file and the
+  site says so).
 
 Amounts are read the way the site reads them: `1,234` is 1234, and `12,50` is refused.
 The console app reads a typed amount only up to its first comma, so there `1,234` is
@@ -92,7 +108,9 @@ made before this change stay where they are, in `local/backups/` itself. To undo
 change: quit the console app, rename the backup to the file's name alone (a backup is
 named with the date and time it was kept, a short code, and then the file's name, so a
 name ending in `_settings.csv` becomes `settings.csv`), copy it into `Saved_Data/` in
-place of the file there, then press **Refresh**.
+place of the file there, then press **Refresh**. The time in a backup's name is UTC
+(the `Z` at its end), and the folder of the data you saved last is the newest folder in
+`local/backups/`.
 
 ### Adding games
 
@@ -111,6 +129,10 @@ repository is public on GitHub, committing them there publishes all of that: kee
 out of git, or make that repository private.
 
 A game that is already filed in any folder is not filed again (menu 19 does the same).
+If a download in Downloads is bigger than the copy already filed (a game filed before
+the night ended), the page points it out: move the filed file out of its folder, press
+**Refresh**, and add the bigger one. To file a game in another folder, move its ledger
+(and hand log) there yourself, in Finder or File Explorer, then press **Refresh**.
 A game can be filed while the console app is open, but the console app lists it only
 after it is restarted. A folder can be named `Games` only once the data has a `Games`
 folder, because otherwise the games at the top of the folder would stop being read.
@@ -118,7 +140,7 @@ folder, because otherwise the games at the top of the folder would stop being re
 ### Share it with the group (any phone, anywhere)
 
 **Settings → Make a snapshot** (or `npm run snapshot`) makes one file,
-`local/snapshots/poker-ledger-<date>.html`, with every page of the site and the
+`local/snapshots/poker-ledger-<date>.html` (press **Download it** for a copy to send), with every page of the site and the
 results up to now inside it. It opens on any phone or computer, even offline, with
 nothing to install: send it by AirDrop, a message or a shared drive. It is
 read-only and does not update, so make a new one after each game. It holds
@@ -131,7 +153,9 @@ payments: send it only to people who may see them.
 npm run web:phone
 ```
 
-The terminal prints a `Network:` address; open it on your phone. Anyone on that
+Run it in Terminal from this folder (the Start Poker Ledger file does not do phone
+mode). The terminal prints a `Network:` address; open it on your phone. Ctrl-C in
+the terminal stops it. Anyone on that
 Wi-Fi can then read the page, so use it at home, not on public Wi-Fi. Adding games
 and every other change work only on this computer.
 

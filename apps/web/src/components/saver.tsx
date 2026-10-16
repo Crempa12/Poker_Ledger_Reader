@@ -10,8 +10,9 @@ export interface Saver {
 }
 
 // One Saved_Data save at a time, with the outcome to show under the card. run says
-// whether the file was written; the page reloads the data after a write.
-export function useSaver(ctx: Ctx, onSaved: () => void): Saver {
+// whether the file was written; the page reloads the data after a write, and the buttons stay busy until
+// that reload is in (a second save sent with the data from before the first would be refused as stale).
+export function useSaver(ctx: Ctx, onSaved: () => void | Promise<void>): Saver {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const run = async (file: SavedFile, text: string, done: string): Promise<boolean> => {
@@ -21,7 +22,7 @@ export function useSaver(ctx: Ctx, onSaved: () => void): Saver {
       // false: the person said no to the question writeSaved asks, so nothing was written.
       if (!(await writeSaved(ctx, file, text))) return false;
       setNote({ ok: true, text: done });
-      onSaved();
+      await onSaved();
       return true;
     } catch (err) {
       setNote({ ok: false, text: errorText(err) });

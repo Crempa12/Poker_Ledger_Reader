@@ -273,8 +273,9 @@ async function gameFileNames(dir: string): Promise<string[]> {
 
 // Whether a game file (its relative path) is the same kind of file for the same game: a ledger or a
 // hand log with this id, a browser copy's " (1)" included. The console checks the two kinds apart too.
+const GAME_FILE = /^(ledger|poker_now_log)_(pgl[A-Za-z0-9_-]{10,40})(?: \(\d+\))?\.csv$/i;
 function isSameGameFile(path: string, kind: string, id: string): boolean {
-  const m = /^(ledger|poker_now_log)_(pgl[A-Za-z0-9_-]{10,40})(?: \(\d+\))?\.csv$/i.exec(path.split("/").pop() ?? "");
+  const m = GAME_FILE.exec(path.split("/").pop() ?? "");
   return m !== null && m[1]?.toLowerCase() === kind && m[2] === id;
 }
 
@@ -353,6 +354,9 @@ export async function handleData(cfg: ApiConfig, req: IncomingMessage, res: Serv
     // Whether the folder holds the console app's data, and if not, whether a new one may be started there.
     dataReady: await dataRootReady(cfg.dataRoot),
     canStartData: canWrite && (await startableHere(cfg)),
+    // Whether the site would start one here at all (its own data/ folder, or PLR_DATA_ROOT's): when it would but
+    // canStartData is false, the folder has other files in it, and the page says so.
+    dataStartable: canWrite && cfg.startable === true,
     basis,
   });
 }
@@ -585,8 +589,21 @@ export async function handleSavedFile(cfg: ApiConfig, req: IncomingMessage, res:
   const target = join(dir, file);
   await inSaveQueue(async () => {
     if (!(await dataRootReady(cfg.dataRoot))) return send(res, 409, { error: notADataFolder(cfg.dataRoot, await startableHere(cfg)) });
-    await mkdir(dir, { recursive: true });
-    const unlock = await acquireSaveLock(dir, cfg.lockWaitMs ?? LOCK_WAIT_MS);
+    // A Saved_Data folder the site may not write to (read-only, or held by a sync app) fails here, before
+    // anything is changed: said so, not left to the general "could not finish that".
+    let unlock: (() => Promise<void>) | null;
+    try {
+      await mkdir(dir, { recursive: true });
+      unlock = await acquireSaveLock(dir, cfg.lockWaitMs ?? LOCK_WAIT_MS);
+    } catch (err) {
+      console.error("[plr] could not lock the Saved_Data folder:", err);
+      const code = (err as NodeJS.ErrnoException).code ?? "error";
+      return send(res, 500, {
+        error:
+          `${file} could not be written, so nothing changed: the site may not write to the Saved_Data folder (${code}). ` +
+          "Check that the folder is not read-only (in Finder: Get Info, Sharing & Permissions), then try again.",
+      });
+    }
     if (unlock === null) {
       return send(res, 423, {
         error:
@@ -749,6 +766,16 @@ export async function handleSave(cfg: ApiConfig, req: IncomingMessage, res: Serv
   const folder = (await existingGamesFolder(gamesDir(cfg.dataRoot), body.folder)) ?? safeFolder(body.folder);
   if (m === null) return send(res, 400, { error: "only PokerNow ledger_… or poker_now_log_… files can be saved" });
   if (folder === null) {
+    // A folder the console app skips (reports, build ...) passes every rule below, so it is named first.
+    const skipped = typeof body.folder === "string" ? body.folder.split("/").find((p) => isExcludedDir(p) || isExcludedDir(p.toLowerCase())) : undefined;
+    if (skipped !== undefined) {
+      // "Reports" is not skipped by the console app itself, but a Mac or Windows treats it as the folder
+      // "reports", which is: so the site keeps games out of both.
+      const why = isExcludedDir(skipped)
+        ? `the console app skips folders named ${skipped}, so a game there would not be read`
+        : `the site does not file games into ${skipped}: the console app skips ${skipped.toLowerCase()}, and on a Mac or Windows the two names can be the same folder`;
+      return send(res, 400, { error: `${why}: pick another name` });
+    }
     return send(res, 400, {
       error: 'pick another folder name: no dot at its start or end, none of \\ : < > " | ? *, and not a name Windows keeps (CON, NUL ...) or Saved_Data',
     });
@@ -941,6 +968,7 @@ export interface DownloadedFile {
   gameId: string;
   bytes: number;
   modified: number; // ms since the epoch
+  filed?: { path: string; bytes: number }; // this game's file already filed (path relative to Games), if it is
 }
 
 // GET /api/downloads: the PokerNow files at the top of the Downloads folder (where menu 19 looks), newest
@@ -975,6 +1003,23 @@ export async function handleDownloads(cfg: ApiConfig, req: IncomingMessage, res:
     files.push({ name: e.name, kind, gameId: m[2] ?? "", bytes: s.size, modified: s.mtimeMs });
   }
   files.sort((a, b) => b.modified - a.modified || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  // The copy already filed, so the page can point out a download bigger than it (the whole file of a game
+  // filed before the night ended). Only the games that are in Downloads are looked up.
+  if (files.length > 0) {
+    const wanted = new Set(files.map((f) => `${f.kind}_${f.gameId}`));
+    const filed = new Map<string, { path: string; bytes: number }>();
+    await eachGameCsv(gamesDir(cfg.dataRoot), async (relativePath, full) => {
+      const m = GAME_FILE.exec(relativePath.split("/").pop() ?? "");
+      const key = m === null ? "" : `${m[1]?.toLowerCase()}_${m[2]}`;
+      if (!wanted.has(key) || filed.has(key)) return;
+      const s = await stat(full).catch(() => null);
+      if (s !== null) filed.set(key, { path: relativePath, bytes: s.size });
+    });
+    for (const f of files) {
+      const there = filed.get(`${f.kind}_${f.gameId}`);
+      if (there !== undefined) f.filed = there;
+    }
+  }
   // The folder's own path is not sent: the page does not need it.
   send(res, 200, { found: true, files });
 }

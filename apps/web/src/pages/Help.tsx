@@ -26,8 +26,8 @@ export function Help({ ctx }: { ctx: Ctx }) {
       <section className="card pad">
         <h1>How to use it</h1>
         <p className="muted">
-          The site reads the console app&apos;s folder every time a page loads, and again when you come back to its tab after
-          something changed there, so it always shows what the console app shows.
+          The site reads its data folder (the console app&apos;s folder, if you use the console app) every time a page loads, and
+          again when you come back to its tab after something changed there, so it always shows what the console app shows.
         </p>
         <h2>After each game</h2>
         <ol>
@@ -35,7 +35,8 @@ export function Help({ ctx }: { ctx: Ctx }) {
             <a href={href("add")}>+ Add game</a>: paste the game&apos;s PokerNow link. The ledger is saved where the console app keeps
             its games. PokerNow puts a captcha on hand logs, so download the hand log yourself: the page finds it in your Downloads
             folder (press <strong>Add all</strong>, or <strong>Add it</strong> for one file, then <strong>Save all</strong> or the
-            file&apos;s own <strong>Save to</strong> button), or you can pick the file.
+            file&apos;s own <strong>Save to</strong> button), or you can pick the file. Filed a game in the wrong folder? Move its
+            file (and its hand log) to the right folder yourself, in Finder or File Explorer, then press <strong>Refresh</strong>.
           </li>
           <li>
             <a href={href("check")}>Checks</a>: answer any new name (a new nickname, or a new player) and any seat that looks like
@@ -44,14 +45,17 @@ export function Help({ ctx }: { ctx: Ctx }) {
           <li>
             <a href={href("settle")}>Settle up</a>: choose what to settle (the folder, or one game) and look over who pays whom. If
             someone wants to pay a particular person, add it there. Copy the sheet for the group chat, then press{" "}
-            <strong>Save sheet</strong> to track who has paid.
+            <strong>Save sheet</strong> to track who has paid. Save one sheet per night or one for the whole folder, not both: Who
+            owes adds up every saved sheet.
           </li>
           <li>
-            <a href={href("owed")}>Who owes</a>: press <strong>Paid…</strong> as the money comes in.
+            <a href={href("owed")}>Who owes</a>: press <strong>Paid…</strong> as the money comes in. That changes Who owes only;
+            a payment on <a href={href("adjust")}>Payments &amp; corrections</a> changes Settle up only, as in the console app.
           </li>
           <li>
-            Share it: <a href={href("settings")}>Settings</a> → <strong>Make a snapshot</strong>, and send the file to the group. It
-            opens on any phone, even offline, and does not change, so make a new one after the next game.
+            Share it: <a href={href("settings")}>Settings</a> → <strong>Make a snapshot</strong>, then <strong>Download it</strong>,
+            and send that file to the group (a group chat or AirDrop). It opens in any phone&apos;s browser, even offline, and does
+            not change, so make a new one after the next game.
           </li>
         </ol>
       </section>
@@ -67,10 +71,15 @@ export function Help({ ctx }: { ctx: Ctx }) {
           <li>
             If the site says something changed since the page loaded, press <strong>Refresh</strong> and do it again.
           </li>
+          <li>
+            Close the Saved_Data files (adjustments.csv, settings.csv and the rest) in Excel, Numbers or any other program first. A
+            program that still has the old copy open writes it back over the change the next time it saves.
+          </li>
           <li>Every change keeps the old file in the web folder&apos;s local/backups/; the README says how to put one back.</li>
           <li>
-            On your phone, on the same Wi-Fi: run <code>npm run web:phone</code> and open the Network address it prints. Phones can
-            look, not change.
+            On your phone, on the same Wi-Fi: in Terminal, in the Poker_Ledger_Web folder, run <code>npm run web:phone</code>, then
+            open on the phone the address on the line that starts <code>Network:</code>. Phones can look, not change. Ctrl-C in
+            Terminal stops it.
           </li>
         </ul>
       </section>
@@ -109,7 +118,10 @@ function SnapshotHelp({ ctx }: { ctx: Ctx }) {
         ask for a new one after the next game.
       </p>
       <ul>
-        <li>Folder and Dates at the top choose which games every page counts.</li>
+        <li>
+          Folder and Dates at the top choose the games Overview, Games and Settle up count. Who owes is for every game, and Play
+          style has all dates only.
+        </li>
         <li>
           <a href={href()}>Overview</a> has the leaderboard; tap a name for that player&apos;s nights.
         </li>

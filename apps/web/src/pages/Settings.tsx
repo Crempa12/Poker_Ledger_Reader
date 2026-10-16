@@ -4,6 +4,7 @@ import { settlement, type PaymentPreference, type Settings as AppSettings } from
 import { useSaver } from "../components/saver.tsx";
 import type { Ctx } from "../context.ts";
 import { postJSON } from "../data.ts";
+import { plural } from "../format.ts";
 import { chosenOption, errorText, leftOutNote, pinsToWrite } from "../saved.ts";
 
 // Console menu 6: pinned payments, the banker, who "me" is, and the console's display.
@@ -97,7 +98,7 @@ function Share() {
       </button>
       {made !== null ? (
         <p className="up small">
-          Made {made.name} ({Math.round(made.bytes / 1024)} KB, {made.games} ledgers).{" "}
+          Made {made.name} ({Math.round(made.bytes / 1024)} KB, {plural(made.games, "game")}).{" "}
           <a href={`/api/snapshot/${encodeURIComponent(made.name)}`} download={made.name}>
             Download it
           </a>{" "}

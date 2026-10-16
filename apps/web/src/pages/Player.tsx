@@ -10,8 +10,10 @@ import { useHandLogs } from "../handlogs.ts";
 import { href } from "../router.ts";
 import { runningTotal, Tile } from "./Overview.tsx";
 
-export function PlayerPage({ ctx, normalized }: { ctx: Ctx; normalized: string }) {
+export function PlayerPage({ ctx, normalized: asked }: { ctx: Ctx; normalized: string }) {
   const { view, tz } = ctx;
+  // A name merged into another (a saved sheet on Who owes keeps the old one) opens the merged person's page.
+  const normalized = players.resolveCanonical(ctx.world.rules, asked);
   // The hand logs are read here so the rest of the page never waits for them (the cards below wait).
   const hand = useHandLogs(ctx);
   const p = view.board.find((x) => x.normalizedName === normalized);

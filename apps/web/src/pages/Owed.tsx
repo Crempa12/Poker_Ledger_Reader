@@ -24,7 +24,11 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
     <>
       <section className="card">
         <h2>Who still owes whom</h2>
-        <p className="muted small">Everything still unpaid, added up across every saved sheet (menu 11 in the console app).</p>
+        <p className="muted small">
+          Everything still unpaid, added up across every saved sheet (menu 11 in the console app). It is for every game, whatever the
+          Folder and Dates at the top say. A payment recorded here (Paid…) changes this list only; Payments &amp; corrections change
+          Settle up only and are not counted here. Names stay as each sheet saved them, even after a merge.
+        </p>
         {view.owed.length === 0 ? (
           <p className="up">Nobody. Every saved sheet is paid.</p>
         ) : (

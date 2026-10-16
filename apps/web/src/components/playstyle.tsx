@@ -9,7 +9,7 @@ import { libcppSort } from "../../../../packages/core/src/libcpp-sort.ts";
 import { href } from "../router.ts";
 import type { HandScopePayload } from "../handtypes.ts";
 import { afText, cutCell, hrText, pctText, profilesOf, rateText, styleName } from "../handformat.ts";
-import { Legend, Lines } from "./handlines.tsx";
+import { AddLogHint, Legend, Lines } from "./handlines.tsx";
 
 // The Archetype column's width in the console's table (playstyle.cpp printProfiles: W - 68 = 32).
 const ARCHETYPE_COLUMNS = 32;
@@ -166,7 +166,7 @@ export function StyleCard({ style }: { style: handlog.StyleStats[] }) {
 
 // The menu 21 two tables (playstyle.cpp printProfiles). Players under 50 hands are left out of the
 // tables, as the console leaves them out; their long reads are listed below the tables.
-export function ProfilesView({ data, scope }: { data: HandScopePayload; scope: string }) {
+export function ProfilesView({ data, scope, canWrite = true }: { data: HandScopePayload; scope: string; canWrite?: boolean }) {
   const { poolVpip, poolPfr, counted } = data.pool;
   const profiles = profilesOf(data);
   const shown = profiles.filter((p) => p.hands >= 50);
@@ -177,8 +177,7 @@ export function ProfilesView({ data, scope }: { data: HandScopePayload; scope: s
     return (
       <div className="card pad">
         <p>
-          No hand logs in scope. Download &quot;poker_now_log_&lt;id&gt;.csv&quot; from PokerNow, then pick it on{" "}
-          <a href={href("add")}>+ Add game</a> (or file it with the console app&apos;s menu 19).
+          No hand logs in scope. <AddLogHint canWrite={canWrite} />
         </p>
       </div>
     );

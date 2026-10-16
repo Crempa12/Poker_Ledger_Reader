@@ -19,7 +19,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import react from "@vitejs/plugin-react";
 import { build } from "vite";
 
-import { looksLikeLedger } from "../../../packages/core/src/ledger.ts";
+import { loadAllGames, looksLikeLedger } from "../../../packages/core/src/ledger.ts";
 import { formatLocalDate } from "../../../packages/core/src/util.ts";
 import { loadDataRoot } from "../../../tools/load.ts";
 import { dataRootReady, defaultDataRoot } from "./dataroot.ts";
@@ -118,7 +118,8 @@ export async function makeSnapshot(dataRoot: string, timeZone: string, outDir: s
       await rm(temp, { force: true });
       throw err;
     }
-    return { file, name, bytes: Buffer.byteLength(html), games: ledgers.length };
+    // The games the pages count (copies and never-played ledgers left out), not the ledger files.
+    return { file, name, bytes: Buffer.byteLength(html), games: loadAllGames(ledgers).games.length };
   } finally {
     // The build folder is only a step on the way: it goes whether or not the snapshot was made.
     await rm(work, { recursive: true, force: true });
@@ -136,7 +137,7 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
   if (process.argv.includes("--json")) {
     console.log(JSON.stringify(r)); // for the site's "Make a snapshot" button (api.ts)
   } else {
-    console.log(`Snapshot of ${r.games} ledgers written to ${r.file} (${Math.round(r.bytes / 1024)} KB).`);
+    console.log(`Snapshot of ${r.games} games written to ${r.file} (${Math.round(r.bytes / 1024)} KB).`);
     console.log("It holds everyone's results, names, notes and PokerNow account ids: share it only with people who may see them.");
   }
 }

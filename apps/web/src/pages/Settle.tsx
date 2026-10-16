@@ -63,6 +63,16 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
   // The name the console app suggests when this sheet is saved (menu 7).
   const suggested = game !== undefined ? gameSessionId(game, tz) : defaultSessionId(scope, tz, Math.floor(Date.now() / 1000));
   const requests = forSheet(asked, suggested);
+  // Saved sheets that already cover some of these games, as far as their names show: a night's own sheet
+  // (game_<date>_<id>) when a folder or range is saved, or the folder's sheet when one night is. Who owes
+  // adds up every saved sheet, so saving both asks for those nights twice.
+  const savedIds = new Set([...world.balances.values()].map((b) => b.sessionId));
+  const overlap =
+    game !== undefined
+      ? savedIds.has(game.folder) && game.folder !== suggested
+        ? [game.folder]
+        : []
+      : games.map((g) => gameSessionId(g, tz)).filter((id) => id !== suggested && savedIds.has(id));
 
   // The board and the sheet are worked out again only when one of their inputs changes, not on every
   // render: a whole folder's sheet takes tens of milliseconds, and the page renders on each small change.
@@ -96,7 +106,7 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
   const title = game !== undefined ? `Game on ${longDate(game.start, tz)}` : `Everything in ${scopeWords(ctx.choice)}, ${plural(games.length, "game")}`;
 
   // The sheet as text for the group chat. Where the browser will not copy it, the text is shown to select.
-  const copyBody = copyText(title, sheet.entries);
+  const copyBody = copyText(title, sheet.entries, sheet.warnings);
   const copy = (): void => {
     setCopyFailed(false);
     void copyToClipboard(copyBody).then((ok) => {
@@ -275,7 +285,7 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
         </section>
       ) : null}
       {sheet.entries.length > 0 ? (
-        <SaveSheet key={suggested} ctx={ctx} suggested={suggested} entries={sheet.entries} onSaved={onSaved} />
+        <SaveSheet key={suggested} ctx={ctx} suggested={suggested} entries={sheet.entries} overlap={overlap} onSaved={onSaved} />
       ) : null}
     </>
   );
@@ -417,20 +427,32 @@ function RequestCard({
 
 // Menu 7: save the sheet under a session id, so payments can be recorded against it
 // on Who owes. A name already used adds these amounts on top, as the console app asks.
+// "The saved sheet "Nov" may already cover" or "3 saved sheets (game_..., ...) may already cover", for the
+// overlap warning. "May": a saved sheet does not record its games, so its name is all there is to go on.
+function overlapWords(ids: readonly string[]): string {
+  if (ids.length === 1) return `The saved sheet "${ids[0] ?? ""}" may already cover`;
+  const shown = ids.slice(0, 3).map((id) => `"${id}"`).join(", ");
+  return `${ids.length} saved sheets (${shown}${ids.length > 3 ? ", …" : ""}) may already cover`;
+}
+
 function SaveSheet({
   ctx,
   suggested,
   entries,
+  overlap,
   onSaved,
 }: {
   ctx: Ctx;
   suggested: string;
   entries: readonly SettlementEntry[];
-  onSaved: () => void;
+  overlap: readonly string[]; // saved sheets that already cover some of these games
+  onSaved: () => void | Promise<void>;
 }) {
   const [name, setName] = useState(suggested);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+  // The name this sheet was just saved under: pressing Save again would add the same amounts on top.
+  const [savedAs, setSavedAs] = useState<string | null>(null);
 
   if (!ctx.payload.canWrite) {
     return <p className="muted small center">Saving a sheet works on the computer that runs the site.</p>;
@@ -441,6 +463,12 @@ function SaveSheet({
     const exists = [...ctx.world.balances.values()].some((b) => b.sessionId === id);
     if (exists && !window.confirm(`A sheet named "${id}" is already saved. Add these amounts on top of it?`))
       return setNote({ ok: false, text: "Nothing saved. Pick a different sheet name next time." });
+    if (
+      !exists &&
+      overlap.length > 0 &&
+      !window.confirm(`${overlapWords(overlap)} some of these games. If so, saving this sheet too counts those nights twice. Save it anyway?`)
+    )
+      return setNote({ ok: false, text: "Nothing saved." });
     setBusy(true);
     setNote(null);
     try {
@@ -448,7 +476,8 @@ function SaveSheet({
       // false: the person declined the question writeSaved asks, so the sheet is not saved.
       if (!(await writeSaved(ctx, "session_balances.csv", sessions.serializeSessionBalances(next)))) return;
       setNote({ ok: true, text: `Saved ${plural(entries.length, "balance")} under "${id}".` });
-      onSaved();
+      setSavedAs(id);
+      await onSaved();
     } catch (err) {
       setNote({ ok: false, text: errorText(err) });
     } finally {
@@ -460,15 +489,22 @@ function SaveSheet({
     <section className="card">
       <h2>Track who has paid</h2>
       <p className="muted small">
-        Saves this sheet (console menu 7). Then record payments as they come in on <a href={href("owed")}>Who owes</a>.
+        Saves this sheet (console menu 7). Then record payments as they come in on <a href={href("owed")}>Who owes</a>. Save
+        one sheet per night or one for the whole folder, not both: Who owes adds up every saved sheet, and a sheet does not
+        record which games it covers.
       </p>
+      {overlap.length > 0 ? (
+        <p className="down small" role="status">
+          {overlapWords(overlap)} some of these games. If so, saving this sheet too would ask for those nights twice.
+        </p>
+      ) : null}
       <div className="controls">
         <label className="grow">
           <span className="muted">Sheet name</span>
           <input value={name} onChange={(e) => setName(e.target.value)} spellCheck={false} />
         </label>
-        <button onClick={() => void save()} disabled={busy}>
-          {busy ? "Saving…" : "Save sheet"}
+        <button onClick={() => void save()} disabled={busy || savedAs === name.trim()}>
+          {busy ? "Saving…" : savedAs === name.trim() ? "Saved" : "Save sheet"}
         </button>
       </div>
       {note !== null ? (

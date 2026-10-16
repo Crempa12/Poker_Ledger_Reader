@@ -5,6 +5,10 @@ Every name and id is invented: nicknames are `Zaqvin`-style words, ids are `FAKE
 ledger ids are `ledger_pglFAKE0001` and up. Write it again with `npm run fixtures`. The output is
 the same every time (fixed seed, no clock).
 
+The ids (`pglFAKE0001`) are shorter than the 10 characters after `pgl` the site asks of a
+PokerNow id, so + Add game does not take these files from Downloads or a link. To try
+that page, copy one under a longer made-up id (`ledger_pglMadeUpNight01.csv`).
+
 `synthetic-reference/` is what the C++ app prints and writes for `synthetic/`
 (`reference/run.sh`). Both are committed; see `reference/README.md`.
 

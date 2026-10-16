@@ -18,11 +18,17 @@ export async function dataRootReady(root: string): Promise<boolean> {
 
 // canStart: the site may start a data folder there (see canStartDataRoot), so the text points to that too.
 export function notADataFolder(root: string, canStart = false): string {
+  const missing = `The data folder ${root} is not there, or holds no console app data (no Games or Saved_Data folder, no game files). Nothing was changed.`;
+  // A group without the console app is told first what it can do here.
+  if (canStart) {
+    return (
+      `${missing} Not using the console app? Press Start a new data folder on the Overview. If you use it, run it once in ` +
+      "its folder (it creates Saved_Data), then press Refresh."
+    );
+  }
   return (
-    `The data folder ${root} is not there, or holds no console app data (no Games or Saved_Data folder, no game files). ` +
-    "Nothing was changed. If it is the console app's folder, run the console app once in it (it creates Saved_Data), " +
-    "then press Refresh. If it is not, set PLR_DATA_ROOT to the console app's folder and restart the site." +
-    (canStart ? " Not using the console app? Press Start a new data folder on the Overview." : "")
+    `${missing} If it is the console app's folder, run the console app once in it (it creates Saved_Data), ` +
+    "then press Refresh. If it is not, set PLR_DATA_ROOT to the console app's folder and restart the site."
   );
 }
 

@@ -275,8 +275,9 @@ export function SeatEditor({ ctx, game, onSaved }: { ctx: Ctx; game: Game; onSav
     <section className="card">
       <h2>Seats</h2>
       <p className="muted small">
-        Every sit-down in this game. A seat played by someone other than its name? Tick it and say whose money it was (console
-        menu 20).
+        {ctx.payload.canWrite
+          ? "Every sit-down in this game. A seat played by someone other than its name? Tick it and say whose money it was (console menu 20)."
+          : "Every sit-down in this game. Whose money a seat was is set on the computer that runs the site (console menu 20)."}
       </p>
       <div className="tablewrap">
         <table>

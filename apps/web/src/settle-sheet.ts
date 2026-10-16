@@ -129,11 +129,12 @@ export function offByLines(w: settlement.SheetWarning): string[] {
 }
 
 // The text "Copy for the group chat" puts on the clipboard: the title, then one line per transfer in the
-// order the sheet shows them.
-export function copyText(title: string, entries: readonly SettlementEntry[]): string {
+// order the sheet shows them, then what the page says when the sheet does not balance (so the group sees it too).
+export function copyText(title: string, entries: readonly SettlementEntry[], warnings: readonly settlement.SheetWarning[] = []): string {
   return [
     `Poker settle-up: ${title}`,
     ...printOrder(entries).map((e) => `${e.fromDisplay} → ${e.toDisplay}: ${moneyCents(e.amountCents)}`),
+    ...warnings.flatMap((w) => offByLines(w)),
   ].join("\n");
 }
 

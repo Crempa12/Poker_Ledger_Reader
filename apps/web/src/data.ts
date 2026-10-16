@@ -18,6 +18,7 @@ export interface Payload {
   gamesFolder?: boolean; // whether the data folder has a Games folder (a new game goes there, else at the top); absent in a snapshot
   dataReady?: boolean; // whether the folder read holds the console app's data; absent in a snapshot
   canStartData?: boolean; // whether a new data folder may be started there (it is missing or empty); absent in a snapshot
+  dataStartable?: boolean; // whether the site starts data folders where it reads at all (not in the console app's folder)
   basis: string; // the server's token for every input a save depends on; sent back with each save ("" for a snapshot, which never writes)
   handlogs?: SnapshotHandLogs; // a snapshot's hand-log results for all dates (absent in local mode, which asks the server)
 }
@@ -65,6 +66,23 @@ export interface ScopeChoice {
   folder: string;
   from: string;
   to: string;
+  // A preset ("Past 30 days"): from is that many days before today, worked out again when the day changes
+  // (withDays, from App), so the range moves with the calendar instead of staying on the day it was picked.
+  days?: number;
+}
+
+// The local day (YYYY-MM-DD) of a moment, in the data's time zone.
+export function isoDay(epochMs: number, timeZone: string): string {
+  // en-CA prints YYYY-MM-DD.
+  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(epochMs));
+}
+
+// The choice with a preset's From date worked out for the day of nowMs: that day in the data's zone, then
+// whole calendar days back (counted in UTC, which has no clock changes, so a DST change cannot shift it).
+export function withDays(choice: ScopeChoice, timeZone: string, nowMs: number): ScopeChoice {
+  if (choice.days === undefined) return choice;
+  const [y = 0, m = 1, d = 1] = isoDay(nowMs, timeZone).split("-").map(Number);
+  return { ...choice, from: new Date(Date.UTC(y, m - 1, d - choice.days)).toISOString().slice(0, 10), to: "" };
 }
 
 export const EVERYTHING: ScopeChoice = { folder: "", from: "", to: "" };
@@ -84,7 +102,9 @@ export function readSavedScope(): ScopeChoice {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw === null) return EVERYTHING;
     const v = JSON.parse(raw) as Partial<ScopeChoice>;
-    return { folder: v.folder ?? "", from: v.from ?? "", to: v.to ?? "" };
+    const choice: ScopeChoice = { folder: v.folder ?? "", from: v.from ?? "", to: v.to ?? "" };
+    if (typeof v.days === "number" && v.days > 0) choice.days = v.days;
+    return choice;
   } catch {
     return EVERYTHING;
   }

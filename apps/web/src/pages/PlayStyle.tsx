@@ -7,7 +7,7 @@ import type { HandScopePayload } from "../handtypes.ts";
 import { scopeWords } from "../handformat.ts";
 import { href } from "../router.ts";
 import { Downloads } from "../components/downloads.tsx";
-import { HandStatus, Notes } from "../components/handlines.tsx";
+import { AddLogHint, HandStatus, Notes } from "../components/handlines.tsx";
 import { HitRunPlayer, HitRunView } from "../components/hitrun.tsx";
 import { NightsCard, ProfileDetail, ProfilesView, StyleCard, UnloggedCard } from "../components/playstyle.tsx";
 
@@ -71,8 +71,7 @@ export function PlayStyleBody({
           <p className="muted">{`Hand-log statistics for ${scope}: ${data.logged} of ${data.games} games have a log.`}</p>
           {data.logged < data.games ? (
             <p className="muted small">
-              Games without a log: download &quot;poker_now_log_&lt;id&gt;.csv&quot; from PokerNow, then pick it on{" "}
-              <a href={href("add")}>+ Add game</a> (or file it with the console app&apos;s menu 19).
+              Games without a log: <AddLogHint canWrite={ctx.payload.canWrite} />
             </p>
           ) : null}
           <Notes messages={data.messages} />
@@ -80,8 +79,7 @@ export function PlayStyleBody({
           {data.logged === 0 ? (
             <div className="card pad">
               <p>
-                No hand logs in scope. Download &quot;poker_now_log_&lt;id&gt;.csv&quot; from PokerNow, then pick it on{" "}
-                <a href={href("add")}>+ Add game</a> (or file it with the console app&apos;s menu 19).
+                No hand logs in scope. <AddLogHint canWrite={ctx.payload.canWrite} />
               </p>
             </div>
           ) : (
@@ -97,7 +95,7 @@ export function PlayStyleBody({
       return person === "" ? (
         <>
           <Notes messages={data.messages} />
-          <ProfilesView data={data} scope={scope} />
+          <ProfilesView data={data} scope={scope} canWrite={ctx.payload.canWrite} />
           <Downloads exports={data.exports} />
         </>
       ) : (
@@ -110,7 +108,7 @@ export function PlayStyleBody({
       return person === "" ? (
         <>
           <Notes messages={data.messages} />
-          <HitRunView data={data} scope={scope} />
+          <HitRunView data={data} scope={scope} canWrite={ctx.payload.canWrite} />
           <Downloads exports={data.exports} />
         </>
       ) : (

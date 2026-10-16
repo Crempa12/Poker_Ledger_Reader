@@ -12,6 +12,7 @@ import {
   type Scope,
   type SeatOwner,
   type World,
+  util,
 } from "@plr/core";
 
 import type { Ctx } from "./context.ts";
@@ -26,8 +27,22 @@ export type SavedFile =
   | "adjustments.csv";
 
 // The reader codes whose row does not come back when the file is saved: a row left out, or
-// an amount read as 0. The other codes keep the row as it was written.
+// an amount read as 0. bad-date is kept apart (writeSaved refuses those); the other codes keep the row
+// as it was written.
 const LOST_ON_SAVE = new Set(["short-row", "dropped-row", "bad-number", "non-finite-number"]);
+
+// Why a save is refused when the file has a date or time the reader could not read (a hand edit): the row
+// itself is kept, but a save writes that cell back blank (seat_owners.csv) or as "unknown" (adjustments.csv),
+// so the text would be lost and a seat answer would quietly stop applying. "" when there are none.
+export function unreadableDateMessage(file: string, rows: readonly number[]): string {
+  if (rows.length === 0) return "";
+  const which = rows.length === 1 ? `Row ${rows[0] ?? 0} of ${file} has a date or time` : `Rows ${rows.join(", ")} of ${file} have dates or times`;
+  return (
+    `${which} the site cannot read, and saving would write ${rows.length === 1 ? "it" : "them"} ${file === "adjustments.csv" ? "as unknown" : "back blank"}. Nothing was saved. ` +
+    `Fix ${rows.length === 1 ? "it" : "them"} by hand in Saved_Data/${file} (written like the other rows), or put back the copy from ` +
+    "local/backups/, then press Refresh."
+  );
+}
 
 // The question asked before a save that would drop or zero rows the site could not read,
 // with how many there are ("" when there are none). Pure, so the wording is one.
@@ -39,6 +54,16 @@ export function lossMessage(file: string, lost: number): string {
     "the rows that could not be read are left out, and an amount that could not be read is saved as 0.00. " +
     "The old file is kept in local/backups/, and the Checks page lists these rows. Save anyway?"
   );
+}
+
+// The rows of a file whose date or time the reader could not read and a save would not write back as found.
+// "unknown" in adjustments.csv is the console app's own text for no date: it reads as no date and is written
+// back as "unknown", so it is not one of them.
+export function unreadableDateRows(ctx: Ctx, file: SavedFile): number[] {
+  const rows = ctx.world.warnings.filter((w) => w.source === file && w.code === "bad-date").map((w) => w.row);
+  if (file !== "adjustments.csv" || rows.length === 0) return rows;
+  const cells = util.parseCSV(ctx.payload.saved[file] ?? "");
+  return rows.filter((row) => util.trim(cells[row - 1]?.[1] ?? "") !== "unknown");
 }
 
 // Asks before a save that would lose rows the site could not read. False when the answer is no.
@@ -53,6 +78,8 @@ export function lossConfirmed(ctx: Ctx, file: SavedFile): boolean {
 // page was loaded, so a stale sheet is never written over newer data. Resolves to false,
 // and writes nothing, when the person says no to lossConfirmed's question.
 export async function writeSaved(ctx: Ctx, file: SavedFile, text: string): Promise<boolean> {
+  const badDates = unreadableDateRows(ctx, file);
+  if (badDates.length > 0) throw new Error(unreadableDateMessage(file, badDates));
   if (!lossConfirmed(ctx, file)) return false;
   await postJSON<{ saved: string }>("/api/saved-file", { file, before: ctx.payload.saved[file] ?? "", text, basis: ctx.payload.basis });
   return true;

@@ -42,6 +42,10 @@ describe("a snapshot file", () => {
     expect(r.name).toMatch(SNAPSHOT_NAME);
     const html = readFileSync(r.file, "utf8");
     expect(r.bytes).toBe(Buffer.byteLength(html));
+    // The games the pages count (14: copies and a ledger of never-played seats left out), not the 17 ledger files.
+    expect(r.games).toBe(14);
+    // A viewer that runs no scripts gets a sentence, not a blank page.
+    expect(html).toContain("<noscript><p>This page needs JavaScript.");
 
     expect(html).not.toMatch(/\b(src|href)="\/assets\//);
     expect(html).toMatch(/<script type="module">/);

@@ -2,7 +2,7 @@ import { Component, useCallback, useEffect, useMemo, useRef, useState, type Reac
 import { ledger } from "@plr/core";
 
 import { buildCtx, type Ctx } from "./context.ts";
-import { currentBasis, EVERYTHING, isSnapshot, loadData, readSavedScope, saveScope, type Loaded, type ScopeChoice } from "./data.ts";
+import { currentBasis, EVERYTHING, isoDay, isSnapshot, loadData, readSavedScope, saveScope, withDays, type Loaded, type ScopeChoice } from "./data.ts";
 import { clockTime, plural, shortDate } from "./format.ts";
 import { href, useRoute } from "./router.ts";
 import { Check, checkCount } from "./pages/Check.tsx";
@@ -28,18 +28,26 @@ export function App() {
   // Each load gets a number. Only the newest load may set the page, so a load that started
   // earlier and finished later (after a save's own reload) cannot show older data.
   const latest = useRef(0);
-  const refresh = useCallback(() => {
+  // The promise settles once the page has the newest data (a save waits for it before its buttons come back):
+  // a load overtaken by a newer one (Refresh pressed meanwhile) settles with that newer load.
+  const newest = useRef<Promise<void>>(Promise.resolve());
+  const refresh = useCallback((): Promise<void> => {
     const mine = latest.current + 1;
     latest.current = mine;
-    loadData()
-      .then((loaded) => {
-        if (mine === latest.current) setState({ status: "ready", loaded });
-      })
-      .catch((err: unknown) => {
-        if (mine === latest.current) setState({ status: "error", message: err instanceof Error ? err.message : String(err) });
-      });
+    const load: Promise<void> = loadData().then(
+      (loaded) => (mine === latest.current ? setState({ status: "ready", loaded }) : newest.current),
+      (err: unknown) =>
+        mine === latest.current ? setState({ status: "error", message: err instanceof Error ? err.message : String(err) }) : newest.current,
+    );
+    newest.current = load;
+    return load;
   }, []);
-  useEffect(refresh, [refresh]);
+  // Bumped when the tab comes back to the front, so a date preset ("Past 30 days") is worked out again for a
+  // new day without a reload (the page context below keys on the day).
+  const [, setShown] = useState(0);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   // When this tab comes back to the front (after the console app filed a game or changed a name, say), the
   // data is read again if it changed, so the page shows what the console app shows without a Refresh, and
@@ -51,10 +59,12 @@ export function App() {
   useEffect(() => {
     let asked = 0;
     const look = (): void => {
-      if (document.visibilityState !== "visible" || shownBasis.current === null || Date.now() - asked < 2000) return;
+      if (document.visibilityState !== "visible") return;
+      setShown((n) => n + 1);
+      if (shownBasis.current === null || Date.now() - asked < 2000) return;
       asked = Date.now();
       void currentBasis().then((now) => {
-        if (now !== null && shownBasis.current !== null && now !== shownBasis.current) refresh();
+        if (now !== null && shownBasis.current !== null && now !== shownBasis.current) void refresh();
       });
     };
     window.addEventListener("focus", look);
@@ -65,14 +75,19 @@ export function App() {
     };
   }, [refresh]);
 
+  // A preset's From date counts back from today, or, in a snapshot, from the day it was made (its results end
+  // then). day changes at midnight, so the next render after that (a page change, the tab coming back) moves it on.
+  const anchorMs = state.status === "ready" && isSnapshot(state.loaded.payload) ? state.loaded.payload.loadedAt : Date.now();
+  const day = state.status === "ready" ? isoDay(anchorMs, state.loaded.world.timeZone) : "";
   const ctx = useMemo(() => {
     if (state.status !== "ready") return null;
     const { payload, world } = state.loaded;
     // A saved folder that no longer exists falls back to every folder.
     const folders = ledger.listFolders(world.games);
     const safe = choice.folder === "" || folders.includes(choice.folder) ? choice : { ...choice, folder: "" };
-    return buildCtx(payload, world, safe);
-  }, [state, choice]);
+    return buildCtx(payload, world, withDays(safe, world.timeZone, anchorMs));
+    // anchorMs is read for its day only: the context is built again when the day changes, not every render.
+  }, [state, choice, day]);
 
   // The browser tab and the window's title follow the page, so the pages can be told apart.
   const routeKey = route.join("/");
@@ -93,7 +108,7 @@ export function App() {
           <h2>Could not load the data</h2>
           <p>{state.status === "error" ? state.message : "Unknown problem."}</p>
           <p className="muted">Start the site with <code>npm run web</code> from the Poker_Ledger_Web folder, then reload this page.</p>
-          <button onClick={refresh}>Try again</button>
+          <button onClick={() => void refresh()}>Try again</button>
         </div>
       </Shell>
     );
@@ -285,18 +300,19 @@ const PRESETS: { id: string; label: string; days: number | null }[] = [
   { id: "90", label: "Past 90 days", days: 90 },
 ];
 
-function isoDay(epochMs: number, timeZone: string): string {
-  // en-CA prints YYYY-MM-DD.
-  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(epochMs));
-}
-
 function ScopeBar({ ctx, onChange }: { ctx: Ctx; onChange: (c: ScopeChoice) => void }) {
   const { choice, view, world, tz } = ctx;
   const folders = ledger.listFolders(world.games);
+  // A preset is kept as its number of days. A range saved as dates (before presets kept days) still shows
+  // as its preset on the day it matches.
   const preset =
-    choice.from === "" && choice.to === ""
-      ? "all"
-      : PRESETS.find((p) => p.days !== null && choice.to === "" && choice.from === isoDay(Date.now() - p.days * 86400000, tz))?.id ?? "custom";
+    choice.days !== undefined
+      ? (PRESETS.find((p) => p.days === choice.days)?.id ?? "custom")
+      : choice.from === "" && choice.to === ""
+        ? "all"
+        : (PRESETS.find((p) => p.days !== null && choice.to === "" && choice.from === isoDay(Date.now() - p.days * 86400000, tz))?.id ?? "custom");
+  // The dates as typed: editing From or To ends a preset.
+  const fixed: ScopeChoice = { folder: choice.folder, from: choice.from, to: choice.to };
   const [custom, setCustom] = useState(preset === "custom");
 
   const pickPreset = (id: string): void => {
@@ -306,7 +322,7 @@ function ScopeBar({ ctx, onChange }: { ctx: Ctx; onChange: (c: ScopeChoice) => v
     }
     setCustom(false);
     const p = PRESETS.find((x) => x.id === id);
-    onChange({ ...choice, from: p?.days == null ? "" : isoDay(Date.now() - p.days * 86400000, tz), to: "" });
+    onChange(p?.days == null ? { ...fixed, from: "", to: "" } : { ...fixed, from: "", to: "", days: p.days });
   };
 
   const first = view.games[0];
@@ -339,11 +355,11 @@ function ScopeBar({ ctx, onChange }: { ctx: Ctx; onChange: (c: ScopeChoice) => v
         <>
           <label>
             <span className="muted">From</span>
-            <input type="date" value={choice.from} onChange={(e) => onChange({ ...choice, from: e.target.value })} />
+            <input type="date" value={choice.from} onChange={(e) => onChange({ ...fixed, from: e.target.value })} />
           </label>
           <label>
             <span className="muted">To</span>
-            <input type="date" value={choice.to} onChange={(e) => onChange({ ...choice, to: e.target.value })} />
+            <input type="date" value={choice.to} onChange={(e) => onChange({ ...fixed, to: e.target.value })} />
           </label>
         </>
       ) : null}

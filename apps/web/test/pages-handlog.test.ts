@@ -197,7 +197,9 @@ describe("playing style (menu 18) with the made-up data, against the console", (
     expect(out).toContain("Hand-log statistics for all folders: 2 of 14 games have a log.");
     // The made-up synthetic logs load without a skipped or duplicate file, so there are no notes to show.
     expect(out).not.toContain("Notes from the hand logs");
-    expect(out).toContain("Games without a log: download");
+    // A snapshot has no + Add game: it says where hand logs are added instead of sending the reader there.
+    expect(out).toContain("Games without a log: Hand logs are added on the computer that runs the site.");
+    expect(out).not.toContain("pick it on");
     const edge = textOf(show(createElement(PlayStylePage, { ctx: await snapshotCtx(EDGE, ALL), section: "", person: "" })));
     expect(edge).toContain("Hand-log statistics for all folders: 6 of 8 games have a log.");
     // The edge data has a duplicate log and an empty one; the console names both in its notes.

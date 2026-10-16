@@ -8,7 +8,7 @@ import { href } from "../router.ts";
 import type { HandScopePayload } from "../handtypes.ts";
 import { moneySigned, toneOf } from "../format.ts";
 import { factorText, factorTone, nightWord, pctOfShare } from "../handformat.ts";
-import { Legend, Lines } from "./handlines.tsx";
+import { AddLogHint, Legend, Lines } from "./handlines.tsx";
 
 // The console's footer under the table (printTable), one line each.
 const TABLE_LEGEND = [
@@ -27,7 +27,7 @@ const TABLE_LEGEND = [
 ];
 
 // The menu 22 table, every person in the console's order (core summaries come sorted).
-export function HitRunView({ data, scope }: { data: HandScopePayload; scope: string }) {
+export function HitRunView({ data, scope, canWrite = true }: { data: HandScopePayload; scope: string; canWrite?: boolean }) {
   const { summaries, nights, unmeasured } = data.hitRun;
   return (
     <>
@@ -35,8 +35,7 @@ export function HitRunView({ data, scope }: { data: HandScopePayload; scope: str
       {summaries.length === 0 ? (
         <div className="card pad">
           <p>
-            No hand logs in scope, so no nights to judge. Download &quot;poker_now_log_&lt;id&gt;.csv&quot; from PokerNow, then pick
-            it on <a href={href("add")}>+ Add game</a> (or file it with the console app&apos;s menu 19).
+            No hand logs in scope, so no nights to judge. <AddLogHint canWrite={canWrite} />
           </p>
         </div>
       ) : (

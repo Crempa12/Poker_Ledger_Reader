@@ -36,8 +36,9 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       <section className="card">
         <h2>Checks</h2>
         <p className="muted small">
-          What the console app flags at startup. New names can be answered here; for the rest, use the console menu named next
-          to each one, then press Refresh.
+          {ctx.payload.canWrite
+            ? "What the console app flags at startup. New names can be answered here; for the rest, use the console menu named next to each one, then press Refresh."
+            : "What the console app flags at startup. This copy is read-only: answers and changes are made on the computer that runs the site."}
         </p>
         {checkCount(ctx) === 0 && world.warnings.length === 0 ? <p className="up">✓ Nothing to check.</p> : null}
       </section>
@@ -77,6 +78,12 @@ export function Check({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
       {world.messages.length > 0 ? (
         <section className="card">
           <h3>Ledger notes</h3>
+          {world.messages.some((m) => m.startsWith("WARNING") && m.includes("does not balance")) ? (
+            <p className="muted small">
+              A ledger that does not balance may have been cut short or changed by hand. On the computer that runs the site, download it again
+              from PokerNow, put it in place of the old file, then press Refresh. A payment or correction does not clear this.
+            </p>
+          ) : null}
           <ul className="plain">
             {world.messages.map((m, i) => (
               <li key={i} className={m.startsWith("WARNING") ? "down" : "muted"}>

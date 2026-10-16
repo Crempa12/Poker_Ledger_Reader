@@ -62,12 +62,19 @@ export function Overview({ ctx, onSaved = () => undefined }: { ctx: Ctx; onSaved
         <p>
           No games were found in <code>{folder}</code>.
         </p>
+        {ctx.payload.canStartData === true ? <StartData ctx={ctx} onSaved={onSaved} /> : null}
+        {ctx.payload.canStartData !== true && ctx.payload.dataStartable === true ? (
+          <p>
+            Not using the console app? The site starts a data folder of its own only in a folder that is empty (or not there yet),
+            that it may write to, and that is not a link. If <code>{ctx.payload.dataRoot}</code> holds other files, move them out;
+            otherwise set <code>PLR_DATA_ROOT</code> to such a folder. Then press <strong>Refresh</strong>.
+          </p>
+        ) : null}
         <p className="muted">
           If you use the console app, the site reads its folder (its <code>Games</code> and <code>Saved_Data</code> folders): it must sit
           next to this one, as <code>Poker_Ledger_Reader</code>, or <code>PLR_DATA_ROOT</code> must name it. Then press{" "}
           <strong>Refresh</strong>.
         </p>
-        {ctx.payload.canStartData === true ? <StartData ctx={ctx} onSaved={onSaved} /> : null}
       </div>
     );
   }
@@ -89,7 +96,7 @@ export function Overview({ ctx, onSaved = () => undefined }: { ctx: Ctx; onSaved
         />
         {mine !== undefined ? (
           <Tile
-            label="Your net"
+            label={ctx.payload.canWrite ? "Your net" : `${meName}'s net`}
             value={moneySigned(dollars.get(mine.normalizedName)?.totalNet ?? 0)}
             tone={toneOf(dollars.get(mine.normalizedName)?.totalNet ?? 0)}
             sub={`${moneySigned(dollars.get(mine.normalizedName)?.averagePerGame ?? 0)} a night`}
