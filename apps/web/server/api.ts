@@ -10,8 +10,10 @@
 // same origin when one is sent, and no proxy (readAllowed), so a page on another site,
 // or a DNS name pointed at this computer, gets nothing. These are headers a browser
 // sets; a program running on this computer could send them too (it could also edit
-// the files directly), so they keep out other sites, phones and proxies, not local
-// programs.
+// the files directly), so they keep out other sites, phones and HTTP proxies, not local
+// programs. "No proxy" is known only from the headers a proxy adds: a raw TCP tunnel
+// to this port (ngrok tcp, ssh -R) adds none, and its peers look like this computer.
+// The README says not to run one.
 //
 // Game files: only PokerNow file names, only inside Games/, never over an existing file, never a
 // ledger or hand log that is already filed in any folder, and only over the data the page was built
@@ -24,8 +26,8 @@
 // valid UTF-8 is never rewritten, since that would change bytes the page cannot show.
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { existsSync } from "node:fs";
-import { lstat, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { existsSync, type Dirent } from "node:fs";
+import { lstat, mkdir, open, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { isIP } from "node:net";
 import { homedir } from "node:os";
@@ -69,7 +71,8 @@ export type ConsoleCheck = { open: number } | { unknown: string };
 
 const GAME_ID = /pgl[A-Za-z0-9_-]{10,40}/;
 // PokerNow's names, with an optional browser copy suffix such as " (1)".
-const FILE_NAME = /^(ledger|poker_now_log)_(pgl[A-Za-z0-9_-]{10,40})(?: \(\d+\))?\.csv$/;
+// The extension in any case, as menu 19 takes it (it lower-cases the extension); the kind stays lower case.
+const FILE_NAME = /^(ledger|poker_now_log)_(pgl[A-Za-z0-9_-]{10,40})(?: \(\d+\))?\.[cC][sS][vV]$/;
 const MAX_BYTES = 25 * 1024 * 1024;
 const CONSOLE_CHECK_MS = 5_000;
 const KEEP_BACKUPS = 50; // old versions kept per Saved_Data file
@@ -201,11 +204,19 @@ function likeBefore(before: string, text: string): string {
 }
 
 // A folder name the user typed or picked: one plain name, nothing that climbs out.
-function safeFolder(name: unknown): string | null {
+// A folder under Games: one name, or a few joined by "/" for a folder inside a folder ("Nov/Week 1"), as
+// the console app reads them and menu 19 files into them. Each name is checked on its own: not empty, not
+// starting with a dot, no backslash or colon, not ending in a dot or space (Windows drops those, so
+// "Games." would be "Games"), and not a folder the console app skips.
+export function safeFolder(name: unknown): string | null {
   if (typeof name !== "string") return null;
-  const n = name.trim();
-  if (n === "" || n.length > 60 || n.startsWith(".") || /[/\\:]/.test(n) || n.includes("..") || isExcludedDir(n)) return null;
-  return n;
+  const parts = name.trim().split("/");
+  if (parts.length > 4) return null;
+  for (const part of parts) {
+    if (part === "" || part.length > 60 || part !== part.trim() || part.startsWith(".") || /[.]$/.test(part)) return null;
+    if (/[\\:]/.test(part) || isExcludedDir(part)) return null;
+  }
+  return parts.join("/");
 }
 
 // Calls visit for every .csv under dir, with its path relative to dir ("/" separators) and its
@@ -695,7 +706,9 @@ export async function handleSave(cfg: ApiConfig, req: IncomingMessage, res: Serv
   const m = typeof body.fileName === "string" ? FILE_NAME.exec(body.fileName) : null;
   const folder = safeFolder(body.folder);
   if (m === null) return send(res, 400, { error: "only PokerNow ledger_… or poker_now_log_… files can be saved" });
-  if (folder === null) return send(res, 400, { error: "pick a folder name without slashes or dots at the start" });
+  if (folder === null) {
+    return send(res, 400, { error: "pick a folder name with no dot at its start or end, and no \\ or :" });
+  }
   const text = typeof body.text === "string" ? body.text : "";
   if (text.length === 0) return send(res, 400, { error: "the file is empty" });
   const [, kind = "", id = ""] = m;
@@ -706,7 +719,7 @@ export async function handleSave(cfg: ApiConfig, req: IncomingMessage, res: Serv
 
   // A folder named Games here, in a data folder with no Games folder yet, would become the folder the
   // games are read from (and hide the games at the root). So it is refused until there is a Games folder.
-  if (folder.toLowerCase() === "games" && !existsSync(join(cfg.dataRoot, "Games"))) {
+  if ((folder.split("/")[0] ?? "").toLowerCase() === "games" && !existsSync(join(cfg.dataRoot, "Games"))) {
     return send(res, 400, { error: "this data has no Games folder, so a folder cannot be named Games here: pick another name" });
   }
   // Like the Saved_Data saves: one at a time, after the data folder and the page's basis are checked.
@@ -819,20 +832,53 @@ export interface DownloadedFile {
 export async function handleDownloads(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (!fromThisComputer(req)) return send(res, 403, { error: NOT_YOURS });
   const dir = downloadsDir(cfg);
-  const entries = await readdir(dir, { withFileTypes: true }).catch(() => null);
-  if (entries === null) return send(res, 200, { dir, found: false, files: [] });
+  let entries: Dirent[];
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code ?? "";
+    // No Downloads folder is nothing to say. One the site may not open is: on a Mac, the app that runs
+    // the site (Terminal) needs leave to read Downloads.
+    if (code === "ENOENT" || code === "ENOTDIR") return send(res, 200, { found: false, files: [] });
+    console.error("[plr] could not read the Downloads folder:", err);
+    return send(res, 200, { found: false, files: [], unreadable: code || "error" });
+  }
   const files: DownloadedFile[] = [];
   for (const e of entries) {
     // A link is not followed (isFile is false for one), so only a file really in Downloads is offered.
     if (!e.isFile()) continue;
     const m = FILE_NAME.exec(e.name);
     if (m === null) continue;
-    const s = await stat(join(dir, e.name)).catch(() => null);
-    if (s === null) continue;
-    files.push({ name: e.name, kind: m[1] as DownloadedFile["kind"], gameId: m[2] ?? "", bytes: s.size, modified: s.mtimeMs });
+    const kind = m[1] as DownloadedFile["kind"];
+    const full = join(dir, e.name);
+    const s = await stat(full).catch(() => null);
+    // An empty or cut-off download, or another file under a PokerNow name, is left out, so it cannot
+    // stand in for a good copy of the same game.
+    if (s === null || s.size === 0 || !(await looksLikeItsKind(full, kind))) continue;
+    files.push({ name: e.name, kind, gameId: m[2] ?? "", bytes: s.size, modified: s.mtimeMs });
   }
   files.sort((a, b) => b.modified - a.modified || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
-  send(res, 200, { dir, found: true, files });
+  // The folder's own path is not sent: the page does not need it.
+  send(res, 200, { found: true, files });
+}
+
+// Whether a file starts the way its kind does, from its first bytes: a ledger's header names
+// player_nickname, a hand log's is entry,at,order (the checks /api/save makes on the whole text).
+async function looksLikeItsKind(file: string, kind: DownloadedFile["kind"]): Promise<boolean> {
+  let head: string;
+  try {
+    const h = await open(file, "r");
+    try {
+      const buf = Buffer.alloc(1024);
+      const { bytesRead } = await h.read(buf, 0, buf.length, 0);
+      head = new TextDecoder().decode(buf.subarray(0, bytesRead));
+    } finally {
+      await h.close();
+    }
+  } catch {
+    return false;
+  }
+  return kind === "ledger" ? looksLikeLedger(head) : head.startsWith("entry,at,order");
 }
 
 // GET /api/downloads/<name>: one of those files' text, read the way a browser reads a picked file

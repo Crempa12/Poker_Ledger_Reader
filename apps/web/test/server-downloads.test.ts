@@ -1,13 +1,13 @@
 // The Downloads folder routes (+ Add game, like menu 19): which files are listed, who may ask, and
 // what a file read gives. Made-up files in temporary folders only; the real Downloads folder is never read.
-import { mkdirSync, mkdtempSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import { describe, expect, it } from "vitest";
 
-import { handleDownloadedFile, handleDownloads, type ApiConfig } from "../server/api.ts";
+import { handleDownloadedFile, handleDownloads, safeFolder, type ApiConfig } from "../server/api.ts";
 
 const PORT = 5173;
 const LEDGER = "player_nickname,player_id,session_start_at,session_end_at,buy_in,buy_out,stack,net\n";
@@ -67,6 +67,41 @@ function config(downloadsDir: string): ApiConfig {
 }
 
 describe("the Downloads folder routes", () => {
+  it("leave out an empty copy and a file that is not what its name says, so an older good copy is offered", async () => {
+    const dir = downloads();
+    const older = `ledger_${ID_B} (2).csv`;
+    writeFileSync(join(dir, older), LEDGER);
+    writeFileSync(join(dir, `ledger_${ID_B} (3).csv`), ""); // an empty download
+    writeFileSync(join(dir, `ledger_${ID_B} (4).CSV`), "<html>not a ledger</html>\n"); // another file under the name
+    utimesSync(join(dir, older), new Date(2029, 0, 1), new Date(2029, 0, 1));
+    const r = await reply((res) => handleDownloads(config(dir), request("/api/downloads"), res));
+    const names = (r.json.files as { name: string }[]).map((f) => f.name);
+    expect(names).toContain(older);
+    expect(names).not.toContain(`ledger_${ID_B} (3).csv`);
+    expect(names).not.toContain(`ledger_${ID_B} (4).CSV`);
+    expect(r.json).not.toHaveProperty("dir"); // the folder's path is not sent
+  });
+
+  it("take an upper-case .CSV, as menu 19 does", async () => {
+    const dir = downloads();
+    writeFileSync(join(dir, "ledger_pglMadeUpUpperCase77.CSV"), LEDGER);
+    const r = await reply((res) => handleDownloads(config(dir), request("/api/downloads"), res));
+    expect((r.json.files as { name: string; kind: string }[]).find((f) => f.name === "ledger_pglMadeUpUpperCase77.CSV")?.kind).toBe("ledger");
+  });
+
+  it("say when the Downloads folder is there but cannot be opened", async () => {
+    const dir = downloads();
+    chmodSync(dir, 0o000);
+    try {
+      const r = await reply((res) => handleDownloads(config(dir), request("/api/downloads"), res));
+      expect(r.status).toBe(200);
+      expect(r.json.found).toBe(false);
+      expect(r.json.unreadable).toMatch(/^E[A-Z]+$/);
+    } finally {
+      chmodSync(dir, 0o700);
+    }
+  });
+
   it("list only the PokerNow files at the top of the folder, newest first, not following a link", async () => {
     const r = await reply((res) => handleDownloads(config(downloads()), request("/api/downloads"), res));
     expect(r.status).toBe(200);
@@ -116,5 +151,20 @@ describe("the Downloads folder routes", () => {
     expect(await status(`ledger_${ID_B}.csv`)).toBe(404); // the folder
     expect(await status(`poker_now_log_${ID_A}.csv`)).toBe(404); // the link
     expect(await status(`ledger_pglMadeUpNotThere99.csv`)).toBe(404);
+  });
+});
+
+describe("the folder a game is filed in", () => {
+  it("is one name, or a few joined by / for a folder inside a folder", () => {
+    expect(safeFolder("Nov 2026")).toBe("Nov 2026");
+    expect(safeFolder("  Nov 2026  ")).toBe("Nov 2026");
+    expect(safeFolder("Nov/Week 1")).toBe("Nov/Week 1");
+  });
+
+  it("refuses names that would leave Games, hide, or change on Windows", () => {
+    for (const bad of ["", "/", "Nov/", "/Nov", "Nov//Week", "..", "../x", "Nov/../x", ".hidden", "Nov/.x", "Games.", "Nov/Week.",
+      "Nov /Week", "a\\b", "C:", "a/b/c/d/e", "x".repeat(61), "build", "Nov/reports", 7, null]) {
+      expect(safeFolder(bad), String(bad)).toBeNull();
+    }
   });
 });

@@ -91,9 +91,11 @@ into `Games/<folder>/` in the console app's folder, the same place menu 19 puts 
 so the console app sees it too. (A data folder with no `Games` folder yet gets the
 folder at its top, where the console app also reads games.) PokerNow puts a captcha on hand logs, so download
 the log yourself (the page links to each game missing one). The page lists the PokerNow
-files in your Downloads folder that are not filed yet, as menu 19 does: **Add all**,
-then **Save all**. It files a copy and leaves Downloads as it is (menu 19 moves the
-files). You can also pick the files by hand.
+files in your Downloads folder that are not filed yet, as menu 19 does: press **Add all**
+(**Add it** for one file), then **Save all** (or the file's own **Save to** button). It
+files a copy and leaves Downloads as it is (menu 19 moves the files). You can also pick
+the files by hand. On a Mac, the first time, macOS may ask whether Terminal may open
+your Downloads folder.
 Game files hold everyone's names, PokerNow ids and results. If the console app's
 repository is public on GitHub, committing them there publishes all of that: keep them
 out of git, or make that repository private.
@@ -122,6 +124,10 @@ npm run web:phone
 The terminal prints a `Network:` address; open it on your phone. Anyone on that
 Wi-Fi can then read the page, so use it at home, not on public Wi-Fi. Adding games
 and every other change work only on this computer.
+
+Do not put the site on the internet through a tunnel (ngrok, `ssh -R`, Tailscale Funnel
+and the like). Tunnels that say they are one are refused, but a plain TCP tunnel looks
+to the site like this computer, and anyone who reaches it could change your files.
 
 ## Checks
 

@@ -167,4 +167,22 @@ describe("the server's answers for the review fixes", () => {
     expect(error).toContain("run the console app once in it");
     expect(existsSync(join(root, "Nov"))).toBe(false);
   });
+
+  it("files a game into a folder inside a folder, as the console app reads it, and never outside Games", async () => {
+    const root = mkdtempSync(join(tmpdir(), "plr-nested-"));
+    mkdirSync(join(root, "Games", "Nov", "Week 1"), { recursive: true });
+    const cfg: ApiConfig = { dataRoot: root, timeZone: TZ, consoleProbe: async () => ({ open: 0 }) };
+    const save = async (folder: string, id: string) => {
+      const body = JSON.stringify({ fileName: `poker_now_log_${id}.csv`, folder, text: "entry,at,order\n", basis: await dataBasis(root) });
+      return reply((res) => handleSave(cfg, request("POST", "/api/save", WRITE, body), res));
+    };
+    const r = await save("Nov/Week 1", "pglMadeUpNestedOne1");
+    expect(r.status).toBe(200);
+    expect(JSON.parse(r.body.toString("utf8")).saved).toBe("Nov/Week 1/poker_now_log_pglMadeUpNestedOne1.csv");
+    expect(existsSync(join(root, "Games", "Nov", "Week 1", "poker_now_log_pglMadeUpNestedOne1.csv"))).toBe(true);
+    for (const bad of ["Nov/../..", "../Nov", "Nov/.x", "Games."]) {
+      expect((await save(bad, "pglMadeUpNestedTwo2")).status, bad).toBe(400);
+    }
+    expect(existsSync(join(root, "poker_now_log_pglMadeUpNestedTwo2.csv"))).toBe(false);
+  });
 });

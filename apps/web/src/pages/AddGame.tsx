@@ -12,7 +12,7 @@ function logId(game: Game): string {
   return game.id.replace(/^ledger_/, "");
 }
 
-const FILE_NAME = /^(ledger|poker_now_log)_(pgl[A-Za-z0-9_-]{10,40})(?: \(\d+\))?\.csv$/;
+const FILE_NAME = /^(ledger|poker_now_log)_(pgl[A-Za-z0-9_-]{10,40})(?: \(\d+\))?\.[cC][sS][vV]$/;
 
 type Status = "ready" | "saving" | "saved" | "there" | "error";
 
@@ -25,9 +25,9 @@ interface Downloaded {
   modified: number;
 }
 interface DownloadsList {
-  dir: string;
   found: boolean;
   files: Downloaded[]; // newest first
+  unreadable?: string; // why the folder could not be opened (EPERM ...), when it is there but closed to the site
 }
 
 interface Item {
@@ -73,9 +73,12 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   const [problems, setProblems] = useState<string[]>([]);
   // The basis the server checks each save against. A save returns the new one, so the next game of the
   // batch goes through without a reload; a reload of the data (after a save) sets it again.
+  // While saves run (one, or a Save all), a reload that lands (Refresh pressed meanwhile) may carry the basis
+  // from before the last save, so it is not taken then; the reload after the saves sets it.
   const basis = useRef(ctx.payload.basis);
+  const saving = useRef(0);
   useEffect(() => {
-    basis.current = ctx.payload.basis;
+    if (saving.current === 0) basis.current = ctx.payload.basis;
   }, [ctx.payload.basis]);
   // The PokerNow files in the Downloads folder (menu 19 looks there). Looked at again each time the data is
   // read (a save, Refresh) and when this tab comes back to the front, as it does after a download elsewhere.
@@ -163,6 +166,7 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   // reload that lands between two saves cannot hand the next save an older basis.
   const save = async (item: Item, reload = true): Promise<void> => {
     setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "saving" } : x)));
+    saving.current++;
     try {
       const r = await postJSON<{ saved: string; basis: string }>("/api/save", {
         fileName: item.fileName,
@@ -176,14 +180,21 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setItems((list) => list.map((x) => (x.key === item.key ? { ...x, status: "error", message } : x)));
+    } finally {
+      saving.current--;
     }
   };
 
   const saveAll = async (list: Item[]): Promise<void> => {
     setBusy(true);
-    for (const item of list) await save(item, false);
-    setBusy(false);
-    onSaved();
+    saving.current++;
+    try {
+      for (const item of list) await save(item, false);
+    } finally {
+      saving.current--;
+      setBusy(false);
+      onSaved();
+    }
   };
 
   // The newest copy of each game's file in Downloads that is not in the data yet, nor on this page.
@@ -254,6 +265,7 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
           value={links}
           onChange={(e) => setLinks(e.target.value)}
           aria-label="PokerNow links, one per line"
+          disabled={busy}
         />
         <div className="row">
           <button onClick={() => void fetchLinks()} disabled={busy || links.trim() === ""}>
@@ -307,10 +319,15 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                 <div className="row">
                   <label>
                     <span className="muted small">Folder</span>
-                    <FolderPicker folders={folders} value={item.folder} onChange={(f) => setFolder(item.key, f)} disabled={item.status !== "ready" && item.status !== "error"} />
+                    <FolderPicker
+                      folders={folders}
+                      value={item.folder}
+                      onChange={(f) => setFolder(item.key, f)}
+                      disabled={busy || (item.status !== "ready" && item.status !== "error")}
+                    />
                   </label>
                   {item.status === "ready" || item.status === "error" ? (
-                    <button onClick={() => void save(item)} disabled={item.folder.trim() === ""}>
+                    <button onClick={() => void save(item)} disabled={busy || item.folder.trim() === ""}>
                       Save to {savedLabel(item.folder, gamesFolder)}
                     </button>
                   ) : null}
@@ -366,6 +383,15 @@ function DownloadsFound({
   tz: string;
   onAdd: (files: Downloaded[]) => void;
 }) {
+  if (list !== null && list.unreadable !== undefined) {
+    return (
+      <p className="muted small">
+        The site may not open your Downloads folder ({list.unreadable}). On a Mac, allow the app that runs the site (Terminal) in
+        System Settings → Privacy &amp; Security → Files and Folders, then press <strong>Refresh</strong>. You can still pick the
+        files below.
+      </p>
+    );
+  }
   if (list === null || !list.found) return null;
   if (fresh.length === 0) {
     return (
