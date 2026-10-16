@@ -9,6 +9,7 @@
   --down: #c62f3a;
   --up-soft: #d9f2e4;
   --down-soft: #f8dcdf;
+  --warn: #a86400;
   --me: #fff7d6;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.05);
   --radius: 12px;
@@ -27,6 +28,7 @@
     --down: #ff6b74;
     --up-soft: #12301f;
     --down-soft: #3a1619;
+    --warn: #e8b04c;
     --me: #2c2812;
     --shadow: none;
     color-scheme: dark;
@@ -593,4 +595,88 @@ details summary {
 }
 .banner.snapshot {
   background: var(--me);
+}
+
+/* Play style and the hand-log blocks: the console's colours, and tables that scroll on a phone
+   with the name column kept in view. */
+.subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 12px;
+}
+.subtabs a {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+}
+.subtabs a:hover {
+  text-decoration: none;
+  color: var(--text);
+}
+.subtabs a.active {
+  color: var(--text);
+  font-weight: 600;
+  border-color: var(--accent);
+}
+.stick {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--card);
+}
+.nowrap {
+  white-space: nowrap;
+}
+.label {
+  color: var(--accent);
+}
+.warn {
+  color: var(--warn);
+}
+.hitter {
+  color: var(--down);
+  font-weight: 600;
+}
+.runs {
+  color: var(--warn);
+}
+.quiet {
+  color: var(--muted);
+}
+.legend {
+  margin-top: 10px;
+}
+.legend p {
+  margin: 0 0 4px;
+}
+.lines {
+  margin: 8px 0 12px;
+}
+.kv {
+  display: grid;
+  grid-template-columns: 9.5rem 1fr;
+  gap: 2px 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.kv .k {
+  color: var(--muted);
+}
+.kv .v {
+  overflow-wrap: anywhere;
+}
+.notes {
+  margin-bottom: 12px;
+}
+.notes li {
+  padding: 3px 0;
+}
+@media (max-width: 460px) {
+  .kv {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }

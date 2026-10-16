@@ -100,6 +100,11 @@ export function handViewOf(hw: HandWorld, scope: Scope): HandView {
 
   const annotatedStyle = hitrun.annotateStyle(style, summaries);
   const facts = hitrun.hitRunFacts(summaries);
+  // Menu 21 rows carry their hit & run columns, as main.cpp deepPlaystyle sets them (hitrun annotate).
+  const annotatedProfiles = profiles.map((p) => {
+    const f = facts.get(p.normalizedName);
+    return f === undefined ? p : { ...p, hitRun: f.hitRun, hitRunReliable: f.hitRunReliable, hitRunTag: f.hitRunTag, hitRunLine: f.hitRunLine };
+  });
   const hasNights = summaries.length > 0;
   return {
     scope,
@@ -109,13 +114,13 @@ export function handViewOf(hw: HandWorld, scope: Scope): HandView {
     playtime: time,
     showdownRivals: rivals,
     style: annotatedStyle,
-    profiles,
+    profiles: annotatedProfiles,
     hitRun: { nights: hitRunNights.nights, unmeasured: hitRunNights.unmeasured, summaries },
     exports: {
       playerSummary: playerSummaryCSV(sortedByNet(stats), time),
       showdownRivals: showdowns.showdownRivalsCSV(rivals),
       styleStats: logs.length > 0 ? styleStatsCSV(annotatedStyle) : null,
-      playstyle: logs.length > 0 ? playstyle.playstyleCSV(profiles, facts) : null,
+      playstyle: logs.length > 0 ? playstyle.playstyleCSV(annotatedProfiles, facts) : null,
       hitAndRun: hasNights ? hitrun.hitRunCSV(summaries) : null,
       hitAndRunNights: hasNights ? hitrun.hitRunNightsCSV(hitRunNights.nights, world.timeZone) : null,
     },

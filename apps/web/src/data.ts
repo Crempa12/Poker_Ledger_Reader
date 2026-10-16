@@ -3,6 +3,8 @@
 // changing the scope is instant and the numbers are the console app's numbers.
 import { loadWorld, parseLocalDate, type Scope, type World, type ledger } from "@plr/core";
 
+import type { SnapshotHandLogs } from "./handtypes.ts";
+
 export interface Payload {
   source: string; // "local": read from the console app's folder on this computer; "snapshot": a shared file
   dataRoot: string;
@@ -14,6 +16,7 @@ export interface Payload {
   canWrite: boolean; // the server can file new game files and rewrite Saved_Data (this computer only)
   consoleOpen: number; // console app windows open when the data was read: 0 none, -1 could not tell (Saved_Data saves wait for 0)
   basis: string; // the server's token for every input a save depends on; sent back with each save ("" for a snapshot, which never writes)
+  handlogs?: SnapshotHandLogs; // a snapshot's hand-log results for all dates (absent in local mode, which asks the server)
 }
 
 export interface Loaded {

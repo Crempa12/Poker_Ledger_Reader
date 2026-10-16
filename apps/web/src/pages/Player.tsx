@@ -1,13 +1,19 @@
 import { players } from "@plr/core";
 
 import { LineChart } from "../components/charts.tsx";
+import { AtTheTable, BeatenAtShowdown, beatenFor } from "../components/hands.tsx";
+import { HandStatus } from "../components/handlines.tsx";
 import { nightsOf, upDown, type Ctx } from "../context.ts";
 import { longDate, moneySigned, moneySignedCents, plural, toneOf, toneOfCents } from "../format.ts";
+import { entryOf } from "../handformat.ts";
+import { useHandLogs } from "../handlogs.ts";
 import { href } from "../router.ts";
 import { runningTotal, Tile } from "./Overview.tsx";
 
 export function PlayerPage({ ctx, normalized }: { ctx: Ctx; normalized: string }) {
   const { view, tz } = ctx;
+  // The hand logs are read here so the rest of the page never waits for them (the cards below wait).
+  const hand = useHandLogs(ctx);
   const p = view.board.find((x) => x.normalizedName === normalized);
   if (p === undefined) {
     const known = ctx.everyone.some((x) => x.normalizedName === normalized);
@@ -53,6 +59,40 @@ export function PlayerPage({ ctx, normalized }: { ctx: Ctx; normalized: string }
       <section className="card">
         <h2>Running total</h2>
         <LineChart points={runningTotal(p, tz)} />
+      </section>
+
+      <section className="card">
+        <h2>At the table</h2>
+        {hand.data !== undefined ? (
+          <AtTheTable displayName={p.displayName} totalNet={d.totalNet} time={entryOf(hand.data.playtime, normalized)} />
+        ) : (
+          <HandStatus hand={hand} compact />
+        )}
+      </section>
+
+      <section className="card">
+        <h2>Beaten at showdown by</h2>
+        {hand.data !== undefined ? (
+          <BeatenAtShowdown displayName={p.displayName} games={hand.data.games} summary={beatenFor(hand.data, normalized)} />
+        ) : (
+          <HandStatus hand={hand} compact />
+        )}
+        {hand.data !== undefined &&
+        (hand.data.profiles.some((h) => h.normalizedName === normalized) ||
+          hand.data.hitRun.summaries.some((s) => s.person === normalized)) ? (
+          <p className="small">
+            {hand.data.profiles.some((h) => h.normalizedName === normalized) ? (
+              <a href={href("style", "profiles", normalized)}>Deep profile</a>
+            ) : null}
+            {hand.data.profiles.some((h) => h.normalizedName === normalized) &&
+            hand.data.hitRun.summaries.some((s) => s.person === normalized)
+              ? " · "
+              : null}
+            {hand.data.hitRun.summaries.some((s) => s.person === normalized) ? (
+              <a href={href("style", "hitrun", normalized)}>Hit &amp; run nights</a>
+            ) : null}
+          </p>
+        ) : null}
       </section>
 
       <section className="card">

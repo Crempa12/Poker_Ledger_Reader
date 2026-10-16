@@ -13,6 +13,7 @@ import { Games } from "./pages/Games.tsx";
 import { Overview } from "./pages/Overview.tsx";
 import { Owed } from "./pages/Owed.tsx";
 import { PlayerPage } from "./pages/Player.tsx";
+import { PlayStylePage } from "./pages/PlayStyle.tsx";
 import { Settings } from "./pages/Settings.tsx";
 import { Settle } from "./pages/Settle.tsx";
 
@@ -108,7 +109,7 @@ function folderName(path: string): string {
 }
 
 function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () => void }) {
-  const [first, second] = route;
+  const [first, second, third] = route;
   switch (first) {
     case undefined:
       return <Overview ctx={ctx} />;
@@ -116,6 +117,8 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
       return <PlayerPage ctx={ctx} normalized={second ?? ""} />;
     case "games":
       return <Games ctx={ctx} />;
+    case "style":
+      return <PlayStylePage ctx={ctx} section={second ?? ""} person={third ?? ""} />;
     case "game":
       return <GamePage ctx={ctx} id={second ?? ""} onSaved={onSaved} />;
     case "settle":
@@ -144,6 +147,7 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
 const TABS: { path: string; label: string }[] = [
   { path: "", label: "Overview" },
   { path: "games", label: "Games" },
+  { path: "style", label: "Play style" },
   { path: "settle", label: "Settle up" },
   { path: "owed", label: "Who owes" },
   { path: "check", label: "Checks" },

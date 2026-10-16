@@ -3,7 +3,9 @@
 // can be sent to the group (AirDrop, a message, a shared drive). It holds every game's
 // results, the names, notes and PokerNow account ids, and the saved sheets and
 // payments: share it only with people who may see them. Only the six Saved_Data files
-// the app keeps go in (the console's own reports do not).
+// the app keeps go in (the console's own reports do not). The hand-log results (menus 18, 21
+// and 22, and the player history's showdown and table time) go in too, for every folder and
+// for each folder (handlogs.ts).
 //
 //   npm run snapshot            (PLR_DATA_ROOT and PLR_TZ as for the site)
 //
@@ -19,7 +21,11 @@ import { build } from "vite";
 
 import { looksLikeLedger } from "../../../packages/core/src/ledger.ts";
 import { formatLocalDate } from "../../../packages/core/src/util.ts";
-import { SAVED_DATA_FILES, loadDataRoot } from "../../../tools/load.ts";
+import { loadDataRoot } from "../../../tools/load.ts";
+import { handWorldFromInputs, savedForPage, snapshotHandLogs } from "./handlogs.ts";
+
+// The saved files a page sees are listed in handlogs.ts, shared with the server.
+export { savedForPage };
 
 const APP = fileURLToPath(new URL("..", import.meta.url)); // apps/web
 export const SNAPSHOTS = fileURLToPath(new URL("../../../local/snapshots/", import.meta.url));
@@ -37,11 +43,6 @@ function scriptSafe(text: string): string {
   return text.replace(/<\/(script)/gi, "<\\/$1");
 }
 
-// The saved files a page may see: the six the app keeps, "" when a file is missing.
-export function savedForPage(saved: Record<string, string>): Record<string, string> {
-  return Object.fromEntries(SAVED_DATA_FILES.map((name): [string, string] => [name, saved[name] ?? ""]));
-}
-
 export async function makeSnapshot(dataRoot: string, timeZone: string, outDir: string = SNAPSHOTS): Promise<SnapshotResult> {
   const work = await mkdtemp(join(tmpdir(), "plr-snapshot-"));
   try {
@@ -56,6 +57,8 @@ export async function makeSnapshot(dataRoot: string, timeZone: string, outDir: s
 
     const inputs = await loadDataRoot(dataRoot);
     const ledgers = inputs.games.filter((g) => looksLikeLedger(g.text));
+    // The hand-log results for every folder, and for each folder, worked out once here (handlogs.ts).
+    const handlogs = snapshotHandLogs(handWorldFromInputs(inputs, timeZone));
     const now = Date.now();
     const payload = {
       source: "snapshot",
@@ -68,6 +71,7 @@ export async function makeSnapshot(dataRoot: string, timeZone: string, outDir: s
       basis: "", // a snapshot never writes, so there is nothing to check a save against
       canWrite: false,
       consoleOpen: 0,
+      handlogs, // the hand-log results: key "" is every folder, the others one folder each (handlogs.ts)
     };
     const data = `<script id="plr-data" type="application/json">${JSON.stringify(payload).replace(/</g, "\\u003c")}</script>`;
 

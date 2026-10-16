@@ -44,6 +44,7 @@ import {
 import { isExcludedDir } from "../../../packages/core/src/util.ts";
 import { SAVED_DATA_FILES, loadDataRoot } from "../../../tools/load.ts";
 import { SNAPSHOT_NAME, SNAPSHOTS, savedForPage } from "./snapshot.ts";
+import { handLogCache, parseHandScope, type HandLogCache } from "./handlogs.ts";
 
 export interface ApiConfig {
   dataRoot: string;
@@ -53,6 +54,7 @@ export interface ApiConfig {
   backupDir?: string; // where old Saved_Data versions go; default: the web project's local/backups/
   snapshotDir?: string; // where snapshot files go; default: the web project's local/snapshots/
   lockWaitMs?: number; // how long a save waits for another save's lock file; default: LOCK_WAIT_MS
+  handLogs?: HandLogCache; // where the hand-log results are kept; default: the process's one (handlogs.ts)
 }
 
 // What the console app check found: how many of its windows are open (0 when this
@@ -256,6 +258,28 @@ export async function handleData(cfg: ApiConfig, req: IncomingMessage, res: Serv
     consoleOpen: "open" in check ? check.open : -1,
     basis,
   });
+}
+
+// GET /api/handlogs?folder=&from=&to=: the hand-log results for one scope (handlogs.ts). It is
+// read the way /api/data is read: this computer, a phone on the Wi-Fi, never through a proxy.
+export async function handleHandLogs(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!readAllowed(req)) return send(res, 403, { error: "this page may not read the data from here" });
+  const url = req.url ?? "";
+  const at = url.indexOf("?");
+  const parsed = parseHandScope(at === -1 ? "" : url.slice(at + 1));
+  if ("error" in parsed) return send(res, 400, { error: parsed.error });
+  const cache = cfg.handLogs ?? handLogCache;
+  // The basis is worked out before the hand logs are read, and again after. When the data changed
+  // in between, the answer is worked out again under the new basis, so the basis an answer carries
+  // always names the data it holds.
+  let basis = await dataBasis(cfg.dataRoot);
+  for (let attempt = 1; ; attempt++) {
+    const payload = await cache.payloadFor(cfg.dataRoot, cfg.timeZone, basis, parsed.scope);
+    const after = await dataBasis(cfg.dataRoot);
+    if (after === basis) return send(res, 200, payload);
+    if (attempt === 3) return send(res, 503, { error: "the data changed while the hand logs were read; try again" });
+    basis = after;
+  }
 }
 
 // The console app keeps its own copy of Saved_Data: it reads the files once at startup
@@ -651,6 +675,8 @@ export function apiMiddleware(cfg: ApiConfig) {
     const route =
       req.method === "GET" && url === "/api/data"
         ? handleData(cfg, req, res)
+        : req.method === "GET" && url === "/api/handlogs"
+          ? handleHandLogs(cfg, req, res)
         : req.method === "POST" && url === "/api/pokernow"
           ? handlePokerNow(req, res)
           : req.method === "POST" && url === "/api/save"

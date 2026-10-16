@@ -22,7 +22,8 @@ another folder.
 | Page | What it shows |
 |---|---|
 | Overview | games, players, money in play, whether the books balance, your running total, the leaderboard |
-| Player | every night with the running total and its chart, best and worst nights, nicknames |
+| Player | every night with the running total and its chart, best and worst nights, nicknames, time at the table and who beat them at showdown (menu 3) |
+| Play style | from the hand logs: how everyone plays (menu 18), deep profiles (menu 21) and the hit & run factor (menu 22), with the console's CSV files to download |
 | Games | every game, newest first; one game's results per player, and every seat with "whose money was it?" (menu 20) |
 | Settle up | who pays whom for the scope or one game, with your pins and banker mode; "send my money to a specific person" requests (menu 5); copy it for the group chat; **Save sheet** to track payments (menu 7) |
 | Who owes | what is still owed between each pair, every saved sheet, and **Paid…** to record a payment (menu 10) |

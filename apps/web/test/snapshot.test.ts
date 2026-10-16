@@ -11,7 +11,9 @@ import { describe, expect, it } from "vitest";
 import { ledger } from "../../../packages/core/src/index.ts";
 import { SAVED_DATA_FILES, loadDataRoot } from "../../../tools/load.ts";
 import { handleSnapshotFile, type ApiConfig } from "../server/api.ts";
+import { handScopePayload, handWorldFromInputs } from "../server/handlogs.ts";
 import { makeSnapshot, SNAPSHOT_NAME } from "../server/snapshot.ts";
+import type { HandScopePayload } from "../src/handtypes.ts";
 
 const SYNTHETIC = fileURLToPath(new URL("../../../fixtures/synthetic/", import.meta.url));
 const TZ = "America/New_York";
@@ -24,6 +26,7 @@ interface Payload {
   basis: string;
   ledgers: unknown[];
   saved: Record<string, string>;
+  handlogs: Record<string, HandScopePayload>;
 }
 
 // The data element of a snapshot page, parsed.
@@ -55,6 +58,23 @@ describe("a snapshot file", () => {
     expect(payload.ledgers).toHaveLength(data.games.filter((g) => ledger.looksLikeLedger(g.text)).length);
     expect(Object.keys(payload.saved).sort()).toEqual([...SAVED_DATA_FILES].sort());
     for (const name of SAVED_DATA_FILES) expect(payload.saved[name]).toBe(data.savedData[name] ?? "");
+  }, 120_000);
+
+  it("carries the hand-log results for every folder, and for each folder, with dates open and no basis", async () => {
+    const out = mkdtempSync(join(tmpdir(), "plr-snap-handlogs-"));
+    const r = await makeSnapshot(SYNTHETIC, TZ, out);
+    const { payload } = payloadOf(readFileSync(r.file, "utf8"));
+    expect(Object.keys(payload.handlogs).sort()).toEqual(["", "Synthetic Autumn", "Synthetic Spring", "Synthetic Winter"]);
+    for (const [folder, p] of Object.entries(payload.handlogs)) {
+      expect(p.basis).toBe("");
+      expect(p.scope).toEqual({ folder, from: null, to: null });
+    }
+    expect(payload.handlogs[""]?.logged).toBe(2);
+    expect(payload.handlogs["Synthetic Autumn"]?.logged).toBe(2);
+    expect(payload.handlogs["Synthetic Spring"]?.nights).toEqual([]);
+    // The same as the server works out for the same data.
+    const hw = handWorldFromInputs(await loadDataRoot(SYNTHETIC), TZ);
+    expect(payload.handlogs[""]).toEqual(handScopePayload(hw, { folder: "", from: null, to: null }, ""));
   }, 120_000);
 
   it("carries only the six files the app keeps, not the console's own reports", async () => {

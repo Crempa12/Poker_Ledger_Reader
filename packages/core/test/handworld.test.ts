@@ -49,6 +49,24 @@ describe("loadHandWorld: the hand logs of the made-up data", () => {
   });
 });
 
+describe("handViewOf: the menu 21 rows carry their hit & run columns", () => {
+  it("gives each profile the factor and tag of the person's style row, as deepPlaystyle does", async () => {
+    // The edge data has people with enough winning nights for a factor and a tag.
+    const inputs = await loadDataRoot(fileURLToPath(new URL("../../../fixtures/synthetic-edge", import.meta.url)));
+    const world = loadWorld({ timeZone: "America/New_York", ledgers: inputs.games, saved: inputs.savedData });
+    const view = handViewOf(loadHandWorld(world, inputs.games), ALL);
+    const styleOf = new Map(view.style.map((s) => [s.normalizedName, s]));
+    let judged = 0;
+    for (const p of view.profiles) {
+      const s = styleOf.get(p.normalizedName);
+      if (s === undefined) continue;
+      expect([p.hitRun, p.hitRunReliable, p.hitRunTag], p.normalizedName).toEqual([s.hitRun, s.hitRunReliable, s.hitRunTag]);
+      if (p.hitRunTag !== "") judged++;
+    }
+    expect(judged).toBeGreaterThan(0);
+  });
+});
+
 describe("handViewOf: an export is written exactly when the app writes it", () => {
   it("writes every hand-log export for a folder with logs", async () => {
     const view = handViewOf(await syntheticHands(), AUTUMN);
