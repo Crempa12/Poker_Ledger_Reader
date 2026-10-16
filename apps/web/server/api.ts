@@ -775,6 +775,12 @@ export async function handleSave(cfg: ApiConfig, req: IncomingMessage, res: Serv
     const base = resolve(gamesDir(cfg.dataRoot));
     const dir = resolve(base, folder);
     if (!dir.startsWith(base + sep)) return send(res, 400, { error: "that folder is outside Games/" });
+    // The site never reads a folder that is a link (eachGameCsv does not enter one), so a game filed through
+    // one would vanish from the page and could be filed again. Every part of the path is checked.
+    const linked = await linkOnTheWay(base, folder);
+    if (linked !== null) {
+      return send(res, 400, { error: `${linked} is a link to another folder, and games in it are not read: pick another folder` });
+    }
     const target = join(dir, `${kind}_${id}.csv`);
     const relative = `${folder}/${kind}_${id}.csv`;
     if (existsSync(target)) return send(res, 409, { error: "that file is already there", path: relative });
@@ -900,6 +906,20 @@ async function existingGamesFolder(base: string, raw: unknown): Promise<string |
     dir = join(dir, part);
   }
   return dir.startsWith(resolve(base) + sep) ? raw : null;
+}
+
+// The first part of folder (as "Nov" or "Nov/Week 1") that is a link, or null. Parts not there yet are made
+// as plain folders by the save. lstat: on a file system that ignores case, "NOV" finds the link "nov" too.
+async function linkOnTheWay(base: string, folder: string): Promise<string | null> {
+  const parts = folder.split("/");
+  let dir = base;
+  for (let i = 0; i < parts.length; i++) {
+    dir = join(dir, parts[i] ?? "");
+    const s = await lstat(dir).catch(() => null);
+    if (s === null) return null;
+    if (s.isSymbolicLink()) return parts.slice(0, i + 1).join("/");
+  }
+  return null;
 }
 
 // ---- the Downloads folder (menu 19) ------------------------------------------------------------

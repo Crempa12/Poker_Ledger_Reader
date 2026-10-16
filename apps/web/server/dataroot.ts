@@ -43,6 +43,15 @@ export function defaultDataRoot(webProject: string): string {
   return there ? consoleApp : resolve(webProject, "data");
 }
 
+// Whether the site may ever offer to start a data folder at dataRoot (vite.config.ts): in its own data/, or
+// in a folder PLR_DATA_ROOT names (named), but never in the console app's folder next to the project, even
+// when that is missing for a while (a drive not plugged in) or PLR_DATA_ROOT names it.
+export function startableDataRoot(webProject: string, dataRoot: string, named: boolean): boolean {
+  const root = resolve(dataRoot);
+  if (root === resolve(webProject, "data")) return true;
+  return named && root !== resolve(webProject, "..", "Poker_Ledger_Reader");
+}
+
 // Whether a new data folder may be started at root: it is not there yet but the folder it would go in is,
 // or it is a folder (not a link) this server may write to, with nothing in it but the files a computer
 // leaves in any folder (.DS_Store, desktop.ini). A folder with anything else in it is never taken over,

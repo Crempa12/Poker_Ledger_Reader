@@ -8,7 +8,7 @@ import { Readable } from "node:stream";
 import { describe, expect, it } from "vitest";
 
 import { dataBasis, handleData, handleSave, handleStartData, type ApiConfig } from "../server/api.ts";
-import { canStartDataRoot, defaultDataRoot } from "../server/dataroot.ts";
+import { canStartDataRoot, defaultDataRoot, startableDataRoot } from "../server/dataroot.ts";
 
 const PORT = 5173;
 const WRITE = { host: `127.0.0.1:${PORT}`, "x-plr": "1", origin: `http://127.0.0.1:${PORT}`, "content-type": "application/json" };
@@ -66,6 +66,17 @@ describe("the data folder the site reads", () => {
       throw err;
     }
     expect(defaultDataRoot(project)).toBe(join(parent, "Poker_Ledger_Reader"));
+  });
+
+  it("may be started in the site's own data folder or one PLR_DATA_ROOT names, never in the console app's", () => {
+    const project = join(tmpdir(), "plr-made-up", "Poker_Ledger_Web");
+    expect(startableDataRoot(project, join(project, "data"), false)).toBe(true);
+    expect(startableDataRoot(project, join(project, "data"), true)).toBe(true);
+    expect(startableDataRoot(project, join(tmpdir(), "plr-made-up", "Poker_Ledger_Reader"), false)).toBe(false);
+    // Named outright, with a trailing slash or a ".." on the way: still the console app's folder.
+    expect(startableDataRoot(project, join(project, "..", "Poker_Ledger_Reader") + "/", true)).toBe(false);
+    expect(startableDataRoot(project, join(tmpdir(), "plr-made-up", "group-data"), true)).toBe(true);
+    expect(startableDataRoot(project, join(tmpdir(), "plr-made-up", "group-data"), false)).toBe(false);
   });
 });
 
@@ -178,6 +189,28 @@ describe("filing a game into a folder that is already there", () => {
     expect((await save(root, "reports", "pglMadeUpExisting04")).status).toBe(400);
     expect((await save(root, "Reports", "pglMadeUpExisting05")).status).toBe(400);
     expect(readdirSync(join(root, "Games", "reports"))).toEqual([]);
+  });
+
+  it("never files a game through a folder that is a link (the site would not read it back)", async () => {
+    const root = mkdtempSync(join(tmpdir(), "plr-linked-folder-"));
+    const outside = mkdtempSync(join(tmpdir(), "plr-linked-outside-"));
+    mkdirSync(join(root, "Games", "Nov"), { recursive: true });
+    try {
+      symlinkSync(outside, join(root, "Games", "linkout"));
+      symlinkSync(outside, join(root, "Games", "Nov", "inner"));
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "EPERM") return; // Windows without Developer Mode makes no links
+      throw err;
+    }
+    for (const folder of ["linkout", "linkout/Week 1", "Nov/inner", "Nov/inner/Week 2"]) {
+      const r = await save(root, folder, "pglMadeUpLinked01");
+      expect(r.status, folder).toBe(400);
+      expect(String(r.json.error)).toContain("is a link to another folder");
+    }
+    expect(readdirSync(outside)).toEqual([]);
+    // A plain folder next to the links still works.
+    expect((await save(root, "Nov/Week 3", "pglMadeUpLinked02")).status).toBe(200);
+    expect(existsSync(join(root, "Games", "Nov", "Week 3", "poker_now_log_pglMadeUpLinked02.csv"))).toBe(true);
   });
 
   it("points a group with no data folder yet to Start a new data folder", async () => {

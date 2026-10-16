@@ -15,15 +15,15 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
 import { apiMiddleware } from "./server/api.ts";
-import { defaultDataRoot } from "./server/dataroot.ts";
+import { defaultDataRoot, startableDataRoot } from "./server/dataroot.ts";
 import { denyPatternFor } from "./server/fsdeny.ts";
 
 // The console app's folder next to this project, or the site's own data/ folder (server/dataroot.ts). The
-// site may start a data folder only in its own data/ or in a folder PLR_DATA_ROOT names: never in the
-// console app's folder, even when that is missing for a while (a drive not plugged in).
+// site may start a data folder only in its own data/ or in a folder PLR_DATA_ROOT names, never in the
+// console app's folder (startableDataRoot).
 const PROJECT = resolve(import.meta.dirname, "../..");
 const dataRoot = resolve(process.env.PLR_DATA_ROOT ?? defaultDataRoot(PROJECT));
-const startable = process.env.PLR_DATA_ROOT !== undefined || dataRoot === resolve(PROJECT, "data");
+const startable = startableDataRoot(PROJECT, dataRoot, process.env.PLR_DATA_ROOT !== undefined);
 // When the data folder holds this project (PLR_DATA_ROOT names it or a folder above it), only its Games and
 // Saved_Data folders are kept from Vite's /@fs/; denying the whole folder would refuse the site's own files.
 const dataDeny =

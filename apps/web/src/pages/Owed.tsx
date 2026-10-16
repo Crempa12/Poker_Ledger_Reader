@@ -106,6 +106,7 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                             <tr className="formrow">
                               <td colSpan={6}>
                                 <PaymentForm
+                                  key={b.remainingCents} // a reload that changes what is left starts the amount again
                                   ctx={ctx}
                                   balance={b}
                                   onRecorded={(text) => {
