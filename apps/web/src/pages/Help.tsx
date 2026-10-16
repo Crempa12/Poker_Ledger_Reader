@@ -26,7 +26,8 @@ export function Help({ ctx }: { ctx: Ctx }) {
       <section className="card pad">
         <h1>How to use it</h1>
         <p className="muted">
-          The site reads the console app&apos;s folder every time a page loads, so it always shows what the console app shows.
+          The site reads the console app&apos;s folder every time a page loads, and again when you come back to its tab after
+          something changed there, so it always shows what the console app shows.
         </p>
         <h2>After each game</h2>
         <ol>

@@ -37,6 +37,17 @@ export function isSnapshot(payload: Payload): boolean {
   return payload.source === "snapshot";
 }
 
+// The basis of the data folder as it is now (GET /api/basis), or null when it could not be asked.
+export async function currentBasis(): Promise<string | null> {
+  try {
+    const res = await fetch("/api/basis", { cache: "no-store" });
+    if (!res.ok) return null;
+    return ((await res.json()) as { basis?: unknown }).basis as string;
+  } catch {
+    return null;
+  }
+}
+
 export async function loadData(): Promise<Loaded> {
   let payload = embedded();
   if (payload === null) {

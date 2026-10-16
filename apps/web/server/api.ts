@@ -316,6 +316,13 @@ export async function basisParts(dataRoot: string): Promise<{ basis: string; han
   return { basis: over(SAVED_DATA_FILES), handLogs: over(HAND_LOG_SAVED) };
 }
 
+// GET /api/basis: only the basis of the data as it is now (file names, sizes and times, and the Saved_Data
+// files' digests), so the page can tell when to read the data again without reading it all.
+export async function handleBasis(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!readAllowed(req)) return send(res, 403, { error: "this page may not read the data from here" });
+  send(res, 200, { basis: await dataBasis(cfg.dataRoot) });
+}
+
 export async function handleData(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (!readAllowed(req)) return send(res, 403, { error: "this page may not read the data from here" });
   // The basis is worked out before the data is read: a change in between then makes the
@@ -992,6 +999,8 @@ export function apiMiddleware(cfg: ApiConfig) {
     const route =
       req.method === "GET" && url === "/api/data"
         ? handleData(cfg, req, res)
+        : req.method === "GET" && url === "/api/basis"
+          ? handleBasis(cfg, req, res)
         : req.method === "GET" && url === "/api/handlogs"
           ? handleHandLogs(cfg, req, res)
         : req.method === "GET" && url === "/api/downloads"

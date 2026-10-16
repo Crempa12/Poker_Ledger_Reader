@@ -2,7 +2,7 @@ import { Component, useCallback, useEffect, useMemo, useRef, useState, type Reac
 import { ledger } from "@plr/core";
 
 import { buildCtx, type Ctx } from "./context.ts";
-import { EVERYTHING, isSnapshot, loadData, readSavedScope, saveScope, type Loaded, type ScopeChoice } from "./data.ts";
+import { currentBasis, EVERYTHING, isSnapshot, loadData, readSavedScope, saveScope, type Loaded, type ScopeChoice } from "./data.ts";
 import { clockTime, plural, shortDate } from "./format.ts";
 import { href, useRoute } from "./router.ts";
 import { Check, checkCount } from "./pages/Check.tsx";
@@ -40,6 +40,30 @@ export function App() {
       });
   }, []);
   useEffect(refresh, [refresh]);
+
+  // When this tab comes back to the front (after the console app filed a game or changed a name, say), the
+  // data is read again if it changed, so the page shows what the console app shows without a Refresh, and
+  // a save is not refused for data the page did not have. A snapshot never changes, so it never asks.
+  const shownBasis = useRef<string | null>(null);
+  useEffect(() => {
+    shownBasis.current = state.status === "ready" && !isSnapshot(state.loaded.payload) ? state.loaded.payload.basis : null;
+  }, [state]);
+  useEffect(() => {
+    let asked = 0;
+    const look = (): void => {
+      if (document.visibilityState !== "visible" || shownBasis.current === null || Date.now() - asked < 2000) return;
+      asked = Date.now();
+      void currentBasis().then((now) => {
+        if (now !== null && shownBasis.current !== null && now !== shownBasis.current) refresh();
+      });
+    };
+    window.addEventListener("focus", look);
+    document.addEventListener("visibilitychange", look);
+    return () => {
+      window.removeEventListener("focus", look);
+      document.removeEventListener("visibilitychange", look);
+    };
+  }, [refresh]);
 
   const ctx = useMemo(() => {
     if (state.status !== "ready") return null;

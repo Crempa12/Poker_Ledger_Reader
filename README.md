@@ -37,7 +37,8 @@ are the same ones the console app reads, so it can be pointed at that folder lat
 is empty or not there yet.
 
 It reads `Games/` and `Saved_Data/` from the console app's folder next to this one
-(`../Poker_Ledger_Reader`), every time the page loads or you press **Refresh**, so
+(`../Poker_Ledger_Reader`), every time the page loads, you press **Refresh**, or you come
+back to its tab after something changed there, so
 it always shows the same numbers as the console app. Set `PLR_DATA_ROOT` to read
 another folder. If that folder is not there, or has neither `Games/` nor `Saved_Data/`,
 the page says so, and nothing is saved anywhere.

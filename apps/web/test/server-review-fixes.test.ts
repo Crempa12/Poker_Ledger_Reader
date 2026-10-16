@@ -15,6 +15,7 @@ import { players } from "../../../packages/core/src/index.ts";
 import {
   acceptsGzip,
   dataBasis,
+  handleBasis,
   handleData,
   handleHandLogs,
   handleSave,
@@ -97,6 +98,21 @@ describe("the server's answers for the review fixes", () => {
     expect(refused.headers["content-encoding"]).toBeUndefined();
     expect(refused.body.equals(plain.body)).toBe(true);
     handLogs.close();
+  });
+
+  it("answers the data's basis alone, which changes when a file does", async () => {
+    const root = savedDataOnly();
+    const cfg: ApiConfig = { dataRoot: root, timeZone: TZ, consoleProbe: async () => ({ open: 0 }) };
+    const basis = async (headers: Record<string, string> = {}) => {
+      const r = await reply((res) => handleBasis(cfg, request("GET", "/api/basis", headers), res));
+      return { status: r.status, basis: (JSON.parse(r.body.toString("utf8")) as { basis?: string }).basis };
+    };
+    const before = await basis();
+    expect(before).toEqual({ status: 200, basis: await dataBasis(root) });
+    writeFileSync(join(root, "Saved_Data", "merge_rules.csv"), MORE_RULES);
+    const after = await basis();
+    expect(after.basis).not.toBe(before.basis);
+    expect((await basis({ host: "evil.example:5173" })).status).toBe(403);
   });
 
   it("reads Accept-Encoding with its q-values", () => {
