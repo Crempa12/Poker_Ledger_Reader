@@ -2,8 +2,9 @@
 // folder (Games/ and Saved_Data/) on every page load, so it always shows what the
 // console app shows. It writes when you add a game, and when you save a sheet,
 // record a payment or answer a name question (server/api.ts says how and when).
-// It listens on this computer only, unless PLR_LAN=1 is set, which lets phones on
-// the same Wi-Fi open it too (changing anything still works only on this computer).
+// It listens on this computer only, unless started with --host (npm run web:phone, on any
+// system) or PLR_LAN=1, which let phones on the same Wi-Fi open it too (changing anything
+// still works only on this computer).
 //
 // PLR_CONSOLE_CHECK=0 skips the "is the console app open?" check: only for a test
 // server pointed (PLR_DATA_ROOT) at a scratch copy that no console app is using. Give

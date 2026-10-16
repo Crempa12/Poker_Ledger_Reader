@@ -14,6 +14,16 @@ what it needs, which takes a minute). Your browser opens at
 npm run web
 ```
 
+On Windows, double-click **Start Poker Ledger.cmd** instead (it needs
+[Node.js](https://nodejs.org) 22.18 or newer). This folder must sit next to the console
+app's folder; from a checkout of the console app, make it with:
+
+```bash
+git worktree add ../Poker_Ledger_Web web-app
+```
+
+The site's **Help** tab walks through a week of using it.
+
 It reads `Games/` and `Saved_Data/` from the console app's folder next to this one
 (`../Poker_Ledger_Reader`), every time the page loads or you press **Refresh**, so
 it always shows the same numbers as the console app. Set `PLR_DATA_ROOT` to read

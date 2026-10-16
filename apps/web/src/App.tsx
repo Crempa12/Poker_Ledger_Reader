@@ -10,6 +10,7 @@ import { GamePage } from "./pages/Game.tsx";
 import { AddGame } from "./pages/AddGame.tsx";
 import { Adjust } from "./pages/Adjust.tsx";
 import { Games } from "./pages/Games.tsx";
+import { Help } from "./pages/Help.tsx";
 import { Overview } from "./pages/Overview.tsx";
 import { Owed } from "./pages/Owed.tsx";
 import { PlayerPage } from "./pages/Player.tsx";
@@ -131,6 +132,8 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
       return <Adjust ctx={ctx} onSaved={onSaved} />;
     case "settings":
       return <Settings ctx={ctx} onSaved={onSaved} />;
+    case "help":
+      return <Help ctx={ctx} />;
     case "add":
       if (isSnapshot(ctx.payload)) return <div className="card pad">Games are added on the computer that runs the site.</div>;
       return <AddGame ctx={ctx} onSaved={onSaved} />;
@@ -153,6 +156,7 @@ const TABS: { path: string; label: string }[] = [
   { path: "check", label: "Checks" },
   { path: "settings", label: "Settings" },
   { path: "add", label: "+ Add game" },
+  { path: "help", label: "Help" },
 ];
 
 function Shell({ ctx, onRefresh, route, children }: { ctx?: Ctx; onRefresh?: () => void; route?: string[]; children: React.ReactNode }) {
