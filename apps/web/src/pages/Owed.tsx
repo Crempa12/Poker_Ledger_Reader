@@ -135,7 +135,8 @@ function PaymentForm({ ctx, balance, onRecorded }: { ctx: Ctx; balance: SessionB
     setBusy(true);
     setError(null);
     try {
-      await writeSaved(ctx, "session_balances.csv", sessions.serializeSessionBalances(result.balances));
+      // false: the person declined the question writeSaved asks, so the payment is not recorded.
+      if (!(await writeSaved(ctx, "session_balances.csv", sessions.serializeSessionBalances(result.balances)))) return;
       const extra = result.overpaidCents > 0 ? ` ${moneyCents(result.overpaidCents)} more than was owed was not kept.` : "";
       onRecorded(
         `${balance.fromDisplay} paid ${balance.toDisplay} ${moneyCents(result.appliedCents)} on "${balance.sessionId}": now ${result.balance.status}.${extra}`,

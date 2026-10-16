@@ -5,7 +5,7 @@ import { useSaver } from "../components/saver.tsx";
 import type { Ctx } from "../context.ts";
 import { toneOfCents } from "../format.ts";
 import { href } from "../router.ts";
-import { newGroup, typedCents, typedSignedCents } from "../saved.ts";
+import { chosenOption, newGroup, typedCents, typedSignedCents } from "../saved.ts";
 
 // Console menu 17: money that changed hands outside the ledger (both sides at once,
 // so the books stay balanced), a one-sided correction, or removing an entry. New
@@ -75,17 +75,17 @@ export function Adjust({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
 
       {canWrite ? (
         <>
-          <p className="muted small center">
-            New entries go under:{" "}
-            {scope.folder === "" ? (
-              <strong>all folders</strong>
-            ) : (
-              <>
-                <strong>{scope.folder}</strong> (the folder picked at the top)
-              </>
-            )}
-            {scope.folder === "" ? " — they count only when settling every folder. Pick a folder at the top to tag them with it." : "."}
-          </p>
+          {scope.folder === "" ? (
+            <p className="muted small center">
+              New entries go under: <strong>all folders</strong>. They count only when settling every folder. Pick a folder at the top to
+              tag them with it.
+            </p>
+          ) : (
+            <p className="banner">
+              New entries go under: <strong>{scope.folder}</strong>. They will count only on {scope.folder}'s sheets. Show all folders at
+              the top to count them on every sheet.
+            </p>
+          )}
           <PaymentForm ctx={ctx} people={people} nameOf={nameOf} save={save} busy={saver.busy} />
           <CorrectionForm ctx={ctx} people={people} save={save} busy={saver.busy} />
         </>
@@ -107,13 +107,23 @@ function today(): number {
   return Math.floor(Date.now() / 1000);
 }
 
+// An entry tagged with a folder counts only on that folder's sheets, so the page says
+// so before it is saved. Entries under all folders need no question.
+function folderOk(folder: string): boolean {
+  return folder === "" || window.confirm(`This entry will count only on ${folder}'s sheets. Save it?`);
+}
+
 function PaymentForm({ ctx, people, nameOf, save, busy }: FormProps & { nameOf: (n: string) => string }) {
-  const [creditor, setCreditor] = useState("");
-  const [debtor, setDebtor] = useState("");
+  const [creditorPick, setCreditor] = useState("");
+  const [debtorPick, setDebtor] = useState("");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
+  // A player who has left the list (a new scope, a Refresh) is not saved as chosen.
+  const creditor = chosenOption(creditorPick, people);
+  const debtorOptions = people.filter((p) => p.normalizedName !== creditor);
+  const debtor = chosenOption(debtorPick, debtorOptions);
 
   const add = (): void => {
     const cents = typedCents(amount);
@@ -133,6 +143,7 @@ function PaymentForm({ ctx, people, nameOf, save, busy }: FormProps & { nameOf: 
       debtorName: nameOf(debtor),
     });
     if (!rows.ok) return setProblem(rows.error === "Cancelled." ? "Pick two different players." : rows.error);
+    if (!folderOk(ctx.scope.folder)) return;
     setProblem(null);
     const done = `${nameOf(debtor)} now owes ${moneyCents(cents)} less and ${nameOf(creditor)} is owed ${moneyCents(cents)} less. The leaderboard does not change.`;
     void save([...ctx.world.adjustments, ...rows.value], done).then((ok) => {
@@ -150,23 +161,23 @@ function PaymentForm({ ctx, people, nameOf, save, busy }: FormProps & { nameOf: 
       <div className="controls">
         <label>
           <span className="muted">Who got the money, or let it go? (was owed)</span>
-          <Pick people={people} value={creditor} onChange={setCreditor} />
+          <Pick people={people} value={creditor} onChange={setCreditor} disabled={busy} />
         </label>
         <label>
           <span className="muted">Who paid it, or was let off? (owed it)</span>
-          <Pick people={people.filter((p) => p.normalizedName !== creditor)} value={debtor} onChange={setDebtor} />
+          <Pick people={debtorOptions} value={debtor} onChange={setDebtor} disabled={busy} />
         </label>
         <label>
           <span className="muted">Amount</span>
-          <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="20.00" />
+          <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="20.00" disabled={busy} />
         </label>
         <label>
           <span className="muted">Note</span>
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="paid" />
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="paid" disabled={busy} />
         </label>
         <label>
           <span className="muted">Date (blank = today)</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={busy} />
         </label>
         <button disabled={busy} onClick={add}>
           Save payment
@@ -178,11 +189,12 @@ function PaymentForm({ ctx, people, nameOf, save, busy }: FormProps & { nameOf: 
 }
 
 function CorrectionForm({ ctx, people, save, busy }: FormProps) {
-  const [player, setPlayer] = useState("");
+  const [playerPick, setPlayer] = useState("");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
+  const player = chosenOption(playerPick, people);
 
   const add = (): void => {
     const cents = typedSignedCents(amount);
@@ -192,6 +204,7 @@ function CorrectionForm({ ctx, people, save, busy }: FormProps) {
     if (!day.ok) return setProblem(day.error);
     const row = adjustments.correctionRow({ group: newGroup(ctx.world.adjustments, now), date: day.value, folder: ctx.scope.folder, note, amountCents: cents, player });
     if (!row.ok) return setProblem(row.error);
+    if (!folderOk(ctx.scope.folder)) return;
     setProblem(null);
     const done = `Added. It is one-sided: settlement sheets will be short by ${moneyCents(Math.abs(cents))} until the other side is entered.`;
     void save([...ctx.world.adjustments, row.value], done).then((ok) => {
@@ -209,19 +222,19 @@ function CorrectionForm({ ctx, people, save, busy }: FormProps) {
       <div className="controls">
         <label>
           <span className="muted">Player</span>
-          <Pick people={people} value={player} onChange={setPlayer} />
+          <Pick people={people} value={player} onChange={setPlayer} disabled={busy} />
         </label>
         <label>
           <span className="muted">Add to their balance (negative takes away)</span>
-          <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="-20.00" />
+          <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="-20.00" disabled={busy} />
         </label>
         <label>
           <span className="muted">Note</span>
-          <input value={note} onChange={(e) => setNote(e.target.value)} />
+          <input value={note} onChange={(e) => setNote(e.target.value)} disabled={busy} />
         </label>
         <label>
           <span className="muted">Date (blank = today)</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={busy} />
         </label>
         <button disabled={busy} onClick={add}>
           Save correction
@@ -232,9 +245,9 @@ function CorrectionForm({ ctx, people, save, busy }: FormProps) {
   );
 }
 
-function Pick({ people, value, onChange }: { people: PlayerStats[]; value: string; onChange: (v: string) => void }) {
+function Pick({ people, value, onChange, disabled = false }: { people: PlayerStats[]; value: string; onChange: (v: string) => void; disabled?: boolean }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)}>
+    <select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled}>
       <option value="">Pick a player…</option>
       {people.map((p) => (
         <option key={p.normalizedName} value={p.normalizedName}>

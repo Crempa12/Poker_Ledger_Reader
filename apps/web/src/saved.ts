@@ -2,7 +2,17 @@
 // file with @plr/core, exactly as the console menu would, and the local server writes
 // it (only over the version this page was showing, and never while the console app is
 // open, because it writes its own copy when it quits).
-import { formatLocalDate, seats, type Adjustment, type Game, type Scope, type SeatOwner, type World } from "@plr/core";
+import {
+  adjustments,
+  formatLocalDate,
+  seats,
+  type Adjustment,
+  type Game,
+  type PaymentPreference,
+  type Scope,
+  type SeatOwner,
+  type World,
+} from "@plr/core";
 
 import type { Ctx } from "./context.ts";
 import { postJSON } from "./data.ts";
@@ -15,8 +25,67 @@ export type SavedFile =
   | "seat_owners.csv"
   | "adjustments.csv";
 
-export async function writeSaved(ctx: Ctx, file: SavedFile, text: string): Promise<void> {
-  await postJSON<{ saved: string }>("/api/saved-file", { file, before: ctx.payload.saved[file] ?? "", text });
+// The reader codes whose row does not come back when the file is saved: a row left out, or
+// an amount read as 0. The other codes keep the row as it was written.
+const LOST_ON_SAVE = new Set(["short-row", "dropped-row", "bad-number", "non-finite-number"]);
+
+// The question asked before a save that would drop or zero rows the site could not read,
+// with how many there are ("" when there are none). Pure, so the wording is one.
+export function lossMessage(file: string, lost: number): string {
+  if (lost === 0) return "";
+  const rows = lost === 1 ? "1 row" : `${lost} rows`;
+  return (
+    `${rows} in ${file} could not be read. Saving rewrites the file from the rows that could be read: ` +
+    "the rows that could not be read are left out, and an amount that could not be read is saved as 0.00. " +
+    "The old file is kept in local/backups/, and the Checks page lists these rows. Save anyway?"
+  );
+}
+
+// Asks before a save that would lose rows the site could not read. False when the answer is no.
+export function lossConfirmed(ctx: Ctx, file: SavedFile): boolean {
+  const lost = ctx.world.warnings.filter((w) => w.source === file && LOST_ON_SAVE.has(w.code)).length;
+  const question = lossMessage(file, lost);
+  return question === "" || window.confirm(question);
+}
+
+// The basis is the server's token for everything the save depends on (game files and
+// every Saved_Data file). The server refuses the save when it has changed since this
+// page was loaded, so a stale sheet is never written over newer data. Resolves to false,
+// and writes nothing, when the person says no to lossConfirmed's question.
+export async function writeSaved(ctx: Ctx, file: SavedFile, text: string): Promise<boolean> {
+  if (!lossConfirmed(ctx, file)) return false;
+  await postJSON<{ saved: string }>("/api/saved-file", { file, before: ctx.payload.saved[file] ?? "", text, basis: ctx.payload.basis });
+  return true;
+}
+
+// The value a select can show and save: the chosen player while they are still one of
+// the options, else "" (the placeholder). After a scope change or a Refresh a choice can
+// drop out of the list, and must not be saved as if it were still on screen.
+export function chosenOption(value: string, options: readonly { readonly normalizedName: string }[]): string {
+  return options.some((o) => o.normalizedName === value) ? value : "";
+}
+
+// The pins that go into payment_preferences.csv. A pin whose payer and payee are one
+// person now (after a merge) is left out: the console drops such rows when it loads the
+// file (settlement.cpp loadPreferencesCSV), so it never applied them. `left` says how
+// many were left out, for the message.
+export function pinsToWrite(prefs: readonly PaymentPreference[]): { keep: PaymentPreference[]; left: number } {
+  const keep = prefs.filter((p) => p.payerNormalized !== p.payeeNormalized);
+  return { keep, left: prefs.length - keep.length };
+}
+
+// The sentence a save adds when some pins were left out ("" when none were).
+export function leftOutNote(left: number): string {
+  if (left === 0) return "";
+  return left === 1 ? "One pin that now pays the same person was left out of the file." : `${left} pins that now pay the same person were left out of the file.`;
+}
+
+// Menu 5's "Not on this sheet" count (main.cpp): the payments and corrections saved under
+// "all folders" whose date falls in the sheet's date range. Each side of a payment counts,
+// as the console counts the rows.
+export function notOnThisSheet(list: readonly Adjustment[], target: Scope): number {
+  if (target.folder === "") return 0;
+  return adjustments.filter(list, { ...target, folder: "" }).filter((a) => a.folder === "").length;
 }
 
 // The session id the console app suggests when you save a sheet (main.cpp
@@ -36,10 +105,13 @@ export function gameSessionId(game: Game, timeZone: string): string {
 }
 
 // A typed dollar amount ("20", "12.5", "$1,234.50") in whole cents; null when it is
-// not one, or not above zero.
+// not one, or not above zero. A comma only groups thousands, so "12,50" is refused
+// rather than read as $1,250.
 export function typedCents(text: string): number | null {
-  const t = text.trim().replace(/^\$/, "").replace(/,/g, "");
-  const m = /^(\d{1,9})(?:\.(\d{0,2}))?$/.exec(t) ?? /^()\.(\d{1,2})$/.exec(t);
+  const t = text.trim().replace(/^\$/, "");
+  if (t.includes(",") && !/^\d{1,3}(,\d{3})+(\.\d{0,2})?$/.test(t)) return null;
+  const digits = t.replace(/,/g, "");
+  const m = /^(\d{1,9})(?:\.(\d{0,2}))?$/.exec(digits) ?? /^()\.(\d{1,2})$/.exec(digits);
   if (m === null) return null;
   const cents = Number(m[1] === "" ? "0" : m[1]) * 100 + Number((m[2] ?? "").padEnd(2, "0"));
   return cents > 0 ? cents : null;

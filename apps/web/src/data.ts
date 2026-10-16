@@ -12,7 +12,8 @@ export interface Payload {
   logs: string[]; // paths of the hand logs under the game folder (their text is not sent)
   saved: Record<string, string>;
   canWrite: boolean; // the server can file new game files and rewrite Saved_Data (this computer only)
-  consoleOpen: number; // console app windows open when the data was read (Saved_Data saves wait for 0)
+  consoleOpen: number; // console app windows open when the data was read: 0 none, -1 could not tell (Saved_Data saves wait for 0)
+  basis: string; // the server's token for every input a save depends on; sent back with each save ("" for a snapshot, which never writes)
 }
 
 export interface Loaded {

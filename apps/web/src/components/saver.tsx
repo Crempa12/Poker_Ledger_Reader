@@ -18,7 +18,8 @@ export function useSaver(ctx: Ctx, onSaved: () => void): Saver {
     setBusy(true);
     setNote(null);
     try {
-      await writeSaved(ctx, file, text);
+      // false: the person said no to the question writeSaved asks, so nothing was written.
+      if (!(await writeSaved(ctx, file, text))) return false;
       setNote({ ok: true, text: done });
       onSaved();
       return true;

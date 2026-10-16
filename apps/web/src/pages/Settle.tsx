@@ -15,7 +15,16 @@ import { useSaver } from "../components/saver.tsx";
 import { dayScope, type Ctx } from "../context.ts";
 import { longDate, money, moneyCents, plural, shortDate } from "../format.ts";
 import { href } from "../router.ts";
-import { defaultSessionId, errorText, gameSessionId, writeSaved } from "../saved.ts";
+import {
+  chosenOption,
+  defaultSessionId,
+  errorText,
+  gameSessionId,
+  leftOutNote,
+  notOnThisSheet,
+  pinsToWrite,
+  writeSaved,
+} from "../saved.ts";
 
 const TAG: Record<SettlementReason, string> = { preference: "pinned", requested: "requested", banker: "banker", auto: "" };
 
@@ -42,10 +51,15 @@ interface Requests {
   pinnedHere: string[];
 }
 
+// The requests kept for one sheet: those, or none when the state is for another sheet.
+function forSheet(state: Requests, sheet: string): Requests {
+  return state.sheet === sheet ? state : { sheet, list: [], pinnedHere: [] };
+}
+
 export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onSaved: () => void }) {
   const { world, view, tz, scope } = ctx;
+  // The banker is the one in Settings, as menu 5 uses it: there is no switch per sheet.
   const banker = world.settings.banker;
-  const [bankerOn, setBankerOn] = useState(banker !== "");
   const [copied, setCopied] = useState(false);
   const [asked, setAsked] = useState<Requests>({ sheet: "", list: [], pinnedHere: [] });
 
@@ -54,7 +68,7 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
   const target = game !== undefined ? dayScope(game, tz) : scope;
   // The name the console app suggests when this sheet is saved (menu 7).
   const suggested = game !== undefined ? gameSessionId(game, tz) : defaultSessionId(scope, tz, Math.floor(Date.now() / 1000));
-  const requests = asked.sheet === suggested ? asked : { sheet: suggested, list: [], pinnedHere: [] };
+  const requests = forSheet(asked, suggested);
 
   const board = boardFor(world, games, target);
   const byBalance = board.map((p) => ({ p, dollars: players.balanceDollars(p) }));
@@ -63,8 +77,10 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
   // As menu 5 does it: the pins saved when the sheet was started, then this sheet's
   // requests. A pair pinned from here counts as a request, as the console keeps it.
   // With a banker there are no requests.
-  const prefs = bankerOn && banker !== "" ? world.prefs : [...world.prefs.filter((p) => !requests.pinnedHere.includes(pairOf(p))), ...requests.list];
-  const sheet = settlement.calculateSheet(board, prefs, bankerOn ? banker : "");
+  const prefs = banker !== "" ? world.prefs : [...world.prefs.filter((p) => !requests.pinnedHere.includes(pairOf(p))), ...requests.list];
+  const sheet = settlement.calculateSheet(board, prefs, banker);
+  // Menu 5's hint: payments and corrections saved under all folders that this sheet leaves out.
+  const notHere = notOnThisSheet(world.adjustments, target);
   const balances = byBalance.filter((b) => Math.abs(b.dollars) >= 0.005).sort((a, b) => a.dollars - b.dollars);
   const pinsHere = world.prefs.filter(
     (p) => losers.some((l) => l.normalizedName === p.payerNormalized) && winners.some((w) => w.normalizedName === p.payeeNormalized),
@@ -109,16 +125,11 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
               ))}
             </select>
           </label>
-          {banker !== "" ? (
-            <label className="check">
-              <input type="checkbox" checked={bankerOn} onChange={(e) => setBankerOn(e.target.checked)} />
-              Banker mode ({ctx.nameOf(banker)} collects and pays everyone)
-            </label>
-          ) : null}
         </div>
-        {bankerOn && banker !== "" ? (
+        {banker !== "" ? (
           <p className="muted small">
-            Banker mode is on: pins and requests are skipped. Turn it off above, or in <a href={href("settings")}>Settings</a>.
+            Banker mode is on: everyone settles through {ctx.nameOf(banker)} · change it in{" "}
+            {ctx.payload.canWrite ? <a href={href("settings")}>Settings</a> : "Settings"}
           </p>
         ) : pinsHere.length > 0 ? (
           <p className="muted small">
@@ -133,19 +144,26 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
         ) : null}
       </section>
 
-      {!(bankerOn && banker !== "") && losers.length > 0 && winners.length > 0 ? (
+      {banker === "" && losers.length > 0 && winners.length > 0 ? (
         <RequestCard
           ctx={ctx}
           losers={losers}
           winners={winners}
           requests={requests}
-          onChange={setAsked}
+          // An update is applied to the latest requests, not to the ones this card had when it was clicked.
+          onChange={(update) => setAsked((prev) => update(forSheet(prev, suggested)))}
           onSaved={onSaved}
         />
       ) : null}
 
       <section className="card">
         <h2>{title}</h2>
+        {notHere > 0 ? (
+          <p className="down small">
+            Not on this sheet: {notHere} {notHere === 1 ? "payment/correction" : "payments/corrections"} saved under all folders (settle every
+            folder to include them).
+          </p>
+        ) : null}
         {sheet.entries.length === 0 ? (
           <p className="muted">Nobody owes anything here.</p>
         ) : (
@@ -216,14 +234,18 @@ function RequestCard({
   losers: PlayerStats[];
   winners: PlayerStats[];
   requests: Requests;
-  onChange: (next: Requests) => void;
+  onChange: (update: (prev: Requests) => Requests) => void;
   onSaved: () => void;
 }) {
-  const [payer, setPayer] = useState("");
-  const [payee, setPayee] = useState("");
+  const [payerPick, setPayer] = useState("");
+  const [payeePick, setPayee] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   const { busy, run, shown } = useSaver(ctx, onSaved);
   const canWrite = ctx.payload.canWrite;
+  // Only someone who owes (or is owed) on this sheet can be picked: a choice that has
+  // left the sheet is not used, so a request is never saved for a hidden pair.
+  const payer = chosenOption(payerPick, losers);
+  const payee = chosenOption(payeePick, winners);
 
   const add = (pin: boolean): void => {
     if (payer === "" || payee === "") return setProblem("Pick who is sending and who they send to.");
@@ -231,29 +253,43 @@ function RequestCard({
     if ([...ctx.world.prefs, ...requests.list].some((p) => pairOf(p) === pair)) return setProblem("That pairing is already on the list.");
     setProblem(null);
     const request: PaymentPreference = { payerNormalized: payer, payeeNormalized: payee, note: "", oneOff: true };
-    const next: Requests = { ...requests, list: [...requests.list, request] };
+    const withRequest = (prev: Requests): Requests => ({ ...prev, list: [...prev.list, request] });
     if (!pin) {
-      onChange(next);
+      onChange(withRequest);
       setPayer("");
       setPayee("");
       return;
     }
-    const saved = [...ctx.world.prefs, { ...request, oneOff: false }];
-    void run(
-      "payment_preferences.csv",
-      settlement.serializePreferencesCSV(saved),
-      `Saved as a pin: ${ctx.nameOf(payer)} always pays ${ctx.nameOf(payee)}.`,
-    ).then((ok) => {
+    const { keep, left } = pinsToWrite([...ctx.world.prefs, { ...request, oneOff: false }]);
+    const done = [`Saved as a pin: ${ctx.nameOf(payer)} always pays ${ctx.nameOf(payee)}.`, leftOutNote(left)].filter((s) => s !== "").join(" ");
+    void run("payment_preferences.csv", settlement.serializePreferencesCSV(keep), done).then((ok) => {
       if (!ok) return;
-      onChange({ ...next, pinnedHere: [...next.pinnedHere, pair] });
+      onChange((prev) => ({ ...withRequest(prev), pinnedHere: [...prev.pinnedHere, pair] }));
       setPayer("");
       setPayee("");
     });
   };
-  const remove = (i: number): void => {
-    const gone = requests.list[i];
-    if (gone === undefined) return;
-    onChange({ ...requests, list: requests.list.filter((_, j) => j !== i), pinnedHere: requests.pinnedHere.filter((k) => k !== pairOf(gone)) });
+  // Takes one request off the sheet, by its pair: a position from before a save could be
+  // another request by the time the save answers.
+  const dropRequest = (pair: string): void =>
+    onChange((prev) => ({
+      ...prev,
+      list: prev.list.filter((r) => pairOf(r) !== pair),
+      pinnedHere: prev.pinnedHere.filter((k) => k !== pair),
+    }));
+  // A request pinned from here is also a pin in the file. Removing the request asks
+  // whether the pin goes too; if not, the pin keeps applying to every sheet.
+  const remove = (gone: PaymentPreference): void => {
+    const pair = pairOf(gone);
+    const pinned = requests.pinnedHere.includes(pair) && ctx.world.prefs.some((p) => pairOf(p) === pair);
+    if (!pinned || !window.confirm("Also remove the pin, so it no longer applies to every sheet?")) return dropRequest(pair);
+    const { keep, left } = pinsToWrite(ctx.world.prefs.filter((p) => pairOf(p) !== pair));
+    const done = [`Removed the pin: ${ctx.nameOf(gone.payerNormalized)} no longer always pays ${ctx.nameOf(gone.payeeNormalized)}.`, leftOutNote(left)]
+      .filter((s) => s !== "")
+      .join(" ");
+    void run("payment_preferences.csv", settlement.serializePreferencesCSV(keep), done).then((ok) => {
+      if (ok) dropRequest(pair);
+    });
   };
 
   return (
@@ -261,13 +297,13 @@ function RequestCard({
       <h3>Anyone want to send their money to a specific person?</h3>
       {requests.list.length > 0 ? (
         <ul className="plain pins">
-          {requests.list.map((r, i) => (
+          {requests.list.map((r) => (
             <li key={pairOf(r)}>
               <span>
                 <strong>{ctx.nameOf(r.payerNormalized)}</strong> sends to <strong>{ctx.nameOf(r.payeeNormalized)}</strong> first
                 {requests.pinnedHere.includes(pairOf(r)) ? <span className="muted"> · pinned</span> : <span className="muted"> · this sheet only</span>}
               </span>
-              <button className="ghost small" onClick={() => remove(i)}>
+              <button className="ghost small" disabled={busy} onClick={() => remove(r)}>
                 Remove
               </button>
             </li>
@@ -277,7 +313,7 @@ function RequestCard({
       <div className="controls">
         <label>
           <span className="muted">Who is sending? (owes)</span>
-          <select value={payer} onChange={(e) => setPayer(e.target.value)}>
+          <select value={payer} onChange={(e) => setPayer(e.target.value)} disabled={busy}>
             <option value="">Pick a player…</option>
             {losers.map((p) => (
               <option key={p.normalizedName} value={p.normalizedName}>
@@ -288,7 +324,7 @@ function RequestCard({
         </label>
         <label>
           <span className="muted">Send to (is owed)</span>
-          <select value={payee} onChange={(e) => setPayee(e.target.value)}>
+          <select value={payee} onChange={(e) => setPayee(e.target.value)} disabled={busy}>
             <option value="">Pick a player…</option>
             {winners.map((p) => (
               <option key={p.normalizedName} value={p.normalizedName}>
@@ -341,7 +377,8 @@ function SaveSheet({
     setNote(null);
     try {
       const next = sessions.addSettlementBatch(ctx.world.balances, id, entries);
-      await writeSaved(ctx, "session_balances.csv", sessions.serializeSessionBalances(next));
+      // false: the person declined the question writeSaved asks, so the sheet is not saved.
+      if (!(await writeSaved(ctx, "session_balances.csv", sessions.serializeSessionBalances(next)))) return;
       setNote({ ok: true, text: `Saved ${plural(entries.length, "payment")} under "${id}".` });
       onSaved();
     } catch (err) {

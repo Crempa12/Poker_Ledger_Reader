@@ -4,7 +4,7 @@ import { moneySigned, players, seats } from "@plr/core";
 import { useSaver, type Saver } from "../components/saver.tsx";
 import type { Ctx } from "../context.ts";
 import { plural } from "../format.ts";
-import { confirmNames } from "../saved.ts";
+import { chosenOption, confirmNames } from "../saved.ts";
 import { SavedSeatOwners, SharedSeats } from "./Seats.tsx";
 
 // How many things the console app would ask you to look at.
@@ -161,9 +161,13 @@ function NewNames({ ctx, saver }: { ctx: Ctx; saver: Saver }) {
 function Names({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   const { world } = ctx;
   const { busy, run, shown } = useSaver(ctx, onSaved);
-  const [keep, setKeep] = useState("");
-  const [other, setOther] = useState("");
+  const [keepPick, setKeep] = useState("");
+  const [otherPick, setOther] = useState("");
   const list = [...ctx.everyone].sort((a, b) => a.displayName.localeCompare(b.displayName));
+  // Only names still on the list are used (a Refresh can drop one), and the name folded
+  // in is never the one kept.
+  const keep = chosenOption(keepPick, list);
+  const other = chosenOption(otherPick, list.filter((p) => p.normalizedName !== keep));
 
   // canonical -> its aliases, the way menu 4 lists the merged names.
   const groups = new Map<string, string[]>();
@@ -209,7 +213,7 @@ function Names({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
         <div className="controls">
           <label>
             <span className="muted">Keep this name</span>
-            <select value={keep} onChange={(e) => setKeep(e.target.value)}>
+            <select value={keep} onChange={(e) => setKeep(e.target.value)} disabled={busy}>
               <option value="">Pick a player…</option>
               {list.map((p) => (
                 <option key={p.normalizedName} value={p.normalizedName}>
@@ -220,7 +224,7 @@ function Names({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
           </label>
           <label>
             <span className="muted">Fold this name into it</span>
-            <select value={other} onChange={(e) => setOther(e.target.value)}>
+            <select value={other} onChange={(e) => setOther(e.target.value)} disabled={busy}>
               <option value="">Pick a player…</option>
               {list
                 .filter((p) => p.normalizedName !== keep)

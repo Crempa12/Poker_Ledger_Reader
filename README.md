@@ -43,10 +43,26 @@ other:
 - **Quit the console app first** (0. Save and exit). It keeps its own copy of these
   files and writes them all again when it quits, so the site refuses to save while
   it is open and says so at the top of the page.
-- If a file changed since the page loaded it, the save is refused; press
+- If anything changed since the page loaded (a game was added, or a saved file
+  changed, in another tab or by the console app), the save is refused; press
   **Refresh** and do it again.
+- If the site cannot tell whether the console app is open, it refuses the save too
+  and says so; try again in a moment.
+- A file that is not plain UTF-8 text is never rewritten by the site: fix it by hand
+  first.
+- If a file has rows the site could not read (the Checks page lists them), a save
+  asks first, because it would leave those rows out.
 
-Before each change the old file is kept in `local/backups/` in this folder.
+Amounts are read the way the site reads them: `1,234` is 1234, and `12,50` is refused.
+The console app reads a typed amount only up to its first comma, so there `1,234` is
+saved as 1. Type `1234` when you use the console.
+
+Before each change the old file is kept, byte for byte, in `local/backups/` in this
+folder (the newest 50 of each file; older ones are removed). To undo a change: quit
+the console app, rename the backup to the file's name alone (a backup is named with
+the date and time it was kept, a short code, and then the file's name, so a name
+ending in `_settings.csv` becomes `settings.csv`), copy it into `Saved_Data/` in place
+of the file there, then press **Refresh**.
 
 ### Adding games
 
@@ -63,7 +79,8 @@ Commit the new files on `master` as usual.
 results up to now inside it. It opens on any phone or computer, even offline, with
 nothing to install: send it by AirDrop, a message or a shared drive. It is
 read-only and does not update, so make a new one after each game. It holds
-everyone's results and names: send it only to people who may see them.
+everyone's results, names, notes and PokerNow account ids, and the saved sheets and
+payments: send it only to people who may see them.
 
 ### On your phone (same Wi-Fi)
 

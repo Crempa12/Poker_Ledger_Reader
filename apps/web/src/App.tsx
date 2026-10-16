@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ledger } from "@plr/core";
 
 import { buildCtx, type Ctx } from "./context.ts";
@@ -23,10 +23,19 @@ export function App() {
   const [choice, setChoice] = useState<ScopeChoice>(readSavedScope);
   const route = useRoute();
 
+  // Each load gets a number. Only the newest load may set the page, so a load that started
+  // earlier and finished later (after a save's own reload) cannot show older data.
+  const latest = useRef(0);
   const refresh = useCallback(() => {
+    const mine = latest.current + 1;
+    latest.current = mine;
     loadData()
-      .then((loaded) => setState({ status: "ready", loaded }))
-      .catch((err: unknown) => setState({ status: "error", message: err instanceof Error ? err.message : String(err) }));
+      .then((loaded) => {
+        if (mine === latest.current) setState({ status: "ready", loaded });
+      })
+      .catch((err: unknown) => {
+        if (mine === latest.current) setState({ status: "error", message: err instanceof Error ? err.message : String(err) });
+      });
   }, []);
   useEffect(refresh, [refresh]);
 
@@ -72,6 +81,10 @@ export function App() {
         <p className="banner" role="status">
           The console app is open. It saves its own copy of the names, sheets and settings when it quits, so changes here wait
           until it is closed: quit it with <strong>0. Save and exit</strong>, then press Refresh.
+        </p>
+      ) : ctx.payload.consoleOpen === -1 && ctx.payload.canWrite ? (
+        <p className="banner" role="status">
+          Could not tell whether the console app is open; saving will check again.
         </p>
       ) : null}
       <ScopeBar ctx={ctx} onChange={changeScope} />

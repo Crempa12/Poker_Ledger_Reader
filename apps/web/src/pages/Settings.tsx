@@ -4,7 +4,7 @@ import { settlement, type PaymentPreference, type Settings as AppSettings } from
 import { useSaver } from "../components/saver.tsx";
 import type { Ctx } from "../context.ts";
 import { postJSON } from "../data.ts";
-import { errorText } from "../saved.ts";
+import { chosenOption, errorText, leftOutNote, pinsToWrite } from "../saved.ts";
 
 // Console menu 6: pinned payments, the banker, who "me" is, and the console's display.
 // Each change is saved the way menu 6 saves it: the whole file, straight away.
@@ -89,7 +89,8 @@ function Share() {
       <p className="muted small">
         One file with every page of this site and the results up to now. It opens on any phone or computer, even offline, with
         nothing to install: send it by AirDrop, a message or a shared drive. It does not update, so make a new one after each
-        game. It holds everyone's results and names: send it only to people who may see them.
+        game. It holds everyone's results, names, notes, PokerNow account ids and saved sheets: send it only to people who may see
+        them.
       </p>
       <button onClick={() => void make()} disabled={busy}>
         {busy ? "Making it…" : "Make a snapshot"}
@@ -111,13 +112,20 @@ function Share() {
 function Pins({ ctx, onSaved, people, canWrite }: { ctx: Ctx; onSaved: () => void; people: Person[]; canWrite: boolean }) {
   const { world } = ctx;
   const { busy, run, shown } = useSaver(ctx, onSaved);
-  const [payer, setPayer] = useState("");
-  const [payee, setPayee] = useState("");
+  const [payerPick, setPayer] = useState("");
+  const [payeePick, setPayee] = useState("");
   const [note, setNote] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
+  // Only players still on the list are used (a Refresh can drop one).
+  const payer = chosenOption(payerPick, people);
+  const payee = chosenOption(payeePick, people.filter((p) => p.normalizedName !== payer));
 
-  const save = (prefs: PaymentPreference[], done: string): Promise<boolean> =>
-    run("payment_preferences.csv", settlement.serializePreferencesCSV(prefs), done);
+  // The whole file is written, as menu 6 does. A pin that now pays the same person is
+  // left out (see pinsToWrite), and the message says so.
+  const save = (prefs: PaymentPreference[], done: string): Promise<boolean> => {
+    const { keep, left } = pinsToWrite(prefs);
+    return run("payment_preferences.csv", settlement.serializePreferencesCSV(keep), [done, leftOutNote(left)].filter((s) => s !== "").join(" "));
+  };
 
   const add = (): void => {
     if (payer === "" || payee === "") return setProblem("Pick who pays and who they pay.");
@@ -171,15 +179,15 @@ function Pins({ ctx, onSaved, people, canWrite }: { ctx: Ctx; onSaved: () => voi
         <div className="controls">
           <label>
             <span className="muted">Payer</span>
-            <PersonSelect people={people} value={payer} onChange={setPayer} />
+            <PersonSelect people={people} value={payer} onChange={setPayer} disabled={busy} />
           </label>
           <label>
             <span className="muted">always pays</span>
-            <PersonSelect people={people.filter((p) => p.normalizedName !== payer)} value={payee} onChange={setPayee} />
+            <PersonSelect people={people.filter((p) => p.normalizedName !== payer)} value={payee} onChange={setPayee} disabled={busy} />
           </label>
           <label className="grow">
             <span className="muted">Note (optional)</span>
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Venmo only" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Venmo only" disabled={busy} />
           </label>
           <button disabled={busy} onClick={add}>
             Pin
@@ -209,9 +217,18 @@ function PersonSetting(props: {
   const [picked, setPicked] = useState(value);
   // A saved name that is not among the players (yet) still shows as chosen.
   const list = value === "" || people.some((p) => p.normalizedName === value) ? people : [...people, { normalizedName: value, displayName: value } as Person];
+  // When the saved value changes (after a save, or a change made in the console) the pick
+  // starts again from it, so a stale choice is never saved. Done during render, so the
+  // message from the last save stays on screen.
+  const [seen, setSeen] = useState(value);
+  if (seen !== value) {
+    setSeen(value);
+    setPicked(value);
+  }
+  const pick = picked === "" ? "" : chosenOption(picked, list);
 
   const save = (): void => {
-    void run("settings.csv", settlement.serializeSettingsCSV(props.change(ctx.world.settings, picked)), props.done(picked));
+    void run("settings.csv", settlement.serializeSettingsCSV(props.change(ctx.world.settings, pick)), props.done(pick));
   };
 
   return (
@@ -219,7 +236,7 @@ function PersonSetting(props: {
       <h3>{props.title}</h3>
       <p className="muted small">{props.help}</p>
       <div className="controls">
-        <select value={picked} onChange={(e) => setPicked(e.target.value)} disabled={!canWrite} aria-label={props.title}>
+        <select value={pick} onChange={(e) => setPicked(e.target.value)} disabled={!canWrite || busy} aria-label={props.title}>
           <option value="">{props.offLabel}</option>
           {list.map((p) => (
             <option key={p.normalizedName} value={p.normalizedName}>
@@ -228,7 +245,7 @@ function PersonSetting(props: {
           ))}
         </select>
         {canWrite ? (
-          <button disabled={busy || picked === value} onClick={save}>
+          <button disabled={busy || pick === value} onClick={save}>
             Save
           </button>
         ) : null}
@@ -262,9 +279,9 @@ function Display({ ctx, onSaved, canWrite }: { ctx: Ctx; onSaved: () => void; ca
   );
 }
 
-function PersonSelect({ people, value, onChange }: { people: Person[]; value: string; onChange: (v: string) => void }) {
+function PersonSelect({ people, value, onChange, disabled = false }: { people: Person[]; value: string; onChange: (v: string) => void; disabled?: boolean }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)}>
+    <select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled}>
       <option value="">Pick a player…</option>
       {people.map((p) => (
         <option key={p.normalizedName} value={p.normalizedName}>

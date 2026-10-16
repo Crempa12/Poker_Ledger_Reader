@@ -22,6 +22,18 @@ describe("typed payment amounts", () => {
     expect(typedCents("3.")).toBe(300);
   });
 
+  it("reads commas only as thousands separators", () => {
+    expect(typedCents("1,234")).toBe(123400);
+    expect(typedCents("1,234,567.89")).toBe(123456789);
+    expect(typedCents("$12,000")).toBe(1200000);
+  });
+
+  it("refuses a comma that is not a thousands separator, rather than reading 12,50 as $1,250", () => {
+    for (const t of ["12,50", "1,23", "1,2345", ",5", "1234,567", "1,234,5", "12,50.00", "1,234,,567"]) {
+      expect(typedCents(t), t).toBeNull();
+    }
+  });
+
   it("refuses anything that is not an amount above zero", () => {
     for (const t of ["", "0", "0.00", "-5", "12.345", "abc", "1e3", "$", ".", "12..5", "Infinity"]) {
       expect(typedCents(t), t).toBeNull();

@@ -9,6 +9,7 @@ import { useSaver, type Saver } from "../components/saver.tsx";
 import type { Ctx } from "../context.ts";
 import { clockTime, longDate, plural, toneOfCents } from "../format.ts";
 import { href } from "../router.ts";
+import { chosenOption } from "../saved.ts";
 
 type Choice = seats.OwnerChoice;
 
@@ -28,17 +29,22 @@ function answer(ctx: Ctx, saver: Saver, game: Game, rows: readonly LedgerRow[], 
 // "Whose money was this seat?" with the console's choices: the name on the seat, the
 // account's usual owner (when that is someone else), or anyone else.
 function OwnerQuestion({ ctx, rows, usual, busy, onPick }: { ctx: Ctx; rows: readonly LedgerRow[]; usual: string; busy: boolean; onPick: (c: Choice) => void }) {
-  const [other, setOther] = useState("");
+  const [otherPick, setOther] = useState("");
   const [typed, setTyped] = useState("");
+  const [problem, setProblem] = useState<string | null>(null);
   const rules = ctx.world.rules;
   const nickPeople = [...new Set(rows.map((r) => seats.nicknamePerson(rules, r)))];
   const offerUsual = usual !== "" && !(nickPeople.length === 1 && nickPeople[0] === usual);
   const people = [...ctx.everyone].sort((a, b) => a.displayName.localeCompare(b.displayName));
+  // Only a name still on the list is used (a Refresh can drop one).
+  const other = chosenOption(otherPick, people);
 
   const someoneElse = (): void => {
+    setProblem(null);
     if (typed.trim() !== "") {
       const person = players.resolveCanonical(rules, util.normalizeName(typed));
-      if (person === "") return;
+      // As seats.cpp: a name with no letters in it is not a name.
+      if (person === "") return setProblem("A name needs at least one letter.");
       const known = ctx.everyone.some((p) => p.normalizedName === person);
       if (!known && !window.confirm(`Nobody called "${typed.trim()}" has played yet. Count it for a new player?`)) return;
       onPick({ kind: "person", person });
@@ -48,30 +54,40 @@ function OwnerQuestion({ ctx, rows, usual, busy, onPick }: { ctx: Ctx; rows: rea
   };
 
   return (
-    <div className="choices">
-      <button disabled={busy} onClick={() => onPick({ kind: "nickname" })}>
-        {nickPeople.length === 1 ? `${ctx.nameOf(nickPeople[0] ?? "")}'s (the name is right)` : "Whoever each name says"}
-      </button>
-      {offerUsual ? (
-        <button disabled={busy} onClick={() => onPick({ kind: "person", person: usual })}>
-          {ctx.nameOf(usual)}'s (normally uses this account)
+    <>
+      <div className="choices">
+        <button disabled={busy} onClick={() => onPick({ kind: "nickname" })}>
+          {nickPeople.length === 1 ? `${ctx.nameOf(nickPeople[0] ?? "")}'s (the name is right)` : "Whoever each name says"}
         </button>
-      ) : null}
-      <span className="someone">
-        <select value={other} onChange={(e) => setOther(e.target.value)} aria-label="Someone else">
-          <option value="">Someone else…</option>
-          {people.map((p) => (
-            <option key={p.normalizedName} value={p.normalizedName}>
-              {p.displayName}
-            </option>
-          ))}
-        </select>
-        <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="or type a name" aria-label="Type a name" size={12} />
-        <button className="ghost" disabled={busy || (other === "" && typed.trim() === "")} onClick={someoneElse}>
-          Theirs
-        </button>
-      </span>
-    </div>
+        {offerUsual ? (
+          <button disabled={busy} onClick={() => onPick({ kind: "person", person: usual })}>
+            {ctx.nameOf(usual)}'s (normally uses this account)
+          </button>
+        ) : null}
+        <span className="someone">
+          <select value={other} onChange={(e) => setOther(e.target.value)} aria-label="Someone else" disabled={busy}>
+            <option value="">Someone else…</option>
+            {people.map((p) => (
+              <option key={p.normalizedName} value={p.normalizedName}>
+                {p.displayName}
+              </option>
+            ))}
+          </select>
+          <input
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            placeholder="or type a name"
+            aria-label="Type a name"
+            size={12}
+            disabled={busy}
+          />
+          <button className="ghost" disabled={busy || (other === "" && typed.trim() === "")} onClick={someoneElse}>
+            Theirs
+          </button>
+        </span>
+      </div>
+      {problem !== null ? <p className="down small">{problem}</p> : null}
+    </>
   );
 }
 
@@ -268,7 +284,13 @@ export function SeatEditor({ ctx, game, onSaved }: { ctx: Ctx; game: Game; onSav
               <tr key={i} className={picked.includes(i) ? "me" : ""}>
                 {ctx.payload.canWrite ? (
                   <td>
-                    <input type="checkbox" checked={picked.includes(i)} onChange={() => toggle(i)} aria-label={`Pick ${r.nickname}`} />
+                    <input
+                      type="checkbox"
+                      checked={picked.includes(i)}
+                      onChange={() => toggle(i)}
+                      aria-label={`Pick ${r.nickname}`}
+                      disabled={saver.busy}
+                    />
                   </td>
                 ) : null}
                 <td>{r.nickname}</td>
