@@ -61,7 +61,7 @@ export function PlayerPage({ ctx, normalized: asked }: { ctx: Ctx; normalized: s
         </dl>
         {place > 0 ? (
           <p className="facts">
-            {ordinal(place)} of {listed.length} on the standings{p.normalizedName === ctx.me ? " · you" : ""}
+            {ordinal(place)} of {listed.length} on the standings{p.normalizedName === ctx.me && ctx.payload.canWrite ? " · you" : ""}
           </p>
         ) : null}
         <dl className="pstats">

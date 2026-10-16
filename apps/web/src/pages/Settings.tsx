@@ -106,7 +106,11 @@ function Share() {
           · also kept at <code>{made.file}</code>
         </p>
       ) : null}
-      {error !== null ? <p className="down small">{error}</p> : null}
+      {error !== null ? (
+        <p className="down small" role="alert">
+          {error}
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -201,7 +205,11 @@ function Pins({ ctx, onSaved, people, canWrite }: { ctx: Ctx; onSaved: () => voi
           </button>
         </div>
       ) : null}
-      {problem !== null ? <p className="down small">{problem}</p> : null}
+      {problem !== null ? (
+        <p className="down small" role="alert">
+          {problem}
+        </p>
+      ) : null}
       {shown}
     </section>
   );

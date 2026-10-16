@@ -11,7 +11,8 @@ import { ledger, loadWorld, type World } from "../../../packages/core/src/index.
 import { loadDataRoot } from "../../../tools/load.ts";
 import { buildCtx, type Ctx } from "../src/context.ts";
 import { EVERYTHING, withDays, type Payload, type ScopeChoice } from "../src/data.ts";
-import { afterSaveNotes, sizes } from "../src/pages/AddGame.tsx";
+import { navTabs } from "../src/App.tsx";
+import { afterSaveNotes, freshDownloads, sizes, type Downloaded } from "../src/pages/AddGame.tsx";
 import { Check } from "../src/pages/Check.tsx";
 import { Overview } from "../src/pages/Overview.tsx";
 import { PlayerPage } from "../src/pages/Player.tsx";
@@ -44,6 +45,15 @@ async function pageCtx(opts: { canWrite?: boolean; choice?: ScopeChoice; saved?:
 }
 
 const show = (el: Parameters<typeof renderToStaticMarkup>[0]): string => renderToStaticMarkup(el).replace(/&#x27;/g, "'").replace(/&quot;/g, '"');
+// A page's words, tags taken out (each tag counts as a space, so words do not run together).
+const textOf = (html: string): string =>
+  html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .replace(/ ([.,;:])/g, "$1");
 
 describe("+ Add game, after a save", () => {
   it("says when the Folder at the top hides the game just filed", async () => {
@@ -52,7 +62,7 @@ describe("+ Add game, after a save", () => {
     const item = { kind: "ledger" as const, gameId: "pglMadeUpNight01", text };
     const hidden = await pageCtx({ choice: { folder: "Synthetic Winter", from: "", to: "" } });
     expect(afterSaveNotes(hidden, item, "Nov 2026/ledger_pglMadeUpNight01.csv", [])).toEqual([
-      "the Folder or Dates choice at the top hides it: pick All folders and All time to see it",
+      "the Folder or Dates choice (at the top of Standings) hides it: pick All folders and All time there to see it",
     ]);
     expect(afterSaveNotes(await pageCtx(), item, "Nov 2026/ledger_pglMadeUpNight01.csv", [])).toEqual([]);
     // A night from January is outside a range that starts in March.
@@ -161,5 +171,49 @@ describe("saving a sheet that saved sheets already cover", () => {
     const out = show(createElement(Settle, { ctx, gameId: "", onSaved: () => undefined }));
     expect(out).toContain(`The saved sheet "${gameSessionId(night, TZ)}" may already cover some of these games.`);
     expect(show(createElement(Settle, { ctx: plain, gameId: "", onSaved: () => undefined }))).not.toContain("may already cover");
+  });
+});
+
+// From the review of the redesign (made-up data and files).
+describe("the redesign's review fixes", () => {
+  it("a read-only copy is never told 'you' on the owner's page", async () => {
+    const own = textOf(renderToStaticMarkup(createElement(PlayerPage, { ctx: await pageCtx(), normalized: "zaqvin" })));
+    expect(own).toMatch(/of \d+ on the standings · you/);
+    const phone = textOf(renderToStaticMarkup(createElement(PlayerPage, { ctx: await pageCtx({ canWrite: false }), normalized: "zaqvin" })));
+    expect(phone).toMatch(/of \d+ on the standings/);
+    expect(phone).not.toContain("· you");
+  });
+
+  it("Standings still says who you owe when you have no games in the Folder chosen", async () => {
+    // Kaxtun has no games in Synthetic Winter; Who owes is for every game, so the line stays.
+    const settings = "key,value\nme,kaxtun\nbanker,\ndisplay,fancy\n";
+    const ctx = await pageCtx({ choice: { folder: "Synthetic Winter", from: "", to: "" }, saved: { "settings.csv": settings } });
+    const text = textOf(renderToStaticMarkup(createElement(Overview, { ctx })));
+    expect(text).toContain("has no games in this scope");
+    expect(text).toContain("You owe nothing on the saved sheets, and nobody owes you.");
+  });
+
+  it("a read-only copy has no + Add: Settle up takes its place on a phone", () => {
+    const own = navTabs(false);
+    expect(own.phone.map((t) => t.label)).toEqual(["Standings", "Nights", "+ Add", "Who owes", "More"]);
+    expect(own.desktop.map((t) => t.label)).toContain("+ Add game");
+    const readOnly = navTabs(true);
+    expect(readOnly.phone.map((t) => t.label)).toEqual(["Standings", "Nights", "Settle up", "Who owes", "More"]);
+    expect(readOnly.desktop.map((t) => t.label)).not.toContain("+ Add game");
+  });
+
+  it("a bigger download of a hand log already on the page (not filed yet) takes its place; a smaller one does not", () => {
+    const file = (name: string, bytes: number): Downloaded => ({ name, kind: "poker_now_log", gameId: "pglMadeUpLog00001", bytes, modified: 0 });
+    const early = { key: "poker_now_log_pglMadeUpLog00001", source: "file" as const, status: "ready" as const, bytes: 100 };
+    const onPage = [early];
+    const none = (): boolean => false;
+    // Newest first: the whole log, downloaded again, then the early one.
+    expect(freshDownloads([file("poker_now_log_pglMadeUpLog00001 (1).csv", 300), file("poker_now_log_pglMadeUpLog00001.csv", 100)], onPage, none).map((f) => f.name)).toEqual([
+      "poker_now_log_pglMadeUpLog00001 (1).csv",
+    ]);
+    expect(freshDownloads([file("poker_now_log_pglMadeUpLog00001.csv", 100)], onPage, none)).toEqual([]);
+    // Filed already, or filed from this page: never listed again.
+    expect(freshDownloads([file("poker_now_log_pglMadeUpLog00001 (1).csv", 300)], onPage, () => true)).toEqual([]);
+    expect(freshDownloads([file("poker_now_log_pglMadeUpLog00001 (1).csv", 300)], [{ ...early, status: "saved" as const }], none)).toEqual([]);
   });
 });

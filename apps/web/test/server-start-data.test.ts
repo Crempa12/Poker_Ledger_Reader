@@ -213,10 +213,10 @@ describe("filing a game into a folder that is already there", () => {
     expect(existsSync(join(root, "Games", "Nov", "Week 3", "poker_now_log_pglMadeUpLinked02.csv"))).toBe(true);
   });
 
-  it("points a group with no data folder yet to Start a new data folder", async () => {
+  it("points a group with no data folder yet to Start with this game", async () => {
     const root = join(mkdtempSync(join(tmpdir(), "plr-not-started-")), "data");
     const r = await save(root, "Nov", "pglMadeUpExisting06");
     expect(r.status).toBe(409);
-    expect(String(r.json.error)).toContain("Start a new data folder on the Overview");
+    expect(String(r.json.error)).toContain("paste a game's PokerNow link and press Start with this game");
   });
 });

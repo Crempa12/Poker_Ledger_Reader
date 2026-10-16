@@ -4,6 +4,7 @@ import { ledger } from "@plr/core";
 import { buildCtx, type Ctx } from "./context.ts";
 import { currentBasis, EVERYTHING, isoDay, isSnapshot, loadData, readSavedScope, saveScope, withDays, type Loaded, type ScopeChoice } from "./data.ts";
 import { clockTime, plural, shortDate } from "./format.ts";
+import { useNotice, setNotice } from "./notice.ts";
 import { href, useRoute } from "./router.ts";
 import { Check, checkCount } from "./pages/Check.tsx";
 import { GamePage } from "./pages/Game.tsx";
@@ -46,6 +47,7 @@ export function App() {
   // Bumped when the tab comes back to the front, so a date preset ("Past 30 days") is worked out again for a
   // new day without a reload (the page context below keys on the day).
   const [, setShown] = useState(0);
+  const notice = useNotice();
   useEffect(() => {
     void refresh();
   }, [refresh]);
@@ -149,13 +151,23 @@ export function App() {
           Could not tell whether the console app is open; saving will check again.
         </p>
       ) : null}
+      {notice !== null ? (
+        <div className="banner warn-banner" role="alert">
+          <p>{notice}</p>
+          <button className="link" onClick={() => setNotice(null)}>
+            Dismiss
+          </button>
+        </div>
+      ) : null}
       {SCOPED.has(page) && !(page === "settle" && (route[1] ?? "") !== "") && ctx.world.games.length > 0 ? (
         <ScopeLine ctx={ctx} onChange={changeScope} />
       ) : null}
       <main id="main" tabIndex={-1} className={WIDE.has(page) ? "screen wide" : "screen"}>
         <PageBoundary key={route.join("/")}>
           {/* The pages that have no heading of their own still name themselves to a screen reader. */}
-          {PAGES_WITH_OWN_HEADING.has(page) ? null : <h1 className="sr-only">{pageName(route)}</h1>}
+          {PAGES_WITH_OWN_HEADING.has(page) || (page === "" && ctx.world.games.length === 0 && !snapshot) ? null : (
+            <h1 className="sr-only">{pageName(route)}</h1>
+          )}
           <Page ctx={ctx} route={route} onSaved={refresh} />
         </PageBoundary>
       </main>
@@ -218,7 +230,14 @@ function Page({ ctx, route, onSaved }: { ctx: Ctx; route: string[]; onSaved: () 
     case "more":
       return <More ctx={ctx} />;
     case "add":
-      if (isSnapshot(ctx.payload)) return <p>Games are added on the computer that runs the site.</p>;
+      if (isSnapshot(ctx.payload)) {
+        return (
+          <>
+            <h1>Add a game</h1>
+            <p className="lede">Games are added on the computer that runs the site.</p>
+          </>
+        );
+      }
       return <AddGame ctx={ctx} onSaved={onSaved} />;
     default:
       return (
@@ -274,32 +293,41 @@ interface Tab {
   add?: boolean;
 }
 
+// The bars' places. Phone: four places and the one thing to do. A read-only copy (a snapshot, a phone on the
+// Wi-Fi) never adds a game, so Settle up takes that place there, and the desktop row leaves + Add game out.
+export function navTabs(noAdd: boolean): { phone: Tab[]; desktop: Tab[] } {
+  return {
+    phone: [
+      { path: "", label: "Standings" },
+      { path: "games", label: "Nights" },
+      noAdd ? { path: "settle", label: "Settle up" } : { path: "add", label: "+ Add", add: true },
+      { path: "owed", label: "Who owes" },
+      { path: "more", label: "More" },
+    ],
+    desktop: [
+      { path: "", label: "Standings" },
+      { path: "games", label: "Nights" },
+      { path: "settle", label: "Settle up" },
+      { path: "owed", label: "Who owes" },
+      ...(noAdd ? [] : [{ path: "add", label: "+ Add game", add: true }]),
+      { path: "more", label: "More" },
+    ],
+  };
+}
+
 function Shell({ ctx, onRefresh, route, children }: { ctx?: Ctx; onRefresh?: () => void; route?: string[]; children: ReactNode }) {
   const page = route?.[0] ?? "";
   const section = route === undefined ? "" : sectionOf(route[0]);
   const snapshot = ctx !== undefined && isSnapshot(ctx.payload);
+  // A snapshot, or a phone on the Wi-Fi, cannot add a game: + Add is left out there.
+  const noAdd = ctx !== undefined && (snapshot || !ctx.payload.canWrite);
   const checks = ctx === undefined ? 0 : checkCount(ctx);
   // This page is the tab's own ("page"), or one inside it ("true": a player under Standings, a night under Nights).
   const current = (path: string): "page" | "true" | undefined => (section !== path ? undefined : page === path ? "page" : "true");
-  // Phone: four places and the one thing to do. A snapshot never adds a game, so Settle up takes that place.
-  const phone: Tab[] = [
-    { path: "", label: "Standings" },
-    { path: "games", label: "Nights" },
-    snapshot ? { path: "settle", label: "Settle up" } : { path: "add", label: "+ Add", add: true },
-    { path: "owed", label: "Who owes" },
-    { path: "more", label: "More" },
-  ];
-  const desktop: Tab[] = [
-    { path: "", label: "Standings" },
-    { path: "games", label: "Nights" },
-    { path: "settle", label: "Settle up" },
-    { path: "owed", label: "Who owes" },
-    ...(snapshot ? [] : [{ path: "add", label: "+ Add game", add: true }]),
-    { path: "more", label: "More" },
-  ];
+  const { phone, desktop } = navTabs(noAdd);
   // Settle up has no tab on a phone (it is reached from a night): Nights stays lit there.
   const phoneCurrent = (path: string): "page" | "true" | undefined =>
-    !snapshot && section === "settle" && path === "games" ? "true" : current(path);
+    !noAdd && section === "settle" && path === "games" ? "true" : current(path);
   const badge =
     checks > 0 ? (
       <>
@@ -467,6 +495,8 @@ function ScopeLine({ ctx, onChange }: { ctx: Ctx; onChange: (c: ScopeChoice) => 
                 onClick={() => {
                   setCustom(false);
                   onChange(EVERYTHING);
+                  // This button goes once everything is shown: the keyboard goes on from the folder list.
+                  requestAnimationFrame(() => box.current?.querySelector<HTMLInputElement>("fieldset input")?.focus());
                 }}
               >
                 Show everything
@@ -474,7 +504,13 @@ function ScopeLine({ ctx, onChange }: { ctx: Ctx; onChange: (c: ScopeChoice) => 
             ) : (
               <span />
             )}
-            <button className="small" onClick={() => setOpen(false)}>
+            <button
+              className="small"
+              onClick={() => {
+                setOpen(false);
+                box.current?.querySelector("summary")?.focus();
+              }}
+            >
               Done
             </button>
           </div>

@@ -511,8 +511,10 @@ describe("one game's results against the console's single-game settlement (made-
       expect(picked, c.picker).toBeDefined();
       const block = blockRows(text, `-- Game of ${picked?.date ?? ""}, 1 game`).filter((l) => !/^\s+Player\s/.test(l));
       const recorded = nets(block);
-      // A name cell is "usual" or "usual · as <that night's nickname>"; the console prints the nickname.
-      const results = rowsOf(needCard(html, "Results")).map((cells) => [nightNameOf(cells[0] ?? ""), cells[cells.length - 1] ?? ""]);
+      // A name cell is "usual" or "usual · as <that night's nickname>"; the console prints the nickname. The
+      // "(you)" a screen reader hears beside your own name is not on screen, so it is left out.
+      const card = needCard(html, "Results").replace(/<span class="sr-only">[\s\S]*?<\/span>/g, "");
+      const results = rowsOf(card).map((cells) => [nightNameOf(cells[0] ?? ""), cells[cells.length - 1] ?? ""]);
       expect(results).toEqual(recorded);
 
       const shown = textOf(html);

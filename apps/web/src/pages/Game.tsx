@@ -84,6 +84,7 @@ export function GamePage({ ctx, id, onSaved }: { ctx: Ctx; id: string; onSaved: 
                 <tr key={r.person} className={r.person === ctx.me ? "me" : ""}>
                   <td>
                     <NightName usual={ctx.nameOf(r.person)} tonight={players.displayName(gameBoard, r.person)} person={r.person} />
+                    {r.person === ctx.me && ctx.payload.canWrite ? <span className="sr-only"> (you)</span> : null}
                   </td>
                   <td className="num hide-xs">{r.seats}</td>
                   <td className="num">{moneyCents(r.buyInCents)}</td>

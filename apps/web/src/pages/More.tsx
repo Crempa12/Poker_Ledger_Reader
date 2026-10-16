@@ -55,7 +55,7 @@ export function More({ ctx }: { ctx: Ctx }) {
           <span className="k">Times in</span>
           <span className="v">{ctx.tz}</span>
         </div>
-        {me === "" && !snapshot ? (
+        {me === "" && !snapshot && ctx.payload.canWrite ? (
           <p className="note">
             Tell the site who you are in <a href={href("settings")}>Settings</a> to see your own number first on Standings.
           </p>

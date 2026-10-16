@@ -19,6 +19,9 @@ export function CopyForChat({ text, label = "Copy for the group chat", what }: {
     <>
       <div className="controls">
         <button onClick={copy}>{copied ? "Copied" : label}</button>
+        <span className="sr-only" role="status">
+          {copied ? "Copied" : ""}
+        </span>
       </div>
       {failed ? (
         <>

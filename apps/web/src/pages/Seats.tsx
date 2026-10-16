@@ -91,7 +91,11 @@ function OwnerQuestion({ ctx, rows, usual, busy, onPick }: { ctx: Ctx; rows: rea
           </button>
         </span>
       </div>
-      {problem !== null ? <p className="down small">{problem}</p> : null}
+      {problem !== null ? (
+        <p className="down small" role="alert">
+          {problem}
+        </p>
+      ) : null}
     </>
   );
 }

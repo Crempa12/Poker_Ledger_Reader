@@ -198,7 +198,7 @@ function PaymentForm({ ctx, people, nameOf, save, busy }: FormProps & { nameOf: 
           Save payment
         </button>
       </div>
-      {problem !== null ? <p className="down small">{problem}</p> : null}
+      {problem !== null ? <p className="down small" role="alert">{problem}</p> : null}
     </section>
   );
 }
@@ -255,7 +255,7 @@ function CorrectionForm({ ctx, people, save, busy }: FormProps) {
           Save correction
         </button>
       </div>
-      {problem !== null ? <p className="down small">{problem}</p> : null}
+      {problem !== null ? <p className="down small" role="alert">{problem}</p> : null}
     </section>
   );
 }

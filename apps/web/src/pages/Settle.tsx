@@ -104,6 +104,8 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
     (p) => losers.some((l) => l.normalizedName === p.payerNormalized) && winners.some((w) => w.normalizedName === p.payeeNormalized),
   );
   const isYou = (n: string): boolean => me !== "" && players.resolveCanonical(world.rules, n) === me;
+  // "(you)" for a screen reader, on the computer that keeps the data only (a snapshot is read by others).
+  const own = ctx.payload.canWrite;
 
   const title = game !== undefined ? `Game on ${longDate(game.start, tz)}` : `Everything in ${scopeWords(ctx.choice)}, ${plural(games.length, "game")}`;
 
@@ -203,12 +205,14 @@ export function Settle({ ctx, gameId, onSaved }: { ctx: Ctx; gameId: string; onS
                       <a className="who" href={href("player", row.entry.fromNormalized)}>
                         {row.entry.fromDisplay}
                       </a>
+                      {own && isYou(row.entry.fromNormalized) ? <span className="sr-only"> (you)</span> : null}
                       <span className="lead" aria-hidden="true" />
                       <strong className="amount">{moneyCents(row.entry.amountCents)}</strong>
                       <span className="to">
                         <span aria-hidden="true">→ </span>
                         <span className="sr-only"> pays </span>
                         <a href={href("player", row.entry.toNormalized)}>{row.entry.toDisplay}</a>
+                        {own && isYou(row.entry.toNormalized) ? <span className="sr-only"> (you)</span> : null}
                       </span>
                       {TAG[row.entry.reason] !== "" ? <span className="tag">{TAG[row.entry.reason]}</span> : null}
                     </li>
@@ -464,7 +468,11 @@ function RequestCard({
           </button>
         ) : null}
       </div>
-      {problem !== null ? <p className="small down">{problem}</p> : null}
+      {problem !== null ? (
+        <p className="small down" role="alert">
+          {problem}
+        </p>
+      ) : null}
       {shown}
     </details>
   );

@@ -64,12 +64,14 @@ export function Owed({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
                     <a className="who" href={href("player", d.fromNormalized)}>
                       {d.fromDisplay}
                     </a>
+                    {ctx.payload.canWrite && isYou(d.fromNormalized) ? <span className="sr-only"> (you)</span> : null}
                     <span className="lead" aria-hidden="true" />
                     <strong className="amount">{moneyCents(d.totalCents)}</strong>
                     <span className="to">
                       <span aria-hidden="true">→ </span>
                       <span className="sr-only"> owes </span>
                       <a href={href("player", d.toNormalized)}>{d.toDisplay}</a>
+                      {ctx.payload.canWrite && isYou(d.toNormalized) ? <span className="sr-only"> (you)</span> : null}
                     </span>
                   </li>
                 ))}
@@ -240,7 +242,11 @@ function PaymentForm({ ctx, balance, onRecorded }: { ctx: Ctx; balance: SessionB
       <button type="submit" disabled={busy || cents === null}>
         {busy ? "Saving…" : cents === balance.remainingCents ? "Paid in full" : "Record payment"}
       </button>
-      {error !== null ? <p className="small down">{error}</p> : null}
+      {error !== null ? (
+        <p className="small down" role="alert">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }

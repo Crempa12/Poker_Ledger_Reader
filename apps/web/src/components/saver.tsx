@@ -31,6 +31,11 @@ export function useSaver(ctx: Ctx, onSaved: () => void | Promise<void>): Saver {
       setBusy(false);
     }
   };
-  const shown = note === null ? null : <p className={note.ok ? "up small" : "down small"}>{note.text}</p>;
+  const shown =
+    note === null ? null : (
+      <p className={note.ok ? "up small" : "down small"} role={note.ok ? "status" : "alert"}>
+        {note.text}
+      </p>
+    );
   return { busy, run, shown };
 }

@@ -22,7 +22,7 @@ export function notADataFolder(root: string, canStart = false): string {
   // A group without the console app is told first what it can do here.
   if (canStart) {
     return (
-      `${missing} Not using the console app? Press Start a new data folder on the Overview. If you use it, run it once in ` +
+      `${missing} Not using the console app? On Standings, paste a game's PokerNow link and press Start with this game. If you use it, run it once in ` +
       "its folder (it creates Saved_Data), then press Refresh."
     );
   }

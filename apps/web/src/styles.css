@@ -710,6 +710,23 @@ details.fold + details.fold {
 .banner.snapshot {
   background: var(--you);
 }
+/* What went wrong after the page that made it was replaced (a first run's batch): said until dismissed. */
+.banner.warn-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  color: var(--down);
+  background: var(--paper-2);
+}
+.banner.warn-banner p {
+  margin: 0;
+}
+.banner.warn-banner button.link {
+  min-height: 36px;
+  color: var(--ink);
+}
 .banner details > summary {
   min-height: 0;
   display: inline;
@@ -845,6 +862,8 @@ details.fold + details.fold {
   padding-right: 8px;
   background: var(--you);
   border-top-color: transparent;
+  /* A rule in the margin as well as the tint, so the mark does not rest on colour alone. */
+  box-shadow: inset 3px 0 0 var(--ink);
 }
 .pl.you + .pl {
   border-top-color: transparent;
@@ -1015,7 +1034,9 @@ tr.me td {
   background: var(--you);
 }
 tr.me td:first-child {
-  box-shadow: -8px 0 0 var(--you);
+  box-shadow:
+    -8px 0 0 var(--you),
+    -11px 0 0 var(--ink);
 }
 tr.me td:last-child {
   box-shadow: 8px 0 0 var(--you);
@@ -1128,6 +1149,14 @@ td button.link:hover {
 }
 .board .wide {
   display: none;
+}
+/* A long name or a big figure scrolls the table inside its box, never the page sideways. The box reaches
+   11px past the table on each side, so your row's highlight and its rule (tr.me) are not clipped by it. */
+.boardwrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -11px;
+  padding: 0 11px;
 }
 .boardwrap.collapsed tr.later:not(.me) {
   display: none;
@@ -1495,8 +1524,15 @@ td button.link:hover {
 .merged .alias {
   display: inline-flex;
   gap: 4px;
-  align-items: baseline;
+  align-items: center;
   margin-right: 12px;
+}
+.merged .alias button.link,
+.scope-pop .foot button.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 6px;
 }
 .pins li {
   display: flex;
@@ -1527,7 +1563,8 @@ td button.link:hover {
   display: flex;
   flex-wrap: nowrap;
   gap: 0;
-  margin: 4px 0 18px;
+  margin: -2px 0 12px;
+  padding: 6px 4px 0;
   border-bottom: 1px solid var(--rule);
   overflow-x: auto;
   scrollbar-width: none;
@@ -1745,7 +1782,9 @@ td button.link:hover {
     gap: 0;
   }
   .facts3 .big {
-    font-size: 16px;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow-wrap: normal;
   }
 }
 /* Desktop: the five pages as a top row; no bottom bar. */

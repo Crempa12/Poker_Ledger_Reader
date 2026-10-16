@@ -20,7 +20,7 @@ October 2026. Four design directions were drawn with made-up data and scored by 
 
 - **Phone:** a bottom bar with Standings, Nights, **+ Add** (the one filled item), Who owes and More. In a snapshot, which never adds games, the + Add slot becomes Settle up. Settle up is also reached from Last night and from every night's page.
 - **Desktop (900 px and up):** a top row with Standings, Nights, Settle up, Who owes, + Add game and More.
-- **More:** Play style, Checks (with its count, which also shows on More), Payments & corrections, Settings, Help, Make a snapshot, the theme choice, and the facts that used to sit under the tiles: hand logs, banker, pins, me, the data folder and the time zone.
+- **More:** Play style, Checks (with its count, which also shows on More), Payments & corrections, Settings (where Make a snapshot is, first on the page), Help, the theme choice, and the facts that used to sit under the tiles: hand logs, banker, pins, me, the data folder and the time zone.
 - **Scope:** one line, `All folders · All time ▾`, opens a small panel with the folder and date choices. The presets and custom dates work as they do now. The line shows only on the pages it changes: Standings, Nights, Settle up, Play style and a player's page. Who owes says it covers every game.
 - **Banners** (console app open, snapshot) are single lines, with any detail in a fold.
 

@@ -141,7 +141,8 @@ function YouBlock({ ctx, listed, latest, onSaved }: { ctx: Ctx; listed: PlayerSt
         ) : null}
       </p>
       {versus !== null ? <p className="vs">{versus}</p> : null}
-      {mine !== undefined ? <OwesLine ctx={ctx} you={own ? null : meName} /> : null}
+      {/* Who owes is for every game, so the line shows even when you have no games in this scope. */}
+      {me !== "" ? <OwesLine ctx={ctx} you={own ? null : meName} /> : null}
       {mine === undefined ? (
         me === "" && own ? (
           <WhoAreYou ctx={ctx} onSaved={onSaved} />
@@ -254,6 +255,7 @@ function Standings({ ctx, listed }: { ctx: Ctx; listed: PlayerStats[] }) {
                   <td className="num rk">{i + 1}</td>
                   <td className="nm">
                     <a href={href("player", p.normalizedName)}>{p.displayName}</a>
+                    {p.normalizedName === me && ctx.payload.canWrite ? <span className="sr-only"> (you)</span> : null}
                     <span className="line2">
                       {plural(p.games, "night")} · avg {moneySigned(d.averagePerGame)}
                     </span>
@@ -389,13 +391,17 @@ function LatestNight({ ctx, game }: { ctx: Ctx; game: Game }) {
         <ul className="pays">
           {shown.map((e, i) => (
             <li key={i} className={players.resolveCanonical(world.rules, e.fromNormalized) === me || players.resolveCanonical(world.rules, e.toNormalized) === me ? "pl you" : "pl"}>
-              <span className="who">{e.fromDisplay}</span>
+              <span className="who">
+                {e.fromDisplay}
+                {ctx.payload.canWrite && players.resolveCanonical(world.rules, e.fromNormalized) === me ? <span className="sr-only"> (you)</span> : null}
+              </span>
               <span className="lead" aria-hidden="true" />
               <span className="amt">{moneyCents(e.amountCents)}</span>
               <span className="to">
                 <span aria-hidden="true">→ </span>
                 <span className="sr-only">pays </span>
                 {e.toDisplay}
+                {ctx.payload.canWrite && players.resolveCanonical(world.rules, e.toNormalized) === me ? <span className="sr-only"> (you)</span> : null}
               </span>
             </li>
           ))}
@@ -432,13 +438,17 @@ function StillOwed({ ctx }: { ctx: Ctx }) {
           <ul className="pays">
             {shown.map((d) => (
               <li key={`${d.fromNormalized}->${d.toNormalized}`} className={canon(d.fromNormalized) === me || canon(d.toNormalized) === me ? "pl you" : "pl"}>
-                <span className="who">{d.fromDisplay}</span>
+                <span className="who">
+                  {d.fromDisplay}
+                  {ctx.payload.canWrite && canon(d.fromNormalized) === me ? <span className="sr-only"> (you)</span> : null}
+                </span>
                 <span className="lead" aria-hidden="true" />
                 <span className="amt">{moneyCents(d.totalCents)}</span>
                 <span className="to">
                   <span aria-hidden="true">→ </span>
                   <span className="sr-only">owes </span>
                   {d.toDisplay}
+                  {ctx.payload.canWrite && canon(d.toNormalized) === me ? <span className="sr-only"> (you)</span> : null}
                 </span>
               </li>
             ))}
