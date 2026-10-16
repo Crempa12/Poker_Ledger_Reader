@@ -108,6 +108,26 @@ export function AddGame({ ctx, onSaved }: { ctx: Ctx; onSaved: () => void }) {
   if (!ctx.payload.canWrite) {
     return <div className="card pad">Adding games works only on the computer that holds the data.</div>;
   }
+  // No data folder yet: a game has nowhere to go. A group without the console app starts one on the Overview.
+  if (ctx.payload.dataReady === false) {
+    return (
+      <div className="card pad">
+        <p>There is no data folder to add games to yet.</p>
+        <p className="muted">
+          {ctx.payload.canStartData === true ? (
+            <>
+              Not using the console app? Start one on the <a href={href()}>Overview</a>, then come back here.
+            </>
+          ) : (
+            <>
+              The site reads the console app&apos;s folder: put it next to this one (or set PLR_DATA_ROOT to it), then press{" "}
+              <strong>Refresh</strong>.
+            </>
+          )}
+        </p>
+      </div>
+    );
+  }
 
   const add = (item: Omit<Item, "status" | "message" | "folder"> & { folder?: string }): void => {
     const there = findExisting(ctx, item.kind, item.gameId);

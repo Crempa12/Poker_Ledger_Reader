@@ -10,7 +10,7 @@
 // server pointed (PLR_DATA_ROOT) at a scratch copy that no console app is using. Its
 // backups go to a folder of their own inside local/backups/ (one per data folder), so they
 // never push out the real ones; PLR_BACKUP_DIR can still point them somewhere else.
-import { resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
@@ -18,8 +18,18 @@ import { apiMiddleware } from "./server/api.ts";
 import { defaultDataRoot } from "./server/dataroot.ts";
 import { denyPatternFor } from "./server/fsdeny.ts";
 
-// The console app's folder next to this project, or the site's own data/ folder (server/dataroot.ts).
-const dataRoot = resolve(process.env.PLR_DATA_ROOT ?? defaultDataRoot(resolve(import.meta.dirname, "../..")));
+// The console app's folder next to this project, or the site's own data/ folder (server/dataroot.ts). The
+// site may start a data folder only in its own data/ or in a folder PLR_DATA_ROOT names: never in the
+// console app's folder, even when that is missing for a while (a drive not plugged in).
+const PROJECT = resolve(import.meta.dirname, "../..");
+const dataRoot = resolve(process.env.PLR_DATA_ROOT ?? defaultDataRoot(PROJECT));
+const startable = process.env.PLR_DATA_ROOT !== undefined || dataRoot === resolve(PROJECT, "data");
+// When the data folder holds this project (PLR_DATA_ROOT names it or a folder above it), only its Games and
+// Saved_Data folders are kept from Vite's /@fs/; denying the whole folder would refuse the site's own files.
+const dataDeny =
+  PROJECT === dataRoot || PROJECT.startsWith(dataRoot + sep)
+    ? [denyPatternFor(join(dataRoot, "Games")), denyPatternFor(join(dataRoot, "Saved_Data"))]
+    : [denyPatternFor(dataRoot)];
 const timeZone = process.env.PLR_TZ ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 const consoleCheck = process.env.PLR_CONSOLE_CHECK !== "0";
 const LOCAL = resolve(import.meta.dirname, "../../local");
@@ -42,6 +52,7 @@ function localData(): Plugin {
           consoleCheck,
           snapshotDir: process.env.PLR_SNAPSHOT_DIR,
           downloadsDir: process.env.PLR_DOWNLOADS_DIR, // a test server looks in a made-up Downloads folder
+          startable,
           backupDir: process.env.PLR_BACKUP_DIR, // a test server keeps its backups apart from the real ones
         }),
       );
@@ -66,7 +77,7 @@ export default defineConfig(({ mode }) => ({
       // runs: Vite's /@fs/ must never hand them out (a phone on the Wi-Fi could ask).
       // Setting deny replaces Vite's list, so its own entries are repeated here.
       // The data folder too: the site's own data/ is inside this project, where /@fs/ could reach it.
-      deny: [".env", ".env.*", "*.{crt,pem,key,p12,pfx,cer,der}", ".npmrc", ".yarnrc.yml", "**/.git/**", denyPatternFor(LOCAL), denyPatternFor(dataRoot)],
+      deny: [".env", ".env.*", "*.{crt,pem,key,p12,pfx,cer,der}", ".npmrc", ".yarnrc.yml", "**/.git/**", denyPatternFor(LOCAL), ...dataDeny],
     },
   },
 }));

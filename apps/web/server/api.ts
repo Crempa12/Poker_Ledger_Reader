@@ -61,6 +61,9 @@ export interface ApiConfig {
   backupDir?: string; // where old Saved_Data versions go; default: the web project's local/backups/
   snapshotDir?: string; // where snapshot files go; default: the web project's local/snapshots/
   downloadsDir?: string; // where the browser saves downloads; default: Downloads in the home folder (as menu 19)
+  // Whether the site may start a data folder at dataRoot (POST /api/start-data): true for its own data/ folder
+  // and for a folder PLR_DATA_ROOT names, never for the console app's folder (vite.config.ts says which).
+  startable?: boolean;
   lockWaitMs?: number; // how long a save waits for another save's lock file; default: LOCK_WAIT_MS
   handLogs?: HandLogCache; // where the hand-log results are kept; default: the process's one (handlogs.ts)
 }
@@ -342,7 +345,7 @@ export async function handleData(cfg: ApiConfig, req: IncomingMessage, res: Serv
     gamesFolder: existsSync(join(cfg.dataRoot, "Games")),
     // Whether the folder holds the console app's data, and if not, whether a new one may be started there.
     dataReady: await dataRootReady(cfg.dataRoot),
-    canStartData: canWrite && (await canStartDataRoot(cfg.dataRoot)),
+    canStartData: canWrite && (await startableHere(cfg)),
     basis,
   });
 }
@@ -574,7 +577,7 @@ export async function handleSavedFile(cfg: ApiConfig, req: IncomingMessage, res:
   const dir = join(cfg.dataRoot, "Saved_Data");
   const target = join(dir, file);
   await inSaveQueue(async () => {
-    if (!(await dataRootReady(cfg.dataRoot))) return send(res, 409, { error: notADataFolder(cfg.dataRoot) });
+    if (!(await dataRootReady(cfg.dataRoot))) return send(res, 409, { error: notADataFolder(cfg.dataRoot, await startableHere(cfg)) });
     await mkdir(dir, { recursive: true });
     const unlock = await acquireSaveLock(dir, cfg.lockWaitMs ?? LOCK_WAIT_MS);
     if (unlock === null) {
@@ -734,7 +737,9 @@ export async function handleSave(cfg: ApiConfig, req: IncomingMessage, res: Serv
   if (!writeAllowed(req)) return send(res, 403, { error: NOT_YOURS });
   const body = await readBody(req);
   const m = typeof body.fileName === "string" ? FILE_NAME.exec(body.fileName) : null;
-  const folder = safeFolder(body.folder);
+  // A folder already under Games is taken as it is (so a name made before these rules, or with a space at
+  // its end, keeps working and is not filed into a look-alike); a new name must pass safeFolder.
+  const folder = (await existingGamesFolder(gamesDir(cfg.dataRoot), body.folder)) ?? safeFolder(body.folder);
   if (m === null) return send(res, 400, { error: "only PokerNow ledger_… or poker_now_log_… files can be saved" });
   if (folder === null) {
     return send(res, 400, {
@@ -756,7 +761,7 @@ export async function handleSave(cfg: ApiConfig, req: IncomingMessage, res: Serv
   }
   // Like the Saved_Data saves: one at a time, after the data folder and the page's basis are checked.
   await inSaveQueue(async () => {
-    if (!(await dataRootReady(cfg.dataRoot))) return send(res, 409, { error: notADataFolder(cfg.dataRoot) });
+    if (!(await dataRootReady(cfg.dataRoot))) return send(res, 409, { error: notADataFolder(cfg.dataRoot, await startableHere(cfg)) });
     if (typeof body.basis !== "string" || body.basis !== (await dataBasis(cfg.dataRoot))) {
       return send(res, 409, { error: STALE });
     }
@@ -793,7 +798,7 @@ const SNAPSHOT_SCRIPT = fileURLToPath(new URL("./snapshot.ts", import.meta.url))
 export async function handleSnapshot(cfg: ApiConfig, req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (!writeAllowed(req)) return send(res, 403, { error: NOT_YOURS });
   // A snapshot of a folder that is not the console app's would be a page with no games in it.
-  if (!(await dataRootReady(cfg.dataRoot))) return send(res, 409, { error: notADataFolder(cfg.dataRoot) });
+  if (!(await dataRootReady(cfg.dataRoot))) return send(res, 409, { error: notADataFolder(cfg.dataRoot, await startableHere(cfg)) });
   const env = {
     ...process.env,
     NODE_ENV: "production",
@@ -844,14 +849,50 @@ export async function handleStartData(cfg: ApiConfig, req: IncomingMessage, res:
   if (!writeAllowed(req)) return send(res, 403, { error: NOT_YOURS });
   await inSaveQueue(async () => {
     if (await dataRootReady(cfg.dataRoot)) return send(res, 409, { error: "There is a data folder there already. Press Refresh." });
-    if (!(await canStartDataRoot(cfg.dataRoot))) {
+    if (cfg.startable !== true) {
       return send(res, 409, {
-        error: `${cfg.dataRoot} has other files in it, so no data folder was started there. Set PLR_DATA_ROOT to an empty folder.`,
+        error: `${cfg.dataRoot} is the console app's folder, so the site does not start one there. Put the console app's folder back, then press Refresh.`,
       });
     }
-    await startDataRoot(cfg.dataRoot);
+    if (!(await canStartDataRoot(cfg.dataRoot))) {
+      return send(res, 409, {
+        error:
+          `No data folder was started at ${cfg.dataRoot}: it has other files in it, or the folder it would go in is not there ` +
+          "or cannot be written to. Set PLR_DATA_ROOT to an empty folder.",
+      });
+    }
+    try {
+      await startDataRoot(cfg.dataRoot);
+    } catch (err) {
+      console.error("[plr] could not start a data folder:", err);
+      const code = (err as NodeJS.ErrnoException).code ?? "error";
+      return send(res, 409, { error: `No data folder could be made at ${cfg.dataRoot} (${code}). Nothing was changed.` });
+    }
     send(res, 200, { started: cfg.dataRoot });
   });
+}
+
+// Whether the Overview may offer to start a data folder where the site reads.
+async function startableHere(cfg: ApiConfig): Promise<boolean> {
+  return cfg.startable === true && (await canStartDataRoot(cfg.dataRoot));
+}
+
+// body.folder as it is, when it names a folder already under Games (each name matched exactly against the
+// folder's entries, so on a file system that ignores case a look-alike is not taken for it), not a folder
+// the console app skips, and not a link. Null otherwise.
+async function existingGamesFolder(base: string, raw: unknown): Promise<string | null> {
+  if (typeof raw !== "string" || raw === "") return null;
+  const parts = raw.split("/");
+  if (parts.length > 8) return null;
+  let dir = resolve(base);
+  for (const part of parts) {
+    if (part === "" || part === "." || part === ".." || part.includes("\\") || isExcludedDir(part)) return null;
+    const entries = await readdir(dir, { withFileTypes: true }).catch(() => null);
+    const entry = entries?.find((e) => e.name === part);
+    if (entry === undefined || !entry.isDirectory()) return null;
+    dir = join(dir, part);
+  }
+  return dir.startsWith(resolve(base) + sep) ? raw : null;
 }
 
 // ---- the Downloads folder (menu 19) ------------------------------------------------------------
